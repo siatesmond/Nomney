@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 
+import "../global.css"
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
