@@ -1,11 +1,11 @@
-import { Text, View } from 'react-native';
+import { Link } from "expo-router";
+import { View } from "react-native";
 
-export default function testScreen() {
+export default function HomeScreen() {
   return (
     <View>
-      <Text className="text-red-500 text-2xl">
-        RED TEXT
-      </Text>
+      <Link href="/login">Login</Link>
+       <Link href="/register">Register</Link>
     </View>
   );
 }
