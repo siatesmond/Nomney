@@ -1,16 +1,61 @@
 import { useState } from "react";
-import { Text } from "react-native";
+import { Alert, Text } from "react-native";
 import { Screen } from "../../components/styles/Screen";
 import { InputWithIcon } from "../../components/styles/InputWithIcon";
 import { Button } from "../../components/styles/BlackButton";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "../../lib/supabase";
 
 export default function Login() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!firstName || !lastName || !email || !password) {
+      Alert.alert("Please enter all fields");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Sign up user - trigger will automatically create profile
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+        },
+      });
+
+      if (error) {
+        console.error("Auth error:", error);
+        Alert.alert("Sign up failed", error.message);
+        return;
+      }
+
+      console.log("Sign up successful:", data);
+      Alert.alert("Account created! Check your email to verify.");
+
+      // Clear form fields
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      Alert.alert("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Screen>
@@ -44,17 +89,23 @@ export default function Login() {
       <InputWithIcon
         icon={<Ionicons name="lock-closed-outline" size={20} color="#838383" />}
         placeholder="Password"
-        value={email}
+        value={password}
         onChangeText={setPassword}
         autoCapitalize="none"
         secureTextEntry
       />
 
-      <Button title="Create account" />
+      <Button
+        title={loading ? "Creating..." : "Create account"}
+        onPress={handleRegister}
+      />
 
-      <Link href="/" className="text-[#707070] font-medium text-center mt-6">
-        Have an account? Log in
-      </Link>
+      <Text className="text-[#707070] font-medium text-center mt-6">
+        Have an account?{" "}
+        <Link href="/login" asChild>
+          <Text className="text-[#707070] font-medium underline">Log in</Text>
+        </Link>
+      </Text>
     </Screen>
   );
 }

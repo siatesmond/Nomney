@@ -1,14 +1,39 @@
 import { useState } from "react";
-import { Text } from "react-native";
+import { Alert, Text } from "react-native";
 import { Screen } from "../../components/styles/Screen";
 import { InputWithIcon } from "../../components/styles/InputWithIcon";
 import { Button } from "../../components/styles/BlackButton";
 import { Link } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "../../lib/supabase";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Please enter email and password");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        Alert.alert(error.message);
+      }
+
+      Alert.alert("Logged in!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Screen>
@@ -25,7 +50,7 @@ export default function Login() {
       <InputWithIcon
         icon={<Ionicons name="lock-closed-outline" size={20} color="#838383" />}
         placeholder="Password"
-        value={email}
+        value={password}
         onChangeText={setPassword}
         autoCapitalize="none"
         secureTextEntry
@@ -35,11 +60,20 @@ export default function Login() {
         Forgot password?
       </Link>
 
-      <Button title="Sign In" />
+      <Button
+        title={loading ? "Signing in..." : "Sign in"}
+        onPress={handleLogin}
+        disabled={loading}
+      />
 
-      <Link href="/" className="text-[#707070] font-medium text-center mt-6">
-        New here? Create an account
-      </Link>
+      <Text className="text-[#707070] font-medium text-center mt-6">
+        New here?{" "}
+        <Link href="/register" asChild>
+          <Text className="text-[#707070] font-medium underline">
+            Create an account
+          </Text>
+        </Link>
+      </Text>
     </Screen>
   );
 }
