@@ -10,12 +10,13 @@ import { supabase } from "../../lib/supabase";
 export default function Login() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !username || !email || !password) {
       Alert.alert("Please enter all fields");
       return;
     }
@@ -31,6 +32,7 @@ export default function Login() {
           data: {
             first_name: firstName,
             last_name: lastName,
+            username: username,
           },
         },
       });
@@ -49,6 +51,7 @@ export default function Login() {
       setLastName("");
       setEmail("");
       setPassword("");
+
     } catch (err) {
       console.error("Unexpected error:", err);
       Alert.alert("An unexpected error occurred");
@@ -74,6 +77,14 @@ export default function Login() {
         placeholder="Last Name"
         value={lastName}
         onChangeText={setLastName}
+        autoCapitalize="none"
+      />
+
+      <InputWithIcon
+        icon={<Ionicons name="person-outline" size={20} color="#838383" />}
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
         autoCapitalize="none"
       />
 
