@@ -1,10 +1,10 @@
+import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
 import { useState } from "react";
 import { Alert, Text } from "react-native";
-import { Screen } from "../../components/styles/Screen";
-import { InputWithIcon } from "../../components/styles/InputWithIcon";
 import { Button } from "../../components/styles/BlackButton";
-import { Link } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { InputWithIcon } from "../../components/styles/InputWithIcon";
+import { Screen } from "../../components/styles/Screen";
 import { supabase } from "../../lib/supabase";
 
 export default function Login() {
@@ -21,15 +21,17 @@ export default function Login() {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
-        email: email,
+        email: email.trim(),
         password: password,
       });
 
       if (error) {
-        Alert.alert(error.message);
+        Alert.alert("Login failed", error.message);
+        return; // stop here — don't show "Logged in!"
       }
 
-      Alert.alert("Logged in!");
+      // No need to navigate manually — AuthProvider detects the session
+      // and AuthGuard in (protected)/_layout.tsx handles the redirect
     } finally {
       setLoading(false);
     }
