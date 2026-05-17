@@ -1,11 +1,23 @@
-import { Link } from "expo-router";
-import { View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 export default function HomeScreen() {
   return (
-    <View>
-      <Link href="/login">Login</Link>
-       <Link href="/register">Register</Link>
+    <View style={styles.container}>
+      <Text style={styles.title}>Home</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9F9F9",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+});
