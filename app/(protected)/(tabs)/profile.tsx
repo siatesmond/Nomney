@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/providers/AuthProvider';
 import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -12,21 +13,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+// Matches your actual Supabase profiles table columns
 type Profile = {
   id: string;
   full_name: string | null;
   username: string | null;
-  bio: string | null;
+  first_name: string | null;
+  last_name: string | null;
   avatar_url: string | null;
-  followers_count: number;
-  following_count: number;
 };
 
 const { width } = Dimensions.get('window');
 const IMAGE_SIZE = (width - 6) / 3;
 const ACCENT = '#F4522A';
 
-// Placeholder grid images — replace with real posts/saved data when ready
 const PLACEHOLDER_POSTS = [
   'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400',
   'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
@@ -45,8 +45,6 @@ const PLACEHOLDER_SAVED = [
   'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400',
 ];
 
-// ─── Hook: fetch profile from Supabase ───────────────────────────────────────
-
 function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -58,7 +56,6 @@ function useProfile() {
       try {
         setLoading(true);
 
-        // 1. Get the currently logged-in user
         const {
           data: { user },
           error: userError,
@@ -66,10 +63,10 @@ function useProfile() {
 
         if (userError || !user) throw new Error('Not authenticated');
 
-        // 2. Fetch their profile row
+        // Only selecting columns that exist in your table
         const { data, error: profileError } = await supabase
           .from('profiles')
-          .select('id, full_name, username, bio, avatar_url, followers_count, following_count')
+          .select('id, full_name, username, first_name, last_name, avatar_url')
           .eq('id', user.id)
           .single();
 
@@ -77,13 +74,12 @@ function useProfile() {
 
         setProfile(data);
 
-        // 3. Resolve avatar URL — handles both full URLs and Storage paths
         if (data.avatar_url) {
           if (data.avatar_url.startsWith('http')) {
             setAvatarUrl(data.avatar_url);
           } else {
             const { data: urlData } = supabase.storage
-              .from('avatars') // 👈 change bucket name if different
+              .from('avatars')
               .getPublicUrl(data.avatar_url);
             setAvatarUrl(urlData.publicUrl);
           }
@@ -101,15 +97,13 @@ function useProfile() {
   return { profile, avatarUrl, loading, error };
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function ProfileScreen() {
   const { profile, avatarUrl, loading, error } = useProfile();
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'Posts' | 'Saved'>('Posts');
 
   const gridData = activeTab === 'Posts' ? PLACEHOLDER_POSTS : PLACEHOLDER_SAVED;
 
-  // ── Loading state ──
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
@@ -118,7 +112,6 @@ export default function ProfileScreen() {
     );
   }
 
-  // ── Error state ──
   if (error || !profile) {
     return (
       <SafeAreaView style={styles.centered}>
@@ -127,6 +120,13 @@ export default function ProfileScreen() {
     );
   }
 
+  // Show full_name if available, otherwise fall back to first + last, then username
+    const displayName = 
+        profile.full_name ??
+        ([profile.first_name, profile.last_name].filter(Boolean).join(' ') || null) ??
+        profile.username ??
+        'Anonymous';
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ── Profile Header ── */}
+        {/* Header */}
         <View style={styles.header}>
 
           {/* Avatar */}
@@ -144,49 +144,33 @@ export default function ProfileScreen() {
             ) : (
               <View style={[styles.avatar, styles.avatarFallback]}>
                 <Text style={styles.avatarInitials}>
-                  {(profile.full_name ?? profile.username ?? '?')[0].toUpperCase()}
+                  {displayName[0].toUpperCase()}
                 </Text>
               </View>
             )}
           </View>
 
           {/* Name */}
-          <Text style={styles.name}>
-            {profile.full_name ?? profile.username ?? 'Anonymous'}
-          </Text>
+          <Text style={styles.name}>{displayName}</Text>
 
           {/* Username */}
           {profile.username && (
             <Text style={styles.username}>@{profile.username}</Text>
           )}
 
-          {/* Bio */}
-          {profile.bio ? (
-            <Text style={styles.bio}>{profile.bio}</Text>
-          ) : (
-            <Text style={[styles.bio, styles.bioEmpty]}>No bio yet.</Text>
-          )}
-
-          {/* Stats */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{profile.followers_count ?? 0}</Text>
-              <Text style={styles.statLabel}> Followers</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{profile.following_count ?? 0}</Text>
-              <Text style={styles.statLabel}> Following</Text>
-            </View>
-          </View>
-
-          {/* Edit Profile Button */}
+          {/* Edit Profile */}
           <TouchableOpacity style={styles.editButton} activeOpacity={0.85}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
           </TouchableOpacity>
+
+          {/* Log Out */}
+          <TouchableOpacity style={styles.logoutButton} onPress={signOut} activeOpacity={0.7}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+
         </View>
 
-        {/* ── Tab Selector ── */}
+        {/* Tab Selector */}
         <View style={styles.tabRow}>
           {(['Posts', 'Saved'] as const).map((tab) => (
             <TouchableOpacity
@@ -202,9 +186,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* ── Image Grid ──
-            TODO: Replace PLACEHOLDER_POSTS / PLACEHOLDER_SAVED with real Supabase
-            queries once you add a `posts` or `saved_posts` table. */}
+        {/* Image Grid */}
         <View style={styles.grid}>
           {gridData.map((uri, index) => (
             <TouchableOpacity key={index} activeOpacity={0.9} style={styles.gridItem}>
@@ -216,8 +198,6 @@ export default function ProfileScreen() {
     </SafeAreaView>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -240,8 +220,6 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 14,
   },
-
-  // ── Header ──────────────────────────────────────
   header: {
     alignItems: 'center',
     paddingTop: 28,
@@ -285,49 +263,8 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 13,
     color: '#999',
-    marginBottom: 10,
+    marginBottom: 16,
   },
-  bio: {
-    fontSize: 13.5,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 18,
-    maxWidth: 280,
-  },
-  bioEmpty: {
-    fontStyle: 'italic',
-    color: '#BBB',
-  },
-
-  // ── Stats ────────────────────────────────────────
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    gap: 32,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  statNumber: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: ACCENT,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#444',
-    fontWeight: '500',
-  },
-  statDivider: {
-    width: 1,
-    height: 18,
-    backgroundColor: '#DDD',
-  },
-
-  // ── Edit Button ──────────────────────────────────
   editButton: {
     backgroundColor: ACCENT,
     paddingHorizontal: 36,
@@ -345,8 +282,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.3,
   },
-
-  // ── Tab Row ──────────────────────────────────────
+  logoutButton: {
+    marginTop: 12,
+    paddingHorizontal: 36,
+    paddingVertical: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#DDD',
+  },
+  logoutText: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '500',
+  },
   tabRow: {
     flexDirection: 'row',
     backgroundColor: '#EFEFEF',
@@ -378,8 +326,6 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '600',
   },
-
-  // ── Grid ─────────────────────────────────────────
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

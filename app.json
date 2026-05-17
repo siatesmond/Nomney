@@ -4,7 +4,7 @@
     "slug": "Nomney",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/icon/icon_v1.png",
     "scheme": "nomney",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
