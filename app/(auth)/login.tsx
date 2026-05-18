@@ -48,7 +48,6 @@ export default function Login() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-
       <InputWithIcon
         icon={<Ionicons name="lock-closed-outline" size={20} color="#838383" />}
         placeholder="Password"
@@ -67,7 +66,6 @@ export default function Login() {
         onPress={handleLogin}
         disabled={loading}
       />
-
       <Text className="text-[#707070] font-medium text-center mt-6">
         New here?{" "}
         <Link href="/register" asChild>
