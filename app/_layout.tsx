@@ -1,6 +1,7 @@
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../global.css";
 
 // Watches auth state and redirects accordingly
@@ -29,9 +30,11 @@ function AuthGuard() {
 
 export default function Layout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <AuthProvider>
       <AuthGuard />
       <Stack screenOptions={{ headerShown: false }} />
     </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

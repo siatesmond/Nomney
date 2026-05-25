@@ -7,46 +7,18 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import BottomSheet from "@gorhom/bottom-sheet";
+
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
+import { CommentSheet } from "@/components/comments/CommentSheet";
 
+import { DUMMY_COMMENTS } from "@/data/comments";
+import { DUMMY_POSTS } from "@/data/posts";
+
+/* temp dummy data objects */
 const CATEGORIES = ["japanese", "mexican", "cafe", "homemade"];
-
-const EXPLORE_POSTS = [
-  {
-    id: "post1",
-    userId: "user123",
-    username: "user123",
-    timeAgo: "2 hours ago",
-    title: "French toast with berries 🥧 It's worth a try!",
-    description:
-      "Crispy outside, custard inside. The berries were fresh this morning!",
-    imageUrl: "",
-    tags: ["english", "cafe", "dessert"],
-    likes: 42,
-    comments: 8,
-    saves: 15,
-    location: "Morning Brew Cafe",
-    distance: "450m",
-  },
-  {
-    id: "post2",
-    userId: "user123",
-    username: "user123",
-    timeAgo: "2 hours ago",
-    title: "French toast with berries 🥧 It's worth a try!",
-    description:
-      "Crispy outside, custard inside. The berries were fresh this morning!",
-    imageUrl: "",
-    tags: ["english", "cafe", "dessert"],
-    likes: 42,
-    comments: 8,
-    saves: 15,
-    location: "Morning Brew Cafe",
-    distance: "450m",
-  },
-];
 
 export default function ExploreScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -54,6 +26,9 @@ export default function ExploreScreen() {
 
   const [likedPosts, setLikedPosts] = useState({});
   const [savedPosts, setSavedPosts] = useState({});
+
+  const sheetRef = useRef<BottomSheet>(null);
+  const [selectedComments, setSelectedComments] = useState([]);
 
   const toggleLike = (postId) => {
     setLikedPosts((prev) => ({
@@ -69,15 +44,22 @@ export default function ExploreScreen() {
     }));
   };
 
+  // Only show comments for selected posts
+  const openComments = (postId: string) => {
+    const filtered = DUMMY_COMMENTS.filter((c) => c.postId === postId);
+
+    setSelectedComments(filtered);
+    
+    sheetRef.current?.snapToIndex(0);
+  };
+
   return (
     <Screen>
       <View className="flex-1">
         <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-          
-          {/* Header */}
+          {/* Page Header */}
           <View className="px-4 pt-10 pb-4">
             <View className="flex-row items-center justify-between">
-              
               {/* Text */}
               <View className="w-2/3">
                 <Text className="text-3xl font-bold text-gray-900">
@@ -114,9 +96,7 @@ export default function ExploreScreen() {
                   key={category}
                   onPress={() => setSelectedCategory(category)}
                   className={`px-4 py-2 rounded-full ${
-                    selectedCategory === category
-                      ? "bg-[#FA5A40]"
-                      : "bg-white"
+                    selectedCategory === category ? "bg-[#FA5A40]" : "bg-white"
                   }`}
                 >
                   <Text
@@ -133,9 +113,11 @@ export default function ExploreScreen() {
             </View>
           </View>
 
-          {/* Posts */}
+          {/* End of Page header */}
+
+          {/* Feed of Posts */}
           <View className="px-4 pb-6 gap-4">
-            {EXPLORE_POSTS.map((post) => (
+            {DUMMY_POSTS.map((post) => (
               <View
                 key={post.id}
                 className="bg-white rounded-lg overflow-hidden"
@@ -145,14 +127,16 @@ export default function ExploreScreen() {
                   liked={!!likedPosts[post.id]}
                   saved={!!savedPosts[post.id]}
                   onLike={() => toggleLike(post.id)}
-                  onComment={() => console.log("Commented")}
+                  onComment={() => openComments(post.id)} // opens Bottom Sheet on click
                   onSave={() => toggleSave(post.id)}
                 />
               </View>
             ))}
           </View>
-
         </ScrollView>
+
+        {/* Comment Bottom Sheet */}
+        <CommentSheet ref={sheetRef} comments={selectedComments} />
       </View>
     </Screen>
   );
