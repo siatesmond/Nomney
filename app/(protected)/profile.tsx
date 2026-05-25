@@ -1,6 +1,7 @@
-import { useAuth } from '@/providers/AuthProvider';
-import { useNavigation } from '@react-navigation/native';
 import { UserProfile } from '@/components/profile/UserProfile';
+import SignOutButton from '@/components/social-auth-buttons/sign-out-button';
+import { useAuthContext } from '@/hooks/use-auth-context';
+import { useNavigation } from '@react-navigation/native';
 
 const PLACEHOLDER_POSTS = [
     'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400',
@@ -26,19 +27,21 @@ const PLACEHOLDER_SAVED = [
 ];
 
 export default function ProfileScreen() {
-    const { user, signOut } = useAuth();
+    const { profile } = useAuthContext()
     const navigation = useNavigation();
-
-    if (!user) return null;
+    
+    if (!profile) return null;
 
     return (
-        <UserProfile
-            userId={user.id}
-            isOwnProfile={true}
-            onEdit={() => navigation.navigate('EditProfile')}
-            onLogout={signOut}
-            postImages={PLACEHOLDER_POSTS}
-            savedImages={PLACEHOLDER_SAVED}
-        />
+        <>
+            <UserProfile
+                userId={profile.id}
+                isOwnProfile={true}
+                postImages={PLACEHOLDER_POSTS}
+                savedImages={PLACEHOLDER_SAVED}
+            />
+
+            <SignOutButton />
+        </>
     );
 }

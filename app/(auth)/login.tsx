@@ -27,11 +27,9 @@ export default function Login() {
 
       if (error) {
         Alert.alert("Login failed", error.message);
-        return; // stop here — don't show "Logged in!"
+        return;
       }
 
-      // No need to navigate manually — AuthProvider detects the session
-      // and AuthGuard in (protected)/_layout.tsx handles the redirect
     } finally {
       setLoading(false);
     }

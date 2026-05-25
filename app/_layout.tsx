@@ -1,37 +1,33 @@
-import { AuthProvider, useAuth } from "@/providers/AuthProvider";
-import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
-import "../global.css";
+import { Stack } from 'expo-router'
+import 'react-native-reanimated'
 
-// Watches auth state and redirects accordingly
-function AuthGuard() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
+import { SplashScreenController } from '@/components/splash-screen-controller'
+import { useAuthContext } from '@/hooks/use-auth-context'
+import AuthProvider from '@/providers/auth-provider'
+import "../global.css"
 
-  useEffect(() => {
-    if (isLoading) return;
+function RootNavigator() {
+  const { isLoggedIn, isLoading } = useAuthContext()
 
-    const inProtectedGroup = segments[0] === "(protected)";
-    const inAuthGroup = segments[0] === "(auth)";
+  if (isLoading) return null
 
-    if (!isAuthenticated && inProtectedGroup) {
-      // Not logged in — send to login
-      router.replace("/(auth)/login");
-    } else if (isAuthenticated && inAuthGroup) {
-      // Logged in — send to app
-      router.replace("/(protected)/(tabs)");
-    }
-  }, [isAuthenticated, isLoading, segments]);
-
-  return null;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={isLoggedIn}>
+        <Stack.Screen name="(protected)" />
+      </Stack.Protected>
+      <Stack.Protected guard={!isLoggedIn}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+    </Stack>
+  )
 }
 
-export default function Layout() {
+export default function RootLayout() {
   return (
     <AuthProvider>
-      <AuthGuard />
-      <Stack screenOptions={{ headerShown: false }} />
+      <SplashScreenController />
+      <RootNavigator />
     </AuthProvider>
-  );
+  )
 }
