@@ -9,7 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useRef } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
-
+``
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
 import { CommentSheet } from "@/components/comments/CommentSheet";

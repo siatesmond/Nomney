@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef } from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, {
   BottomSheetFlatList,
@@ -12,33 +12,29 @@ type CommentSheetProps = {
 
 export const CommentSheet = React.forwardRef<BottomSheet, CommentSheetProps>(
   ({ comments }, ref) => {
-    /* Height of sheet */
-    const snapPoints = useMemo(() => ["60%", "90%"], []); // half or full
-
+    const snapPoints = useMemo(() => ["60%", "90%"], []);
     const insets = useSafeAreaInsets();
 
-    const renderHeader = () => {
-      return (
-        <View style={styles.header}>
-          <Text style={styles.title}>Comments</Text>
-        </View>
-      );
-    };
+    const renderHeader = () => (
+      <View className="items-center py-2.5 border-b border-gray-200 bg-white">
+        <Text className="font-bold">Comments</Text>
+      </View>
+    );
 
-    const renderItem = useCallback(({ item }) => {
-      return (
-        <View style={styles.commentItem}>
-          <View style={styles.row}>
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
-
-            <View style={styles.textContainer}>
-              <Text style={styles.username}>{item.username}</Text>
-              <Text>{item.text}</Text>
-            </View>
+    const renderItem = useCallback(({ item }) => (
+      <View className="mb-3">
+        <View className="flex-row items-start">
+          <Image
+            source={{ uri: item.avatar }}
+            className="w-9 h-9 rounded-full mr-2.5"
+          />
+          <View className="flex-1">
+            <Text className="font-bold">{item.username}</Text>
+            <Text>{item.text}</Text>
           </View>
         </View>
-      );
-    }, []);
+      </View>
+    ), []);
 
     const renderFooter = useCallback(() => <View />, []);
 
@@ -48,7 +44,7 @@ export const CommentSheet = React.forwardRef<BottomSheet, CommentSheetProps>(
           {...props}
           disappearsOnIndex={-1}
           appearsOnIndex={0}
-          pressBehavior="close" // Close sheet on backdrop click
+          pressBehavior="close"
         />
       ),
       [],
@@ -60,73 +56,31 @@ export const CommentSheet = React.forwardRef<BottomSheet, CommentSheetProps>(
         index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
-        enableDynamicSizing={false} // Lets sheet height be controlled only by snapPoints
-        enableContentPanningGesture={false} // Keeps scrolling inside the list
+        enableDynamicSizing={false}
+        enableContentPanningGesture={false}
         enableHandlePanningGesture={true}
         enableOverDrag={false}
         backdropComponent={renderBackdrop}
-        handleIndicatorStyle={{ backgroundColor: "#ccc" }}
+        handleIndicatorStyle={{ backgroundColor: "#ccc" }} // Keep inline - component config
       >
         {renderHeader()}
 
-        {/* Scrollable content inside sheet */}
         <BottomSheetFlatList
-          style={{ flex: 1 }}
+          className="flex-1"
           data={comments}
           keyExtractor={(item, index) => index.toString()}
           renderItem={renderItem}
           ListFooterComponent={renderFooter}
-          ListFooterComponentStyle={{ height: 200 }} // Forces scroll space
+          ListFooterComponentStyle={{ height: 200 }} // Keep inline - dynamic footer height
           contentContainerStyle={[
-            styles.contentContainer,
-            { paddingBottom: insets.bottom + 16 },
+            {
+              paddingHorizontal: 16,
+              paddingTop: 16,
+              paddingBottom: insets.bottom + 16, // Dynamic value - needs inline
+            },
           ]}
         />
       </BottomSheet>
     );
   },
 );
-
-const styles = StyleSheet.create({
-  header: {
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderColor: "#eee",
-    backgroundColor: "#fff",
-  },
-
-  title: {
-    fontWeight: "bold",
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 10,
-  },
-
-  textContainer: {
-    flex: 1,
-  },
-
-  commentItem: {
-    marginBottom: 12,
-  },
-
-  username: {
-    fontWeight: "bold",
-  },
-
-  contentContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-  },
-});
