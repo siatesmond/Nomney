@@ -1,9 +1,9 @@
-import { Ionicons } from '@expo/vector-icons'
-import { Tabs } from 'expo-router'
-import React from 'react'
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import { ComponentProps } from 'react';
 
 function TabBarIcon(props: {
-  name: React.ComponentProps<typeof Ionicons>['name']
+  name: ComponentProps<typeof Ionicons>['name']
   color: string
 }) {
   return <Ionicons size={24} {...props} />
