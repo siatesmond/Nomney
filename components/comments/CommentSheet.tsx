@@ -1,24 +1,36 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { View, Text, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BottomSheetModal, BottomSheetFlatList, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
+import {
+  BottomSheetModal,
+  BottomSheetFlatList,
+  BottomSheetBackdrop,
+  BottomSheetTextInput,
+} from "@gorhom/bottom-sheet";
 
 type CommentSheetProps = {
   comments: any[];
 };
 
-export const CommentSheet = React.forwardRef(
-  ({ comments }, ref) => {
-    const snapPoints = useMemo(() => ["60%", "90%"], []);
-    const insets = useSafeAreaInsets();
+export const CommentSheet = React.forwardRef(({ comments }, ref) => {
+  const snapPoints = useMemo(() => ["60%"], []);
+  const insets = useSafeAreaInsets();
+  const [inputValue, setInputValue] = useState(""); // input comment
 
-    const renderHeader = () => (
-      <View className="items-center py-2.5 border-b border-gray-200 bg-white">
-        <Text className="font-bold">Comments</Text>
-      </View>
-    );
+  const handleSend = () => {
+    if (!inputValue.trim()) return;
+    console.log("Send comment:", inputValue);
+    setInputValue("");
+  };
 
-    const renderItem = useCallback(({ item }) => (
+  const renderHeader = () => (
+    <View className="items-center py-2.5 border-b border-gray-200 bg-white">
+      <Text className="font-bold">Comments</Text>
+    </View>
+  );
+
+  const renderItem = useCallback(
+    ({ item }) => (
       <View className="mb-3">
         <View className="flex-row items-start">
           <Image
@@ -31,52 +43,74 @@ export const CommentSheet = React.forwardRef(
           </View>
         </View>
       </View>
-    ), []);
+    ),
+    [],
+  );
 
-    const renderFooter = useCallback(() => <View />, []);
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior="close"
+      />
+    ),
+    [],
+  );
 
-    const renderBackdrop = useCallback(
-      (props) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          pressBehavior="close"
-        />
-      ),
-      [],
-    );
+  return (
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      enableDynamicSizing={false}
+      backdropComponent={renderBackdrop}
+    >
+      {renderHeader()}
 
-    return (
-      <BottomSheetModal
-        ref={ref}
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        enableDynamicSizing={false}
-        enableContentPanningGesture={false}
-        enableHandlePanningGesture={true}
-        enableOverDrag={false}
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={{ backgroundColor: "#ccc" }} // Keep inline - component config
+      <BottomSheetFlatList // Handles scrolling only for comments list
+        data={comments}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: 20,
+        }}
+      />
+
+      <View
+        style={{
+          borderTopWidth: 1,
+          borderTopColor: "#e5e5e5",
+          padding: 10,
+          paddingBottom: insets.bottom,
+          backgroundColor: "white",
+        }}
       >
-        {renderHeader()}
-
-        <BottomSheetFlatList
-          className="flex-1"
-          data={comments}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={renderItem}
-          ListFooterComponent={renderFooter}
-          ListFooterComponentStyle={{ height: 200 }} // Keep inline - dynamic footer height
-          contentContainerStyle={[
-            {
-              paddingHorizontal: 16,
-              paddingTop: 16,
-              paddingBottom: insets.bottom + 16, // Dynamic value - needs inline
-            },
-          ]}
-        />
-      </BottomSheetModal>
-    );
-  },
-);
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <BottomSheetTextInput // Input comment
+            value={inputValue}
+            onChangeText={setInputValue}
+            placeholder="Add a comment..."
+            style={{
+              flex: 1,
+              borderWidth: 1,
+              borderColor: "#ddd",
+              borderRadius: 20,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+            }}
+          />
+          <Text // Send button
+            onPress={handleSend}
+            style={{ fontWeight: "700", color: "#FA5A40" }}
+          >
+            Send
+          </Text>
+        </View>
+      </View>
+    </BottomSheetModal>
+  );
+});
