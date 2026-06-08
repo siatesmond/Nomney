@@ -8,8 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useRef } from "react";
-import BottomSheet from "@gorhom/bottom-sheet";
-``
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
 import { CommentSheet } from "@/components/comments/CommentSheet";
@@ -27,7 +26,8 @@ export default function ExploreScreen() {
   const [likedPosts, setLikedPosts] = useState({});
   const [savedPosts, setSavedPosts] = useState({});
 
-  const sheetRef = useRef<BottomSheet>(null);
+  const sheetRef = useRef<BottomSheetModal>(null);
+
   const [selectedComments, setSelectedComments] = useState([]);
 
   const toggleLike = (postId) => {
@@ -49,8 +49,8 @@ export default function ExploreScreen() {
     const filtered = DUMMY_COMMENTS.filter((c) => c.postId === postId);
 
     setSelectedComments(filtered);
-    
-    sheetRef.current?.snapToIndex(0);
+
+    sheetRef.current?.present();
   };
 
   return (

@@ -1,16 +1,13 @@
 import React, { useCallback, useMemo, useRef } from "react";
 import { View, Text, Image } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import BottomSheet, {
-  BottomSheetFlatList,
-  BottomSheetBackdrop,
-} from "@gorhom/bottom-sheet";
+import { BottomSheetModal, BottomSheetFlatList, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 
 type CommentSheetProps = {
   comments: any[];
 };
 
-export const CommentSheet = React.forwardRef<BottomSheet, CommentSheetProps>(
+export const CommentSheet = React.forwardRef(
   ({ comments }, ref) => {
     const snapPoints = useMemo(() => ["60%", "90%"], []);
     const insets = useSafeAreaInsets();
@@ -51,9 +48,8 @@ export const CommentSheet = React.forwardRef<BottomSheet, CommentSheetProps>(
     );
 
     return (
-      <BottomSheet
+      <BottomSheetModal
         ref={ref}
-        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
         enableDynamicSizing={false}
@@ -80,7 +76,7 @@ export const CommentSheet = React.forwardRef<BottomSheet, CommentSheetProps>(
             },
           ]}
         />
-      </BottomSheet>
+      </BottomSheetModal>
     );
   },
 );
