@@ -1,0 +1,261 @@
+export const DUMMY_COMMENTS = [
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+  {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar:
+      "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar:
+      "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+      {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar: "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+      {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar: "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+      {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar: "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+      {
+    id: "c1",
+    postId: "post1",
+    username: "alex_eats",
+    avatar: "https://images.unsplash.com/photo-1543852786-1cf6624b9987?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "This looks amazing!!!",
+    timeAgo: "2h",
+  },
+  {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+    {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+    {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+    {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "I need this 😭",
+    timeAgo: "1h",
+  },
+    {
+    id: "c2",
+    postId: "post1",
+    username: "foodie_maya",
+    avatar: "https://images.unsplash.com/photo-1518288774672-b94e808873ff?q=80&w=1038&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    text: "last comment",
+    timeAgo: "1h",
+  },
+
+];
