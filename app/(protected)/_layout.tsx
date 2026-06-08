@@ -1,28 +1,52 @@
-import { useAuth } from '@/providers/AuthProvider';
-import { Redirect, Stack } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import { ComponentProps } from 'react';
+
+function TabBarIcon(props: {
+  name: ComponentProps<typeof Ionicons>['name']
+  color: string
+}) {
+  return <Ionicons size={24} {...props} />
+}
 
 export default function ProtectedLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Still checking if a session exists — don't redirect yet
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#F4522A" />
-      </View>
-    );
-  }
-
-  // No session — send them to login
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />;
-  }
-
-  // Logged in — render the tabs
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-    </Stack>
-  );
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#F4522A',
+        tabBarInactiveTintColor: '#999',
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="home-outline" color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="two"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="search-outline" color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="person-outline" color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  )
 }

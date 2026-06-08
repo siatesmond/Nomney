@@ -1,0 +1,32 @@
+{
+  "build": {
+    "standalone": {
+      "android": {
+        "buildType": "apk",
+        "env": {
+          "EXPO_NO_CAPABILITY_SYNC": "1"
+        }
+      },
+      "env": {
+        "APP_VARIANT": "production"
+      }
+    },
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "preview3": {
+      "developmentClient": true
+    },
+    "preview4": {
+      "distribution": "internal"
+    },
+    "production": {}
+  }
+}

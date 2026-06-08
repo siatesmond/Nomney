@@ -8,7 +8,7 @@ type ScreenProps = {
 // base screen 
 export function Screen({ children }: ScreenProps) {
   return (
-    <View className="flex-1 bg-[#F6F5F3] justify-center pt-11">
+    <View className="flex-1 bg-[#FDFCF9] justify-center px-6">
       {children}
     </View>
   );
