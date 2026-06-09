@@ -2,6 +2,7 @@ import { View, Text, Image, TouchableOpacity, FlatList } from "react-native";
 import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "./UserAvatar";
+import { ImageCarousel } from "./ImageCarousel";
 
 type PostCardProps = {
   userId: string;
@@ -74,38 +75,7 @@ export function PostCard({
       </View>
 
       {/* Image Horizontal FlatList */}
-      <View className="py-2">
-        {imageUrls?.length > 0 ? (
-          <FlatList
-            data={imageUrls}
-            horizontal
-            pagingEnabled // stops at each img boundary
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(_, i) => i.toString()} // to update when int with db
-            style={{ width: cardWidth }} // constraints img to card width
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  width: cardWidth,
-                  height: 220,
-                }}
-              >
-                <Image
-                  source={{ uri: item }}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-              </View>
-            )}
-          />
-        ) : (
-          <View className="w-full h-56 bg-gray-200 items-center justify-center">
-            <Ionicons name="image-outline" size={30} color="#999" />
-          </View>
-        )}
-      </View>
+      <ImageCarousel imageUrls={imageUrls} cardWidth={cardWidth} />
 
       {/* Tags */}
       <View className="flex-row flex-wrap px-4 py-2.5 gap-2">
