@@ -1,6 +1,8 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, FlatList } from "react-native";
+import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Avatar } from "./UserAvatar";
+import { ImageCarousel } from "./ImageCarousel";
 
 type PostCardProps = {
   userId: string;
@@ -8,7 +10,7 @@ type PostCardProps = {
   timeAgo: string;
   title: string;
   description: string;
-  imageUrl: string;
+  imageUrls: string[];
   tags: string[];
   likes: number;
   comments: number;
@@ -28,7 +30,7 @@ export function PostCard({
   timeAgo,
   title,
   description,
-  imageUrl,
+  imageUrls,
   tags,
   likes,
   comments,
@@ -41,8 +43,13 @@ export function PostCard({
   onComment,
   onSave,
 }: PostCardProps) {
+  const [cardWidth, setCardWidth] = useState(0);
+
   return (
-    <View className="bg-white rounded-xl">
+    <View
+      className="bg-white rounded-xl overflow-hidden"
+      onLayout={(e) => setCardWidth(e.nativeEvent.layout.width)}
+    >
       {/* Header */}
       <View className="px-4 pt-3 pb-2">
         <View className="flex-row items-center gap-3">
@@ -67,20 +74,8 @@ export function PostCard({
         <Text className="text-sm text-black leading-[18px]">{description}</Text>
       </View>
 
-      {/* Image */}
-      <View className="px-4 py-2">
-        {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            className="w-full h-56 bg-gray-200 rounded-lg"
-            resizeMode="cover"
-          />
-        ) : (
-          <View className="w-full h-56 bg-gray-200 rounded-lg items-center justify-center">
-            <Ionicons name="image-outline" size={30} color="#999" />
-          </View>
-        )}
-      </View>
+      {/* Image Horizontal FlatList */}
+      <ImageCarousel imageUrls={imageUrls} cardWidth={cardWidth} />
 
       {/* Tags */}
       <View className="flex-row flex-wrap px-4 py-2.5 gap-2">
