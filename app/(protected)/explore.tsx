@@ -15,6 +15,22 @@ import {
 
 import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
+import { likePost, unlikePost } from "@/lib/likes";
+import { useAuthContext } from "@/hooks/use-auth-context";
+
+type Post = {
+  id: string;
+  title: string;
+  caption: string;
+  imageUrls: string[];
+  categories: string[];
+  likes: number;
+  comments: number;
+  saves: number;
+  username: string;
+  avatarUrl: string | null;
+  timeAgo: string;
+};
 
 /* temp dummy data objects */
 const CATEGORIES = ["japanese", "mexican", "cafe", "homemade"];
@@ -86,7 +102,7 @@ export default function ExploreScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
 
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [likedPosts, setLikedPosts] = useState({});
@@ -96,6 +112,8 @@ export default function ExploreScreen() {
 
   const [selectedComments, setSelectedComments] = useState([]);
   const [selectedPostId, setSelectedPostId] = useState([]);
+
+  const { profile } = useAuthContext();
 
   // Fetch posts when screen loads
   useEffect(() => {
@@ -113,7 +131,7 @@ export default function ExploreScreen() {
   }, []);
 
   // Fetch comments when user clicks on comments
-  const openComments = async (postId) => {
+  const openComments = async (postId: string) => {
     try {
       setSelectedPostId(postId);
 
@@ -127,11 +145,49 @@ export default function ExploreScreen() {
     }
   };
 
-  const toggleLike = (postId) => {
+  // Like/Unlike post
+  const toggleLike = async (postId: string) => {
+    // To check if post is currently liked
+    const isLiked = !!likedPosts[postId];
+
+    //toggle liked/unlike state
     setLikedPosts((prev) => ({
       ...prev,
       [postId]: !prev[postId],
     }));
+
+    // Update like count
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+        const updatedLikes = isLiked ? post.likes - 1 : post.likes + 1;
+        return { ...post, likes: updatedLikes };
+      }),
+    );
+
+    // Update db
+    try {
+      if (isLiked) {
+        await unlikePost(postId, profile.id);
+
+        console.log("Unliked post:", postId);
+      } else {
+        await likePost(postId, profile.id);
+
+        console.log("Liked post:", postId);
+      }
+    } catch (error) {
+      console.log(error);
+      console.log("Failed to update liked count");
+
+      // Revert action if db is unable to update
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: !prev[postId],
+      }));
+    }
   };
 
   const toggleSave = (postId) => {
