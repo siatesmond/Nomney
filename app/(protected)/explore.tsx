@@ -1,27 +1,93 @@
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useState, useRef } from "react";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
-import { CommentSheet } from "@/components/comments/CommentSheet";
+import { Ionicons } from "@expo/vector-icons";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { DUMMY_COMMENTS } from "@/data/comments";
-import { DUMMY_POSTS } from "@/data/posts";
+import { getComments } from "@/lib/comments";
+import { getPosts } from "@/lib/posts";
 
 /* temp dummy data objects */
 const CATEGORIES = ["japanese", "mexican", "cafe", "homemade"];
 
+const ListHeader = ({
+  searchText,
+  setSearchText,
+  selectedCategory,
+  setSelectedCategory,
+}) => (
+  // Page Header
+  <View className="px-2 pt-10 pb-4">
+    <View className="flex-row items-center justify-between">
+      {/* Text */}
+      <View className="w-2/3">
+        <Text className="text-3xl font-bold text-gray-900">
+          What tempts you today?
+        </Text>
+      </View>
+
+      {/* Illustration */}
+      <View className="w-1/3 items-end">
+        <Image
+          source={require("@/assets/images/icon/mascotWithLogo.png")}
+          className="w-full h-24"
+          resizeMode="contain"
+        />
+      </View>
+    </View>
+
+    {/* Search bar */}
+    <View className="flex-row items-center bg-[#e8e5e2] rounded-full px-4 py-3 mb-4">
+      <Ionicons name="search-outline" size={18} color="#999" />
+      <TextInput
+        placeholder="Search dishes, restaurants..."
+        className="flex-1 ml-2 text-[#838383] font-semibold"
+        value={searchText}
+        onChangeText={setSearchText}
+        placeholderTextColor="#999"
+      />
+    </View>
+
+    {/* Categories */}
+    <View className="flex-row gap-2 flex-wrap">
+      {CATEGORIES.map((category) => (
+        <TouchableOpacity
+          key={category}
+          onPress={() => setSelectedCategory(category)}
+          className={`px-4 py-2 rounded-full ${
+            selectedCategory === category ? "bg-[#FA5A40]" : "bg-white"
+          }`}
+        >
+          <Text
+            className={`text-sm font-semibold ${
+              selectedCategory === category ? "text-white" : "text-gray-600"
+            }`}
+          >
+            {category}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </View>
+
+  //End of Page header
+);
+
 export default function ExploreScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
+
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [likedPosts, setLikedPosts] = useState({});
   const [savedPosts, setSavedPosts] = useState({});
@@ -29,6 +95,35 @@ export default function ExploreScreen() {
   const sheetRef = useRef<BottomSheetModal>(null);
 
   const [selectedComments, setSelectedComments] = useState([]);
+  const [selectedPostId, setSelectedPostId] = useState([]);
+
+  // Fetch posts when screen loads
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const data = await getPosts();
+        setPosts(data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPosts();
+  }, []);
+
+  // Fetch comments when user clicks on comments
+  const openComments = async (postId) => {
+    try {
+      setSelectedPostId(postId);
+      setSelectedComments(comments);
+      const comments = await getComments(postId);
+
+      sheetRef.current?.present();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const toggleLike = (postId) => {
     setLikedPosts((prev) => ({
@@ -44,84 +139,25 @@ export default function ExploreScreen() {
     }));
   };
 
-  // Only show comments for selected posts
-  const openComments = (postId: string) => {
-    const filtered = DUMMY_COMMENTS.filter((c) => c.postId === postId);
-
-    setSelectedComments(filtered);
-
-    sheetRef.current?.present();
-  };
-
   return (
     <Screen>
       <View className="flex-1">
-        <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-          {/* Page Header */}
-          <View className="px-4 pt-10 pb-4">
-            <View className="flex-row items-center justify-between">
-              {/* Text */}
-              <View className="w-2/3">
-                <Text className="text-3xl font-bold text-gray-900">
-                  What tempts you today?
-                </Text>
-              </View>
-
-              {/* Illustration */}
-              <View className="w-1/3 items-end">
-                <Image
-                  source={require("@/assets/images/icon/mascotWithLogo.png")}
-                  className="w-full h-24"
-                  resizeMode="contain"
-                />
-              </View>
-            </View>
-
-            {/* Search bar */}
-            <View className="flex-row items-center bg-[#e8e5e2] rounded-full px-4 py-3 mb-4">
-              <Ionicons name="search-outline" size={18} color="#999" />
-              <TextInput
-                placeholder="Search dishes, restaurants..."
-                className="flex-1 ml-2 text-[#838383] font-semibold"
-                value={searchText}
-                onChangeText={setSearchText}
-                placeholderTextColor="#999"
-              />
-            </View>
-
-            {/* Categories */}
-            <View className="flex-row gap-2 flex-wrap">
-              {CATEGORIES.map((category) => (
-                <TouchableOpacity
-                  key={category}
-                  onPress={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full ${
-                    selectedCategory === category ? "bg-[#FA5A40]" : "bg-white"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-semibold ${
-                      selectedCategory === category
-                        ? "text-white"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    {category}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* End of Page header */}
-
-          {/* Feed of Posts */}
-          <View className="px-4 pb-6 gap-4">
-            {DUMMY_POSTS.map((post) => (
-              <View
-                key={post.id}
-                className="bg-white rounded-lg overflow-hidden"
-              >
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <ListHeader
+              searchText={searchText}
+              setSearchText={setSearchText}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+            />
+          }
+          renderItem={({ item: post }) => (
+            <View className="pb-6">
+              <View className="bg-white rounded-lg overflow-hidden">
                 <PostCard
                   {...post}
                   liked={!!likedPosts[post.id]}
@@ -131,12 +167,18 @@ export default function ExploreScreen() {
                   onSave={() => toggleSave(post.id)}
                 />
               </View>
-            ))}
-          </View>
-        </ScrollView>
-
+            </View>
+          )}
+        />
         {/* Comment Bottom Sheet */}
-        <CommentSheet ref={sheetRef} comments={selectedComments} />
+        <CommentSheet
+          ref={sheetRef}
+          postId={selectedPostId}
+          comments={selectedComments}
+          onNewCommentAdded={(newComment) =>
+            setSelectedComments((prev) => [...prev, newComment])
+          } // append new comment with existing comments
+        />
       </View>
     </Screen>
   );

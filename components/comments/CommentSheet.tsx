@@ -8,19 +8,41 @@ import {
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 
-type CommentSheetProps = {
-  comments: any[];
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { addComment } from "@/lib/comments";
+
+type Comment = {
+  id: string;
+  content: string;
+  username: string;
+  avatar: string | null;
+  timeAgo: string;
 };
 
-export const CommentSheet = React.forwardRef(({ comments }, ref) => {
+type CommentSheetProps = {
+  comments: Comment[];
+  postId: string | null;
+  onNewCommentAdded: (newComment: Comment) => void;
+};
+
+export const CommentSheet = React.forwardRef(({ comments, postId, onNewCommentAdded }, ref) => {
   const snapPoints = useMemo(() => ["60%"], []);
   const insets = useSafeAreaInsets();
   const [inputValue, setInputValue] = useState(""); // input comment
 
-  const handleSend = () => {
+  const { profile } = useAuthContext();
+
+  const handleAddComment = async () => {
     if (!inputValue.trim()) return;
-    console.log("Send comment:", inputValue);
-    setInputValue("");
+    try {
+      const newComment = await addComment(postId, profile.id, inputValue);
+      onNewCommentAdded(newComment); // update UI with newly added comment
+
+      console.log("New comment:", JSON.stringify(newComment, null, 2));
+      setInputValue("");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const renderHeader = () => (
@@ -38,8 +60,11 @@ export const CommentSheet = React.forwardRef(({ comments }, ref) => {
             className="w-9 h-9 rounded-full mr-2.5"
           />
           <View className="flex-1">
-            <Text className="font-bold">{item.username}</Text>
-            <Text>{item.text}</Text>
+            <View className="flex-row items-center gap-2">
+              <Text className="font-bold">{item.username}</Text>
+              <Text className="text-xs text-gray-400">{item.timeAgo}</Text>
+            </View>
+            <Text>{item.content}</Text>
           </View>
         </View>
       </View>
@@ -71,8 +96,13 @@ export const CommentSheet = React.forwardRef(({ comments }, ref) => {
 
       <BottomSheetFlatList // Handles scrolling only for comments list
         data={comments}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        ListEmptyComponent={
+          <View className="items-center">
+            <Text className="text-gray-400">No comments yet.</Text>
+          </View>
+        }
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 16,
@@ -104,7 +134,7 @@ export const CommentSheet = React.forwardRef(({ comments }, ref) => {
             }}
           />
           <Text // Send button
-            onPress={handleSend}
+            onPress={handleAddComment}
             style={{ fontWeight: "700", color: "#FA5A40" }}
           >
             Send
