@@ -5,7 +5,7 @@ export const DUMMY_POSTS = [
     username: "user123",
     timeAgo: "2 hours ago",
     title: "French toast with berries 🥧 It's worth a try!",
-    description:
+    caption:
       "Crispy outside, custard inside. The berries were fresh this morning!",
     imageUrls: [
       "https://plus.unsplash.com/premium_photo-1663840190880-89345db5575a?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -25,7 +25,7 @@ export const DUMMY_POSTS = [
     username: "user123",
     timeAgo: "2 hours ago",
     title: "Avocado toast & eggs 🥑",
-    description: "Simple, fresh, and perfect brunch combo.",
+    caption: "Simple, fresh, and perfect brunch combo.",
     imageUrls: [
       "https://images.unsplash.com/photo-1719520670204-dbe1903a789f?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGF2b2NhZG8lMjB0b2FzdCUyMGFuZCUyMGVnZ3N8ZW58MHx8MHx8fDA%3D",
       "https://images.unsplash.com/photo-1747627605341-920577921dcc?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8YXZvY2FkbyUyMHRvYXN0JTIwYW5kJTIwZWdncyUyMGFuZCUyMGNvZmZlZXxlbnwwfHwwfHx8MA%3D%3D",

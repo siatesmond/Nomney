@@ -7,11 +7,12 @@ import { ImageCarousel } from "./ImageCarousel";
 type PostCardProps = {
   userId: string;
   username: string;
+  avatarUrl: string | null;
   timeAgo: string;
   title: string;
-  description: string;
+  caption: string;
   imageUrls: string[];
-  tags: string[];
+  categories: string[];
   likes: number;
   comments: number;
   saves: number;
@@ -27,11 +28,12 @@ type PostCardProps = {
 export function PostCard({
   userId,
   username,
+  avatarUrl,
   timeAgo,
   title,
-  description,
+  caption,
   imageUrls,
-  tags,
+  categories,
   likes,
   comments,
   saves,
@@ -54,7 +56,7 @@ export function PostCard({
       <View className="px-4 pt-3 pb-2">
         <View className="flex-row items-center gap-3">
           <Avatar
-            avatarUrl={null}
+            avatarUrl={avatarUrl}
             displayName={username}
             size="sm"
             shadow={false}
@@ -68,10 +70,10 @@ export function PostCard({
         </View>
       </View>
 
-      {/* Title & Description */}
+      {/* Title & Caption */}
       <View className="px-4 py-2">
         <Text className="text-base font-bold text-black mb-1">{title}</Text>
-        <Text className="text-sm text-black leading-[18px]">{description}</Text>
+        <Text className="text-sm text-black leading-[18px]">{caption}</Text>
       </View>
 
       {/* Image Horizontal FlatList */}
@@ -79,9 +81,9 @@ export function PostCard({
 
       {/* Tags */}
       <View className="flex-row flex-wrap px-4 py-2.5 gap-2">
-        {tags.map((tag, index) => (
+        {categories.map((category, index) => (
           <View key={index} className="bg-[#FFE9E8] px-3 py-1.5 rounded-full">
-            <Text className="text-xs text-[#FA5A40] font-semibold">{tag}</Text>
+            <Text className="text-xs text-[#FA5A40] font-semibold">{category}</Text>
           </View>
         ))}
       </View>

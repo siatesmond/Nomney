@@ -7,14 +7,14 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
 import { CommentSheet } from "@/components/comments/CommentSheet";
 
 import { DUMMY_COMMENTS } from "@/data/comments";
-import { DUMMY_POSTS } from "@/data/posts";
+import { getPosts } from "@/lib/posts";
 
 /* temp dummy data objects */
 const CATEGORIES = ["japanese", "mexican", "cafe", "homemade"];
@@ -26,7 +26,7 @@ const ListHeader = ({
   setSelectedCategory,
 }) => (
   // Page Header
-  <View className="px-4 pt-10 pb-4">
+  <View className="px-2 pt-10 pb-4">
     <View className="flex-row items-center justify-between">
       {/* Text */}
       <View className="w-2/3">
@@ -86,12 +86,29 @@ export default function ExploreScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
 
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [likedPosts, setLikedPosts] = useState({});
   const [savedPosts, setSavedPosts] = useState({});
 
   const sheetRef = useRef<BottomSheetModal>(null);
 
   const [selectedComments, setSelectedComments] = useState([]);
+
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const data = await getPosts();
+        setPosts(data);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPosts();
+  }, []);
 
   const toggleLike = (postId) => {
     setLikedPosts((prev) => ({
@@ -120,7 +137,7 @@ export default function ExploreScreen() {
     <Screen>
       <View className="flex-1">
         <FlatList
-          data={DUMMY_POSTS}
+          data={posts}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           showsVerticalScrollIndicator={false}
