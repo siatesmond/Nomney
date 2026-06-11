@@ -8,9 +8,12 @@ import {
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { addComment } from "@/lib/comments";
+
 type Comment = {
   id: string;
-  text: string;
+  content: string;
   username: string;
   avatar: string | null;
   timeAgo: string;
@@ -18,17 +21,28 @@ type Comment = {
 
 type CommentSheetProps = {
   comments: Comment[];
+  postId: string | null;
+  onNewCommentAdded: (newComment: Comment) => void;
 };
 
-export const CommentSheet = React.forwardRef(({ comments }, ref) => {
+export const CommentSheet = React.forwardRef(({ comments, postId, onNewCommentAdded }, ref) => {
   const snapPoints = useMemo(() => ["60%"], []);
   const insets = useSafeAreaInsets();
   const [inputValue, setInputValue] = useState(""); // input comment
 
-  const handleSend = () => {
+  const { profile } = useAuthContext();
+
+  const handleAddComment = async () => {
     if (!inputValue.trim()) return;
-    console.log("Send comment:", inputValue);
-    setInputValue("");
+    try {
+      const newComment = await addComment(postId, profile.id, inputValue);
+      onNewCommentAdded(newComment); // update UI with newly added comment
+
+      console.log("New comment:", JSON.stringify(newComment, null, 2));
+      setInputValue("");
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const renderHeader = () => (
@@ -120,7 +134,7 @@ export const CommentSheet = React.forwardRef(({ comments }, ref) => {
             }}
           />
           <Text // Send button
-            onPress={handleSend}
+            onPress={handleAddComment}
             style={{ fontWeight: "700", color: "#FA5A40" }}
           >
             Send

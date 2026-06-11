@@ -1,17 +1,17 @@
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  Image,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useState, useRef, useEffect } from "react";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
-import { CommentSheet } from "@/components/comments/CommentSheet";
+import { Ionicons } from "@expo/vector-icons";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
@@ -95,6 +95,7 @@ export default function ExploreScreen() {
   const sheetRef = useRef<BottomSheetModal>(null);
 
   const [selectedComments, setSelectedComments] = useState([]);
+  const [selectedPostId, setSelectedPostId] = useState([]);
 
   // Fetch posts when screen loads
   useEffect(() => {
@@ -114,8 +115,10 @@ export default function ExploreScreen() {
   // Fetch comments when user clicks on comments
   const openComments = async (postId) => {
     try {
-      const comments = await getComments(postId);
+      setSelectedPostId(postId);
       setSelectedComments(comments);
+      const comments = await getComments(postId);
+
       sheetRef.current?.present();
     } catch (error) {
       console.log(error);
@@ -168,7 +171,14 @@ export default function ExploreScreen() {
           )}
         />
         {/* Comment Bottom Sheet */}
-        <CommentSheet ref={sheetRef} comments={selectedComments} />
+        <CommentSheet
+          ref={sheetRef}
+          postId={selectedPostId}
+          comments={selectedComments}
+          onNewCommentAdded={(newComment) =>
+            setSelectedComments((prev) => [...prev, newComment])
+          } // append new comment with existing comments
+        />
       </View>
     </Screen>
   );
