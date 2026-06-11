@@ -116,8 +116,10 @@ export default function ExploreScreen() {
   const openComments = async (postId) => {
     try {
       setSelectedPostId(postId);
-      setSelectedComments(comments);
+
+      // Fetch comments and set state before opening comments sheet
       const comments = await getComments(postId);
+      setSelectedComments(comments);
 
       sheetRef.current?.present();
     } catch (error) {
