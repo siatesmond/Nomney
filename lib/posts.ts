@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { timeAgo } from "./utils/timeAgo";
 
 export async function getPosts() {
   const { data, error } = await supabase
@@ -60,7 +61,6 @@ function mapPost(post) {
     likes: post.likes?.[0]?.count ?? 0,
     comments: post.comments?.[0]?.count ?? 0,
     saves: post.bookmarks?.[0]?.count ?? 0,
-    timeAgo: new Date(post.created_at).toLocaleDateString(),
+    timeAgo: timeAgo(post.created_at),
   };
-
 }

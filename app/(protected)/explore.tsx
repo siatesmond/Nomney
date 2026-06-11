@@ -13,7 +13,7 @@ import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
 import { CommentSheet } from "@/components/comments/CommentSheet";
 
-import { DUMMY_COMMENTS } from "@/data/comments";
+import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
 
 /* temp dummy data objects */
@@ -96,6 +96,7 @@ export default function ExploreScreen() {
 
   const [selectedComments, setSelectedComments] = useState([]);
 
+  // Fetch posts when screen loads
   useEffect(() => {
     async function fetchPosts() {
       try {
@@ -110,6 +111,17 @@ export default function ExploreScreen() {
     fetchPosts();
   }, []);
 
+  // Fetch comments when user clicks on comments
+  const openComments = async (postId) => {
+    try {
+      const comments = await getComments(postId);
+      setSelectedComments(comments);
+      sheetRef.current?.present();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const toggleLike = (postId) => {
     setLikedPosts((prev) => ({
       ...prev,
@@ -122,15 +134,6 @@ export default function ExploreScreen() {
       ...prev,
       [postId]: !prev[postId],
     }));
-  };
-
-  // Only show comments for selected posts
-  const openComments = (postId: string) => {
-    const filtered = DUMMY_COMMENTS.filter((c) => c.postId === postId);
-
-    setSelectedComments(filtered);
-
-    sheetRef.current?.present();
   };
 
   return (

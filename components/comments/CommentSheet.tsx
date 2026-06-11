@@ -8,8 +8,16 @@ import {
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 
+type Comment = {
+  id: string;
+  text: string;
+  username: string;
+  avatar: string | null;
+  timeAgo: string;
+};
+
 type CommentSheetProps = {
-  comments: any[];
+  comments: Comment[];
 };
 
 export const CommentSheet = React.forwardRef(({ comments }, ref) => {
@@ -38,8 +46,11 @@ export const CommentSheet = React.forwardRef(({ comments }, ref) => {
             className="w-9 h-9 rounded-full mr-2.5"
           />
           <View className="flex-1">
-            <Text className="font-bold">{item.username}</Text>
-            <Text>{item.text}</Text>
+            <View className="flex-row items-center gap-2">
+              <Text className="font-bold">{item.username}</Text>
+              <Text className="text-xs text-gray-400">{item.timeAgo}</Text>
+            </View>
+            <Text>{item.content}</Text>
           </View>
         </View>
       </View>
@@ -71,8 +82,13 @@ export const CommentSheet = React.forwardRef(({ comments }, ref) => {
 
       <BottomSheetFlatList // Handles scrolling only for comments list
         data={comments}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
+        ListEmptyComponent={
+          <View className="items-center">
+            <Text className="text-gray-400">No comments yet.</Text>
+          </View>
+        }
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 16,
