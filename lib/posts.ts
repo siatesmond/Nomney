@@ -23,7 +23,7 @@ export async function getPosts() {
         )  ,
         likes (count),
         comments (count), 
-        bookmarks (count)
+        saves (count)
         `,
     )
     .order("created_at", { ascending: false });
@@ -60,7 +60,7 @@ function mapPost(post) {
     })(),
     likes: post.likes?.[0]?.count ?? 0,
     comments: post.comments?.[0]?.count ?? 0,
-    saves: post.bookmarks?.[0]?.count ?? 0,
+    saves: post.saves?.[0]?.count ?? 0,
     timeAgo: timeAgo(post.created_at),
   };
 }

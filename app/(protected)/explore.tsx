@@ -16,6 +16,7 @@ import {
 import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
 import { likePost, unlikePost } from "@/lib/likes";
+import { savePost, unsavePost } from "@/lib/save";
 import { useAuthContext } from "@/hooks/use-auth-context";
 
 type Post = {
@@ -190,11 +191,49 @@ export default function ExploreScreen() {
     }
   };
 
-  const toggleSave = (postId) => {
+  // Save/Unsave post
+
+  const toggleSave = async (postId: string) => {
+    const isSaved = !!savedPosts[postId];
+
+    //toggle saved/unsaved state
     setSavedPosts((prev) => ({
       ...prev,
       [postId]: !prev[postId],
     }));
+
+    // Update saved count
+    setPosts((prev) =>
+      prev.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+        const updatedSaves = isSaved ? post.saves - 1 : post.saves + 1;
+        return { ...post, saves: updatedSaves };
+      }),
+    );
+
+    // Update db
+    try {
+      if (isSaved) {
+        await unsavePost(postId, profile.id);
+
+        console.log("Unsaved post:", postId);
+      } else {
+        await savePost(postId, profile.id);
+
+        console.log("Saved post:", postId);
+      }
+    } catch (error) {
+      console.log(error);
+      console.log("Failed to update saved count");
+
+      // Revert action if db is unable to update
+      setSavedPosts((prev) => ({
+        ...prev,
+        [postId]: !prev[postId],
+      }));
+    }
   };
 
   return (
