@@ -1,52 +1,18 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { ComponentProps } from 'react';
-
-function TabBarIcon(props: {
-  name: ComponentProps<typeof Ionicons>['name']
-  color: string
-}) {
-  return <Ionicons size={24} {...props} />
-}
+import { Stack } from "expo-router";
 
 export default function ProtectedLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#F4522A',
-        tabBarInactiveTintColor: '#999',
-      }}
-    >
-      <Tabs.Screen
-        name="index"
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="new"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="home-outline" color={color} />
-          ),
+          presentation: "modal",
+          gestureEnabled: false,
+          animation: "slide_from_bottom",
+          headerShown: false,
         }}
       />
-
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="search-outline" color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="person-outline" color={color} />
-          ),
-        }}
-      />
-    </Tabs>
-  )
+    </Stack>
+  );
 }

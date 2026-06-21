@@ -1,6 +1,7 @@
-import { TouchableOpacity, Text, TouchableOpacityProps } from "react-native";
+import { Text, TouchableOpacity, TouchableOpacityProps } from "react-native";
 
-type ButtonProps = TouchableOpacityProps & { // all button props
+type ButtonProps = TouchableOpacityProps & {
+  // all button props
   title: string; // custom title
 };
 
@@ -20,9 +21,7 @@ export function Button({ title, style, ...props }: ButtonProps) {
       ]}
       className="bg-black p-4 rounded-3xl w-full mt-6"
     >
-      <Text className="text-white font-bold text-center">
-        {title}
-      </Text>
+      <Text className="text-white font-bold text-center">{title}</Text>
     </TouchableOpacity>
   );
 }

@@ -1,8 +1,8 @@
-import { View, Text, Image, TouchableOpacity, FlatList } from "react-native";
-import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Avatar } from "./UserAvatar";
+import { useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 import { ImageCarousel } from "./ImageCarousel";
+import { Avatar } from "./UserAvatar";
 
 type PostCardProps = {
   userId: string;
@@ -83,7 +83,9 @@ export function PostCard({
       <View className="flex-row flex-wrap px-4 py-2.5 gap-2">
         {categories.map((category, index) => (
           <View key={index} className="bg-[#FFE9E8] px-3 py-1.5 rounded-full">
-            <Text className="text-xs text-[#FA5A40] font-semibold">{category}</Text>
+            <Text className="text-xs text-[#FA5A40] font-semibold">
+              {category}
+            </Text>
           </View>
         ))}
       </View>

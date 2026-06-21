@@ -1,8 +1,8 @@
-import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const ACCENT = '#F4522A';
+const ACCENT = "#F4522A";
 
-type Tab = 'Posts' | 'Saved';
+type Tab = "Posts" | "Saved";
 
 type ProfileTabsProps = {
   activeTab: Tab;
@@ -10,18 +10,23 @@ type ProfileTabsProps = {
 };
 
 export function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
-  const tabs: Tab[] = ['Posts', 'Saved'];
+  const tabs: Tab[] = ["Posts", "Saved"];
 
   return (
     <View style={styles.tabRow}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab}
-          style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
+          style={[
+            styles.tabButton,
+            activeTab === tab && styles.tabButtonActive,
+          ]}
           onPress={() => onTabChange(tab)}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+          <Text
+            style={[styles.tabText, activeTab === tab && styles.tabTextActive]}
+          >
             {tab}
           </Text>
         </TouchableOpacity>
@@ -32,8 +37,8 @@ export function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
 
 const styles = StyleSheet.create({
   tabRow: {
-    flexDirection: 'row',
-    backgroundColor: '#EFEFEF',
+    flexDirection: "row",
+    backgroundColor: "#EFEFEF",
     borderRadius: 24,
     marginHorizontal: 60,
     marginBottom: 16,
@@ -43,7 +48,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 8,
     borderRadius: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   tabButtonActive: {
     backgroundColor: ACCENT,
@@ -55,11 +60,11 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#999',
+    fontWeight: "500",
+    color: "#999",
   },
   tabTextActive: {
-    color: '#FFF',
-    fontWeight: '600',
+    color: "#FFF",
+    fontWeight: "600",
   },
 });

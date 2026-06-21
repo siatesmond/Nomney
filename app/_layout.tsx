@@ -1,27 +1,37 @@
-import { Stack } from 'expo-router'
-import 'react-native-reanimated'
+import { useAuthContext } from "@/hooks/use-auth-context";
+import AuthProvider from "@/providers/auth-provider";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SplashScreenController } from '@/components/splash-screen-controller'
-import { useAuthContext } from '@/hooks/use-auth-context'
-import AuthProvider from '@/providers/auth-provider'
-import "../global.css"
+import "react-native-reanimated";
+import "../global.css";
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootNavigator() {
-  const { isLoggedIn, isLoading } = useAuthContext()
+  const { isLoggedIn, isLoading } = useAuthContext();
 
-  if (isLoading) return null
+  useEffect(() => {
+    if (!isLoading) {
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {});
+      }, 50);
+    }
+  }, [isLoading]);
+
+  if (isLoading) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={isLoggedIn}>
+      {isLoggedIn ? (
         <Stack.Screen name="(protected)" />
-      </Stack.Protected>
-      <Stack.Protected guard={!isLoggedIn}>
+      ) : (
         <Stack.Screen name="(auth)" />
-      </Stack.Protected>
+      )}
     </Stack>
-  )
+  );
 }
 
 export default function RootLayout() {
@@ -29,10 +39,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <AuthProvider>
-          <SplashScreenController />
           <RootNavigator />
         </AuthProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
-  )
+  );
 }

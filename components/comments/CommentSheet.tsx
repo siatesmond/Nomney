@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { View, Text, Image } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  BottomSheetModal,
-  BottomSheetFlatList,
   BottomSheetBackdrop,
+  BottomSheetFlatList,
+  BottomSheetModal,
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
+import React, { useCallback, useMemo, useState } from "react";
+import { Image, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { addComment } from "@/lib/comments";

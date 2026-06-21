@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
-import { View, Image, FlatList } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRef, useState } from "react";
+import { FlatList, Image, View } from "react-native";
 
 type ImageCarouselProps = {
   imageUrls: string[];
@@ -42,7 +42,7 @@ function Paginator({
 
 export function ImageCarousel({ imageUrls, cardWidth }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-   
+
   const viewableItemsChanged = useRef(({ viewableItems }) => {
     if (viewableItems.length > 0) {
       setCurrentIndex(viewableItems[0].index); // updates index during scroll

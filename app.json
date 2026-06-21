@@ -21,6 +21,11 @@
       }
     },
     "android": {
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBIp6HylDldDd3TCAXEmqlq3csxOhdnhMI"
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -36,7 +41,20 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(BUNDLE_DISPLAY_NAME) to access your photos.",
+          "cameraPermission": "Allow $(BUNDLE_DISPLAY_NAME) to use your camera."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(BUNDLE_DISPLAY_NAME) to use your location."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

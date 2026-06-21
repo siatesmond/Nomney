@@ -1,11 +1,11 @@
-import { View } from "react-native";
 import { ReactNode } from "react";
+import { View } from "react-native";
 
 type ScreenProps = {
   children: ReactNode;
 };
 
-// base screen 
+// base screen
 export function Screen({ children }: ScreenProps) {
   return (
     <View className="flex-1 bg-[#FDFCF9] justify-center px-2 pt-10">

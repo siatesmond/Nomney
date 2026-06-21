@@ -30,15 +30,12 @@ export async function getComments(postId: string) {
   }));
 }
 
-
 // Add a comment to post
 export async function addComment(
-  
   postId: string,
   userId: string,
   content: string,
 ) {
-
   const { data, error } = await supabase
     .from("comments")
     .insert({
