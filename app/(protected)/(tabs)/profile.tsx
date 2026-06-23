@@ -1,18 +1,26 @@
+import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import { Modal } from "react-native";
+
+export type GridPost = {
+  id: string;
+  imageUrl: string;
+};
 
 export default function ProfileScreen() {
   const { profile } = useAuthContext();
-  const [userPosts, setUserPosts] = useState<string[]>([]);
-  const [savedPosts, setSavedPosts] = useState<string[]>([]);
+
+  const [userPosts, setUserPosts] = useState<GridPost[]>([]);
+  const [savedPosts, setSavedPosts] = useState<GridPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
   useEffect(() => {
-    if (profile?.id) {
-      fetchUserPosts();
-    }
+    if (profile?.id) fetchUserPosts();
   }, [profile?.id]);
 
   const fetchUserPosts = async () => {
@@ -22,13 +30,13 @@ export default function ProfileScreen() {
         .from("posts")
         .select(
           `
-                    id,
-                    created_at,
-                    post_image (
-                        image_url,
-                        display_order
-                    )
-                `,
+            id,
+            created_at,
+            post_image (
+                image_url,
+                display_order
+            )
+        `,
         )
         .eq("user_id", profile.id)
         .order("created_at", { ascending: false });
@@ -36,19 +44,22 @@ export default function ProfileScreen() {
       if (error) throw error;
 
       if (data) {
-        const extractedImages = data
+        const extractedPosts: GridPost[] = data
           .map((post) => {
             const sortedImages = (post.post_image || []).sort(
               (a: any, b: any) => a.display_order - b.display_order,
             );
-            return sortedImages[0]?.image_url;
+            return {
+              id: post.id,
+              imageUrl: sortedImages[0]?.image_url,
+            };
           })
-          .filter((url): url is string => !!url);
+          .filter((post) => !!post.imageUrl);
 
-        setUserPosts(extractedImages);
+        setUserPosts(extractedPosts);
       }
     } catch (error: any) {
-      console.error("Error fetching profile media feed:", error.message);
+      console.error("Error fetching profile feed:", error.message);
     } finally {
       setLoadingPosts(false);
     }
@@ -57,12 +68,29 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   return (
-    <UserProfile
-      userId={profile.id}
-      isOwnProfile={true}
-      postImages={userPosts}
-      savedImages={savedPosts}
-      isLoadingPosts={loadingPosts}
-    />
+    <>
+      <UserProfile
+        userId={profile.id}
+        isOwnProfile={true}
+        postImages={userPosts}
+        savedImages={savedPosts}
+        isLoadingPosts={loadingPosts}
+        onPostClick={(postId) => setSelectedPostId(postId)}
+      />
+
+      <Modal
+        visible={!!selectedPostId}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setSelectedPostId(null)}
+      >
+        {selectedPostId && (
+          <PostDetailModal
+            postId={selectedPostId}
+            onClose={() => setSelectedPostId(null)}
+          />
+        )}
+      </Modal>
+    </>
   );
 }

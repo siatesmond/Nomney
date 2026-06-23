@@ -7,25 +7,40 @@ const GRID_COLUMNS = 3;
 const GAP = 3;
 const IMAGE_SIZE = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
 
+type GridPost = {
+  id: string;
+  imageUrl: string;
+};
+
 interface ImageGridProps {
-  images: string[];
+  posts: GridPost[];
+  onPostClick: (postId: string) => void;
 }
 
-export function ImageGrid({ images }: ImageGridProps) {
+export function ImageGrid({ posts = [], onPostClick }: ImageGridProps) {
   useEffect(() => {
-    console.log("ImageGrid received URIs:", images);
-  }, [images]);
+    console.log("ImageGrid received post nodes:", posts);
+  }, [posts]);
 
   return (
     <View style={styles.grid}>
-      {images.map((uri, index) => (
-        <TouchableOpacity key={`${uri}-${index}`} style={styles.gridItem}>
+      {posts.map((post, index) => (
+        <TouchableOpacity
+          key={`${post.id}-${index}`}
+          style={styles.gridItem}
+          activeOpacity={0.8}
+          onPress={() => onPostClick(post.id)}
+        >
           <Image
-            source={uri} // Note: expo-image handles strings directly
+            source={post.imageUrl}
             style={styles.gridImage}
             contentFit="cover"
-            // 2. Debug: Log error details
-            onError={(e) => console.log(`Error at ${index}:`, e.error)}
+            onError={(e) =>
+              console.log(
+                `Error loading asset at index ${index} for post ${post.id}:`,
+                e.error,
+              )
+            }
           />
         </TouchableOpacity>
       ))}

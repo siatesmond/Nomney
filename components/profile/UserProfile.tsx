@@ -6,6 +6,11 @@ import { ImageGrid } from "./ImageGrid";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./ProfileTabs";
 
+type GridPost = {
+  id: string;
+  imageUrl: string;
+};
+
 type Profile = {
   id: string;
   full_name: string | null;
@@ -14,14 +19,16 @@ type Profile = {
   last_name: string | null;
   avatar_url: string | null;
 };
+
 type UserProfileProps = {
   userId: string;
   isOwnProfile: boolean;
   onEdit?: () => void;
   onFollow?: () => void;
-  postImages?: string[];
-  savedImages?: string[];
+  postImages?: GridPost[];
+  savedImages?: GridPost[];
   isLoadingPosts?: boolean;
+  onPostClick?: (postId: string) => void;
 };
 
 const ACCENT = "#F4522A";
@@ -34,6 +41,7 @@ export function UserProfile({
   postImages = [],
   savedImages = [],
   isLoadingPosts = false,
+  onPostClick = () => {},
 }: UserProfileProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -113,7 +121,11 @@ export function UserProfile({
           isFollowing={isFollowing}
         />
         <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        <ImageGrid images={activeTab === "Posts" ? postImages : savedImages} />
+
+        <ImageGrid
+          posts={activeTab === "Posts" ? postImages : savedImages}
+          onPostClick={onPostClick}
+        />
       </ScrollView>
     </SafeAreaView>
   );
