@@ -11,25 +11,27 @@ const GRID_COLUMNS = 3;
 const GAP = 3;
 const IMAGE_SIZE = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
 
-type ImageGridItem = {
+type GridPost = {
   id: string;
   imageUrl: string;
 };
 
 type ImageGridProps = {
-  images: string[];
+  posts: GridPost[];
+  onPostClick: (postId: string) => void;
 };
 
-export function ImageGrid({ images }: ImageGridProps) {
+export function ImageGrid({ posts, onPostClick }: ImageGridProps) {
   return (
     <View style={styles.grid}>
-      {images.map((uri, index) => (
+      {posts.map((post) => (
         <TouchableOpacity
-          key={index}
+          key={post.id}
           activeOpacity={0.9}
           style={styles.gridItem}
+          onPress={() => onPostClick(post.id)}
         >
-          <Image source={{ uri }} style={styles.gridImage} />
+          <Image source={{ uri: post.imageUrl }} style={styles.gridImage} />
         </TouchableOpacity>
       ))}
     </View>

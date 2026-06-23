@@ -19,7 +19,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
@@ -41,7 +41,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="plus"
         options={{
-          title: "Plus",
+          title: "Add Post",
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="add-outline" color={color} />
           ),

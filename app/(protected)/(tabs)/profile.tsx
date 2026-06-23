@@ -16,52 +16,97 @@ export default function ProfileScreen() {
   const [userPosts, setUserPosts] = useState<GridPost[]>([]);
   const [savedPosts, setSavedPosts] = useState<GridPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
-
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile?.id) fetchUserPosts();
+    if (profile?.id) {
+      fetchAllProfileData();
+    }
   }, [profile?.id]);
 
-  const fetchUserPosts = async () => {
+  const fetchAllProfileData = async () => {
     try {
       setLoadingPosts(true);
-      const { data, error } = await supabase
-        .from("posts")
-        .select(
-          `
-            id,
-            created_at,
-            post_image (
-                image_url,
-                display_order
-            )
-        `,
-        )
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        const extractedPosts: GridPost[] = data
-          .map((post) => {
-            const sortedImages = (post.post_image || []).sort(
-              (a: any, b: any) => a.display_order - b.display_order,
-            );
-            return {
-              id: post.id,
-              imageUrl: sortedImages[0]?.image_url,
-            };
-          })
-          .filter((post) => !!post.imageUrl);
-
-        setUserPosts(extractedPosts);
-      }
+      // Fire both queries in parallel for efficiency
+      await Promise.all([fetchUserPosts(), fetchSavedPosts()]);
     } catch (error: any) {
-      console.error("Error fetching profile feed:", error.message);
+      console.error("Error loading profile content:", error.message);
     } finally {
       setLoadingPosts(false);
+    }
+  };
+
+  const fetchUserPosts = async () => {
+    const { data, error } = await supabase
+      .from("posts")
+      .select(
+        `
+          id,
+          created_at,
+          post_image (
+              image_url,
+              display_order
+          )
+      `,
+      )
+      .eq("user_id", profile!.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    if (data) {
+      const extractedPosts: GridPost[] = data
+        .map((post) => {
+          const sortedImages = (post.post_image || []).sort(
+            (a: any, b: any) => a.display_order - b.display_order,
+          );
+          return {
+            id: post.id,
+            imageUrl: sortedImages[0]?.image_url,
+          };
+        })
+        .filter((post) => !!post.imageUrl);
+
+      setUserPosts(extractedPosts);
+    }
+  };
+
+  const fetchSavedPosts = async () => {
+    const { data, error } = await supabase
+      .from("saves") // FIX: Updated from "saved_posts" to "saves"
+      .select(
+        `
+        post_id,
+        posts (
+          id,
+          post_image (
+            image_url,
+            display_order
+          )
+        )
+      `,
+      )
+      .eq("user_id", profile!.id);
+
+    if (error) throw error;
+
+    if (data) {
+      const extractedSaved: GridPost[] = data
+        .map((item: any) => {
+          const post = item.posts;
+          if (!post) return null;
+
+          const sortedImages = (post.post_image || []).sort(
+            (a: any, b: any) => a.display_order - b.display_order,
+          );
+          return {
+            id: post.id,
+            imageUrl: sortedImages[0]?.image_url,
+          };
+        })
+        .filter((post): post is GridPost => !!post);
+
+      setSavedPosts(extractedSaved);
     }
   };
 
