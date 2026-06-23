@@ -19,3 +19,15 @@ export async function unsavePost(postId: string, userId: string) {
 
   if (error) throw error;
 }
+
+// Get all post ids the current user has already saved
+export async function getUserSavedPostIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("saves")
+    .select("post_id")
+    .eq("user_id", userId);
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => row.post_id);
+}

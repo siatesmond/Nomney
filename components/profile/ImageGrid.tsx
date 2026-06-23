@@ -1,47 +1,35 @@
-import { Image } from "expo-image";
-import { useEffect } from "react";
-import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const { width } = Dimensions.get("window");
 const GRID_COLUMNS = 3;
 const GAP = 3;
 const IMAGE_SIZE = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
 
-type GridPost = {
+type ImageGridItem = {
   id: string;
   imageUrl: string;
 };
 
-interface ImageGridProps {
-  posts: GridPost[];
-  onPostClick: (postId: string) => void;
-}
+type ImageGridProps = {
+  images: string[];
+};
 
-export function ImageGrid({ posts = [], onPostClick }: ImageGridProps) {
-  useEffect(() => {
-    console.log("ImageGrid received post nodes:", posts);
-  }, [posts]);
-
+export function ImageGrid({ images }: ImageGridProps) {
   return (
     <View style={styles.grid}>
-      {posts.map((post, index) => (
+      {images.map((uri, index) => (
         <TouchableOpacity
-          key={`${post.id}-${index}`}
+          key={index}
+          activeOpacity={0.9}
           style={styles.gridItem}
-          activeOpacity={0.8}
-          onPress={() => onPostClick(post.id)}
         >
-          <Image
-            source={post.imageUrl}
-            style={styles.gridImage}
-            contentFit="cover"
-            onError={(e) =>
-              console.log(
-                `Error loading asset at index ${index} for post ${post.id}:`,
-                e.error,
-              )
-            }
-          />
+          <Image source={{ uri }} style={styles.gridImage} />
         </TouchableOpacity>
       ))}
     </View>
@@ -66,5 +54,6 @@ const styles = StyleSheet.create({
   gridImage: {
     width: "100%",
     height: "100%",
+    resizeMode: "cover",
   },
 });
