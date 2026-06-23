@@ -1,20 +1,32 @@
+// components/profile/ImageGrid.tsx
 import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
-const GRID_COLUMNS = 3; 
+const GRID_COLUMNS = 3;
 const GAP = 3;
 const IMAGE_SIZE = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
 
-type ImageGridProps = {
-  images: string[];
+type ImageGridItem = {
+  id: string;
+  imageUrl: string;
 };
 
-export function ImageGrid({ images }: ImageGridProps) {
+type ImageGridProps = {
+  items: ImageGridItem[];
+  onPressItem?: (id: string) => void;
+};
+
+export function ImageGrid({ items, onPressItem }: ImageGridProps) {
   return (
     <View style={styles.grid}>
-      {images.map((uri, index) => (
-        <TouchableOpacity key={index} activeOpacity={0.9} style={styles.gridItem}>
-          <Image source={{ uri }} style={styles.gridImage} />
+      {items.map((item) => (
+        <TouchableOpacity
+          key={item.id}
+          activeOpacity={0.9}
+          style={styles.gridItem}
+          onPress={() => onPressItem?.(item.id)}
+        >
+          <Image source={{ uri: item.imageUrl }} style={styles.gridImage} />
         </TouchableOpacity>
       ))}
     </View>
@@ -39,6 +51,5 @@ const styles = StyleSheet.create({
   gridImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
 });
