@@ -272,9 +272,19 @@ export default function ExploreScreen() {
           ref={sheetRef}
           postId={selectedPostId}
           comments={selectedComments}
-          onNewCommentAdded={(newComment) =>
-            setSelectedComments((prev) => [...prev, newComment])
-          } // append new comment with existing comments
+          onNewCommentAdded={(newComment) => {
+            // Append new comment with existing comments
+            setSelectedComments((prev) => [...prev, newComment]);
+
+            // Increment comment count on the post
+            setPosts((prev) =>
+              prev.map((post) =>
+                post.id === selectedPostId
+                  ? { ...post, comments: post.comments + 1 }
+                  : post,
+              ),
+            );
+          }}
         />
       </View>
     </Screen>
