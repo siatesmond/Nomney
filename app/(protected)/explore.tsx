@@ -3,20 +3,22 @@ import { PostCard } from "@/components/post";
 import { Screen } from "@/components/styles/Screen";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
-  FlatList,
   Image,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
+import { ImageGrid } from "@/components/profile/ImageGrid";
 
 import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
-import { likePost, unlikePost } from "@/lib/likes";
-import { savePost, unsavePost } from "@/lib/save";
+import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
+import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
 import { useAuthContext } from "@/hooks/use-auth-context";
 
 type Post = {
@@ -114,6 +116,9 @@ export default function ExploreScreen() {
   const [selectedComments, setSelectedComments] = useState([]);
   const [selectedPostId, setSelectedPostId] = useState([]);
 
+  // Store post in grid that is clicked on
+  const [activePost, setActivePost] = useState<Post | null>(null);
+
   const { profile } = useAuthContext();
 
   // Fetch posts when screen loads
@@ -130,6 +135,25 @@ export default function ExploreScreen() {
     }
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    async function fetchUserLikesAndSaves() {
+      if (!profile?.id) return;
+
+      try {
+        const [likedIds, savedIds] = await Promise.all([
+          getUserLikedPostIds(profile.id),
+          getUserSavedPostIds(profile.id),
+        ]);
+
+        setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
+        setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchUserLikesAndSaves();
+  }, [profile?.id]);
 
   // Fetch comments when user clicks on comments
   const openComments = async (postId: string) => {
@@ -183,16 +207,24 @@ export default function ExploreScreen() {
       console.log(error);
       console.log("Failed to update liked count");
 
-      // Revert action if db is unable to update
+      // Revert action if db is unable to update (icon state and count)
       setLikedPosts((prev) => ({
         ...prev,
         [postId]: !prev[postId],
       }));
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) {
+            return post;
+          }
+          const revertedLikes = isLiked ? post.likes + 1 : post.likes - 1;
+          return { ...post, likes: revertedLikes };
+        }),
+      );
     }
   };
 
   // Save/Unsave post
-
   const toggleSave = async (postId: string) => {
     const isSaved = !!savedPosts[postId];
 
@@ -228,65 +260,108 @@ export default function ExploreScreen() {
       console.log(error);
       console.log("Failed to update saved count");
 
-      // Revert action if db is unable to update
+      // Revert action if db is unable to update (icon state and count)
       setSavedPosts((prev) => ({
         ...prev,
         [postId]: !prev[postId],
       }));
+      setPosts((prev) =>
+        prev.map((post) => {
+          if (post.id !== postId) {
+            return post;
+          }
+          const revertedSaves = isSaved ? post.saves + 1 : post.saves - 1;
+          return { ...post, saves: revertedSaves };
+        }),
+      );
     }
   };
 
+  // Map post to Image Grid (first image per post)
+  const gridItems = useMemo(
+    () =>
+      posts
+        .filter((post) => post.imageUrls?.[0])
+        .map((post) => ({ id: post.id, imageUrl: post.imageUrls[0] })),
+    [posts],
+  );
+
+  const handleClickedGridItem = (postId: string) => {
+    const post = posts.find((p) => p.id === postId);
+    if (post) {
+      setActivePost(post); // store clicked post in arr
+    }
+  };
+
+  // Finds post by id in 'posts' on every render so latest counts are always reflected
+  const activePostLatest = activePost
+    ? (posts.find((p) => p.id === activePost.id) ?? activePost)
+    : null;
+
   return (
     <Screen>
-      <View className="flex-1">
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 24 }}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <ListHeader
-              searchText={searchText}
-              setSearchText={setSearchText}
-              selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
-            />
-          }
-          renderItem={({ item: post }) => (
-            <View className="pb-6">
-              <View className="bg-white rounded-lg overflow-hidden">
-                <PostCard
-                  {...post}
-                  liked={!!likedPosts[post.id]}
-                  saved={!!savedPosts[post.id]}
-                  onLike={() => toggleLike(post.id)}
-                  onComment={() => openComments(post.id)} // opens Bottom Sheet on click
-                  onSave={() => toggleSave(post.id)}
-                />
-              </View>
-            </View>
-          )}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <ListHeader
+          searchText={searchText}
+          setSearchText={setSearchText}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
         />
-        {/* Comment Bottom Sheet */}
-        <CommentSheet
-          ref={sheetRef}
-          postId={selectedPostId}
-          comments={selectedComments}
-          onNewCommentAdded={(newComment) => {
-            // Append new comment with existing comments
-            setSelectedComments((prev) => [...prev, newComment]);
+        {loading ? (
+          <View className="items-center py-12">
+            <ActivityIndicator size="large" color="#FA5A40" />
+          </View>
+        ) : (
+          <ImageGrid items={gridItems} onPressItem={handleClickedGridItem} />
+        )}
+      </ScrollView>
 
-            // Increment comment count on the post
-            setPosts((prev) =>
-              prev.map((post) =>
-                post.id === selectedPostId
-                  ? { ...post, comments: post.comments + 1 }
-                  : post,
-              ),
-            );
-          }}
-        />
-      </View>
+      {/* Full post view overlay above grids  */}
+      {!!activePostLatest && (
+        <View
+          className="absolute top-0 left-0 right-0 bottom-0 bg-white"
+          style={{ elevation: 10 }}
+        >
+          <Screen>
+            <View className="flex-row justify-end px-4 pt-3">
+              <TouchableOpacity
+                onPress={() => setActivePost(null)}
+                className="p-2"
+              >
+                <Ionicons name="close" size={26} color="#333" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+              <PostCard
+                {...activePostLatest}
+                liked={!!likedPosts[activePostLatest.id]}
+                saved={!!savedPosts[activePostLatest.id]}
+                onLike={() => toggleLike(activePostLatest.id)}
+                onComment={() => openComments(activePostLatest.id)}
+                onSave={() => toggleSave(activePostLatest.id)}
+              />
+            </ScrollView>
+          </Screen>
+        </View>
+      )}
+
+      {/* Comment Bottom Sheet */}
+      <CommentSheet
+        ref={sheetRef}
+        postId={selectedPostId}
+        comments={selectedComments}
+        onNewCommentAdded={(newComment) => {
+          setSelectedComments((prev) => [...prev, newComment]);
+
+          setPosts((prev) =>
+            prev.map((post) =>
+              post.id === selectedPostId
+                ? { ...post, comments: post.comments + 1 }
+                : post,
+            ),
+          );
+        }}
+      />
     </Screen>
   );
 }
