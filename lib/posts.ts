@@ -9,7 +9,6 @@ export async function getPosts() {
         id, 
         title,
         caption, 
-        image_urls,
         created_at,
         profiles!user_id (
             id,
@@ -21,6 +20,9 @@ export async function getPosts() {
                 name
             )
         )  ,
+        post_image (
+            image_url
+        ),
         likes (count),
         comments (count), 
         saves (count)
@@ -41,14 +43,9 @@ function mapPost(post) {
     avatarUrl: post.profiles?.avatar_url,
     title: post.title,
     caption: post.caption,
-    imageUrls: Array.isArray(post.image_urls)
-      ? post.image_urls
-      : typeof post.image_urls === "string"
-        ? post.image_urls
-            .split(",")
-            .map((url) => url.trim())
-            .filter(Boolean)
-        : [],
+    imageUrls: Array.isArray(post.post_image)
+      ? post.post_image.map((img) => img.image_url).filter(Boolean)
+      : [],
     categories: (() => {
       const pc = post.post_categories;
       if (!pc) return [];
