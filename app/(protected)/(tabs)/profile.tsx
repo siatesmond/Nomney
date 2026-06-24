@@ -3,10 +3,12 @@ import { UserProfile } from "@/components/profile/UserProfile";
 import { GridPost } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Modal } from "react-native";
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { profile } = useAuthContext();
 
   const [userPosts, setUserPosts] = useState<GridPost[]>([]);
@@ -113,6 +115,7 @@ export default function ProfileScreen() {
       <UserProfile
         userId={profile.id}
         isOwnProfile={true}
+        onEdit={() => router.push("/edit-profile")}
         postImages={userPosts}
         savedImages={savedPosts}
         isLoadingPosts={loadingPosts}

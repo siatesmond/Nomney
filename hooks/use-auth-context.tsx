@@ -7,6 +7,7 @@ export type Profile = {
   first_name: string | null;
   last_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
 };
 
 export type AuthData = {
@@ -14,6 +15,7 @@ export type AuthData = {
   profile?: Profile | null;
   isLoading: boolean;
   isLoggedIn: boolean;
+  refreshProfile: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthData>({
@@ -21,6 +23,7 @@ export const AuthContext = createContext<AuthData>({
   profile: undefined,
   isLoading: true,
   isLoggedIn: false,
+  refreshProfile: async () => { },
 });
 
 export const useAuthContext = () => useContext(AuthContext);

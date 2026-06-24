@@ -1,6 +1,6 @@
 import { AuthContext, Profile } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
-import { PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren, useCallback, useEffect, useState } from "react";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [claims, setClaims] = useState<Record<string, any> | null>(null);
@@ -42,7 +42,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     let cancelled = false;
 
-    const fetchProfile = async () => {
+    const loadProfile = async () => {
       setIsLoading(true);
 
       if (claims) {
@@ -60,12 +60,29 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       if (!cancelled) setIsLoading(false);
     };
 
-    fetchProfile();
+    loadProfile();
 
     return () => {
       cancelled = true;
     };
   }, [claims]);
+
+  // Re-fetch the current user's profile on demand (e.g. after editing it).
+  // Does not toggle isLoading, so it won't flash the splash/loading gate.
+  const refreshProfile = useCallback(async () => {
+    if (!claims?.sub) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", claims.sub)
+      .single();
+
+    if (error) {
+      console.error("Failed to refresh profile:", error.message);
+      return;
+    }
+    setProfile(data as Profile | null);
+  }, [claims?.sub]);
 
   return (
     <AuthContext.Provider
@@ -74,6 +91,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         isLoading,
         profile,
         isLoggedIn: !!claims,
+        refreshProfile,
       }}
     >
       {children}

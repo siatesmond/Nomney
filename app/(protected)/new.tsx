@@ -23,9 +23,7 @@ export default function NewPostScreen() {
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const [customTagTypes, setCustomTagTypes] = useState
-  Record < string, "food_type" | "meal_type" >
-  > ({});
+  const [customTagTypes, setCustomTagTypes] = useState<Record<string, "food_type" | "meal_type">>({});
 
   const [ratings, setRatings] =
     useState<Record<RatingKey, number>>(DEFAULT_RATINGS);
