@@ -1,25 +1,12 @@
-import { useAuthContext } from "@/hooks/use-auth-context"; // 1. Import Auth Context
+import { GridPost } from "@/constants/types";
+import { Profile, useAuthContext } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ImageGrid } from "./ImageGrid";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./ProfileTabs";
-
-type GridPost = {
-  id: string;
-  imageUrl: string;
-};
-
-type Profile = {
-  id: string;
-  full_name: string | null;
-  username: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-};
 
 type UserProfileProps = {
   userId: string;
@@ -37,14 +24,14 @@ const ACCENT = "#F4522A";
 export function UserProfile({
   userId,
   isOwnProfile,
-  onEdit = () => {},
+  onEdit = () => { },
   onFollow,
   postImages = [],
   savedImages = [],
   isLoadingPosts = false,
-  onPostClick = () => {},
+  onPostClick = () => { },
 }: UserProfileProps) {
-  const { profile: currentUser } = useAuthContext(); // Current logged-in user profile
+  const { profile: currentUser } = useAuthContext();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -52,7 +39,6 @@ export function UserProfile({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"Posts" | "Saved">("Posts");
 
-  // Follow Metrics States
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -62,7 +48,6 @@ export function UserProfile({
       try {
         setLoadingProfile(true);
 
-        // 2. Setup parallel async queries for optimal load performance
         const profilePromise = supabase
           .from("profiles")
           .select("id, full_name, username, first_name, last_name, avatar_url")
@@ -79,15 +64,14 @@ export function UserProfile({
           .select("*", { count: "exact", head: true })
           .eq("follower_id", userId);
 
-        // Check relationship matrix if viewing another profile
         const relationshipCheckPromise =
           !isOwnProfile && currentUser?.id
             ? supabase
-                .from("followers")
-                .select("*")
-                .eq("follower_id", currentUser.id)
-                .eq("following_id", userId)
-                .maybeSingle()
+              .from("followers")
+              .select("*")
+              .eq("follower_id", currentUser.id)
+              .eq("following_id", userId)
+              .maybeSingle()
             : Promise.resolve({ data: null });
 
         // Fire all queries simultaneously
@@ -101,7 +85,7 @@ export function UserProfile({
 
         if (profileRes.error) throw profileRes.error;
 
-        setProfile(profileRes.data);
+        setProfile(profileRes.data as Profile | null);
         setFollowersCount(followersRes.count || 0);
         setFollowingCount(followingRes.count || 0);
         setIsFollowing(!!relationshipRes.data);
@@ -111,8 +95,8 @@ export function UserProfile({
             profileRes.data.avatar_url.startsWith("http")
               ? profileRes.data.avatar_url
               : supabase.storage
-                  .from("avatars")
-                  .getPublicUrl(profileRes.data.avatar_url).data.publicUrl,
+                .from("avatars")
+                .getPublicUrl(profileRes.data.avatar_url).data.publicUrl,
           );
         }
       } catch (err: any) {
@@ -123,20 +107,17 @@ export function UserProfile({
     })();
   }, [userId, isOwnProfile, currentUser?.id]);
 
-  // 3. Handle Interactive Follow/Unfollow actions safely
   const handleFollowToggle = async () => {
-    if (isOwnProfile || !currentUser?.id) return; // Prevent users from self-following
+    if (isOwnProfile || !currentUser?.id) return;
 
     const previouslyFollowing = isFollowing;
     const previousFollowersCount = followersCount;
 
-    // Optimistic UI updates (instantly switches button and counts for user satisfaction)
     setIsFollowing(!previouslyFollowing);
     setFollowersCount((prev) => (previouslyFollowing ? prev - 1 : prev + 1));
 
     try {
       if (previouslyFollowing) {
-        // Perform DB Unfollow action
         const { error: dbErr } = await supabase
           .from("followers")
           .delete()
@@ -145,7 +126,6 @@ export function UserProfile({
 
         if (dbErr) throw dbErr;
       } else {
-        // Perform DB Follow action
         const { error: dbErr } = await supabase.from("followers").insert({
           follower_id: currentUser.id,
           following_id: userId,
@@ -157,7 +137,6 @@ export function UserProfile({
       onFollow?.();
     } catch (err) {
       console.error("Failed to mutate follow state:", err);
-      // Revert UI shifts if database operational failures occur
       setIsFollowing(previouslyFollowing);
       setFollowersCount(previousFollowersCount);
     }
@@ -165,7 +144,7 @@ export function UserProfile({
 
   if (loadingProfile || isLoadingPosts) {
     return (
-      <SafeAreaView style={styles.centered}>
+      <SafeAreaView className="flex-1 items-center justify-center bg-[#F9F9F9]">
         <ActivityIndicator size="large" color={ACCENT} />
       </SafeAreaView>
     );
@@ -173,8 +152,10 @@ export function UserProfile({
 
   if (error || !profile) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <Text style={styles.errorText}>{error || "Profile not found"}</Text>
+      <SafeAreaView className="flex-1 items-center justify-center bg-[#F9F9F9]">
+        <Text className="text-[#999] text-sm">
+          {error || "Profile not found"}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -186,11 +167,14 @@ export function UserProfile({
     "Anonymous";
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+    <SafeAreaView
+      className="flex-1 bg-[#F9F9F9]"
+      edges={["top", "left", "right"]}
+    >
       <ScrollView
-        style={styles.container}
+        className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
       >
         <ProfileHeader
           avatarUrl={avatarUrl}
@@ -213,16 +197,3 @@ export function UserProfile({
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F9F9F9" },
-  container: { flex: 1 },
-  scrollContent: { paddingBottom: 40, flexGrow: 1 },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F9F9F9",
-  },
-  errorText: { color: "#999", fontSize: 14 },
-});

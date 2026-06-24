@@ -1,8 +1,6 @@
 import SignOutButton from "@/components/social-auth-buttons/sign-out-button";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { Avatar } from "../UserAvatar";
-
-const ACCENT = "#F4522A";
 
 type ProfileHeaderProps = {
   avatarUrl: string | null;
@@ -12,8 +10,8 @@ type ProfileHeaderProps = {
   onEditPress: () => void;
   onFollowPress: () => void;
   isFollowing: boolean;
-  followersCount: number; // 1. Added followers prop
-  followingCount: number; // 1. Added following prop
+  followersCount: number;
+  followingCount: number;
 };
 
 export function ProfileHeader({
@@ -24,12 +22,14 @@ export function ProfileHeader({
   onEditPress,
   onFollowPress,
   isFollowing,
-  followersCount, // Destructure here
-  followingCount, // Destructure here
+  followersCount,
+  followingCount,
 }: ProfileHeaderProps) {
+  const showUnfollowStyle = !isOwnProfile && isFollowing;
+
   return (
-    <View style={styles.header}>
-      <View style={styles.avatarContainer}>
+    <View className="items-center pt-7 px-6 pb-5">
+      <View className="mb-3.5">
         <Avatar
           avatarUrl={avatarUrl}
           displayName={displayName}
@@ -38,94 +38,50 @@ export function ProfileHeader({
         />
       </View>
 
-      <Text style={styles.name}>{displayName}</Text>
-      {username && <Text style={styles.username}>@{username}</Text>}
+      <Text className="text-2xl font-bold text-[#1A1A1A] mb-0.5">
+        {displayName}
+      </Text>
+      {username && (
+        <Text className="text-[13px] text-[#999] mb-4">@{username}</Text>
+      )}
 
-      {/* 2. Added Instagram-Style Stats Row */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{followersCount}</Text>
-          <Text style={styles.statLabel}>Followers</Text>
+      {/* Instagram-Style Stats Row */}
+      <View className="flex-row justify-center gap-10 mb-5">
+        <View className="items-center">
+          <Text className="text-lg font-bold text-[#1A1A1A]">
+            {followersCount}
+          </Text>
+          <Text className="text-xs text-[#666] mt-0.5">Followers</Text>
         </View>
-        <View style={styles.statBox}>
-          <Text style={styles.statNumber}>{followingCount}</Text>
-          <Text style={styles.statLabel}>Following</Text>
+        <View className="items-center">
+          <Text className="text-lg font-bold text-[#1A1A1A]">
+            {followingCount}
+          </Text>
+          <Text className="text-xs text-[#666] mt-0.5">Following</Text>
         </View>
       </View>
 
       {/* Conditional Rendering based on isOwnProfile */}
       <TouchableOpacity
-        style={[
-          styles.button,
-          !isOwnProfile && isFollowing && styles.unfollowButton,
-        ]}
+        className={`px-9 py-2.5 rounded-3xl ${showUnfollowStyle ? "bg-[#EEE]" : "bg-[#F4522A]"
+          }`}
+        style={{ elevation: showUnfollowStyle ? 0 : 4 }}
         activeOpacity={0.85}
         onPress={isOwnProfile ? onEditPress : onFollowPress}
       >
-        {/* 3. Added unfollowButtonText dynamic style to make text visible */}
         <Text
-          style={[
-            styles.buttonText,
-            !isOwnProfile && isFollowing && styles.unfollowButtonText,
-          ]}
+          className={`text-sm font-semibold ${showUnfollowStyle ? "text-[#555]" : "text-white"
+            }`}
         >
           {isOwnProfile ? "Edit Profile" : isFollowing ? "Unfollow" : "Follow"}
         </Text>
       </TouchableOpacity>
 
       {isOwnProfile && (
-        <View style={styles.logoutContainer}>
+        <View className="mt-3 w-full items-center">
           <SignOutButton />
         </View>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    alignItems: "center",
-    paddingTop: 28,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
-  avatarContainer: { marginBottom: 14 },
-  name: { fontSize: 24, fontWeight: "700", color: "#1A1A1A", marginBottom: 2 },
-  username: { fontSize: 13, color: "#999", marginBottom: 16 },
-
-  // New layout styles for follow numbers
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 40, // Spacing between Followers and Following sections
-    marginBottom: 20,
-  },
-  statBox: {
-    alignItems: "center",
-  },
-  statNumber: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1A1A1A",
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 2,
-  },
-
-  button: {
-    backgroundColor: "#F4522A",
-    paddingHorizontal: 36,
-    paddingVertical: 10,
-    borderRadius: 24,
-    elevation: 4,
-  },
-  unfollowButton: {
-    backgroundColor: "#EEE",
-    elevation: 0, // Removes shadow for disabled/unfollow state style preference
-  },
-  buttonText: { color: "#FFF", fontSize: 14, fontWeight: "600" },
-  unfollowButtonText: { color: "#555" }, // Fix: Dark gray text so it's readable on gray backgrounds
-  logoutContainer: { marginTop: 12, width: "100%", alignItems: "center" },
-});

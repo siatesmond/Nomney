@@ -5,12 +5,6 @@ import { AppState } from "react-native";
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabasePublishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-console.log("=== SUPABASE CONFIG ===");
-console.log("URL:", supabaseUrl);
-console.log("Key exists:", !!supabasePublishableKey);
-console.log("Key length:", supabasePublishableKey?.length);
-console.log("=====================");
-
 if (!supabaseUrl || !supabasePublishableKey) {
   throw new Error("Missing Supabase environment variables");
 }

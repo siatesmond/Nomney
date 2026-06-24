@@ -1,5 +1,3 @@
-import { decode } from "base64-arraybuffer";
-import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
@@ -12,7 +10,7 @@ export function useNewPostImages() {
   const processImage = async (uri: string) => {
     const manipResult = await ImageManipulator.manipulateAsync(uri, [], {
       format: ImageManipulator.SaveFormat.JPEG,
-      compress: 0.7, // Slightly higher compression for faster uploads
+      compress: 0.7,
     });
     return manipResult.uri;
   };
@@ -60,17 +58,5 @@ export function useNewPostImages() {
       ]),
     removeImage: (uri: string) =>
       setImages((prev) => prev.filter((i) => i !== uri)),
-
-    // Prepare image for Supabase Storage
-    getProcessedData: async (uri: string) => {
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: "base64",
-      });
-      return {
-        arrayBuffer: decode(base64),
-        fileName: `post_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
-        contentType: "image/jpeg",
-      };
-    },
   };
 }

@@ -1,5 +1,5 @@
 import * as Location from "expo-location";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { GOOGLE_PLACES_API_KEY, LocationData } from "../constants/new-post";
 
@@ -18,6 +18,16 @@ export function useNewPostLocation() {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | number>(
     undefined,
   );
+
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
   const resetSearch = () => {
     setSearchResults([]);
@@ -39,6 +49,8 @@ export function useNewPostLocation() {
         longitude: coords.longitude,
       });
 
+      if (!isMounted.current) return;
+
       setLocation({
         name: formatLocationName(place),
         latitude: coords.latitude,
@@ -46,12 +58,13 @@ export function useNewPostLocation() {
       });
       resetSearch();
     } catch (err: any) {
+      if (!isMounted.current) return;
       Alert.alert(
         "Location Error",
         err.message || "Could not fetch current location.",
       );
     } finally {
-      setGpsLoading(false);
+      if (isMounted.current) setGpsLoading(false);
     }
   };
 
@@ -76,6 +89,9 @@ export function useNewPostLocation() {
       );
 
       const { places } = await res.json();
+
+      if (!isMounted.current) return;
+
       setSearchResults(
         places?.slice(0, 5).map((p: any) => ({
           name: p.displayName.text,
@@ -85,9 +101,10 @@ export function useNewPostLocation() {
         })) || [],
       );
     } catch {
+      if (!isMounted.current) return;
       Alert.alert("Search Error", "Could not reach Google Places API.");
     } finally {
-      setSearchLoading(false);
+      if (isMounted.current) setSearchLoading(false);
     }
   };
 

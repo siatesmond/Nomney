@@ -3,13 +3,11 @@ import { Stack, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Alert, View } from "react-native";
 
-// Components
 import LocationSheet from "@/components/new-post/LocationSheet";
 import NewPostForm from "@/components/new-post/NewPostForm";
 import RatingsSheet from "@/components/new-post/RatingsSheet";
 import TagsSheet from "@/components/new-post/TagsSheet";
 
-// Hooks, Libs, & Constants
 import { RatingKey } from "@/constants/new-post";
 import { useCategories } from "@/hooks/useCategories";
 import { useNewPostImages } from "@/hooks/useNewPostImages";
@@ -20,11 +18,13 @@ import { createNewPost } from "@/services/postService";
 export default function NewPostScreen() {
   const router = useRouter();
 
-  // Core Form Input State
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const [customTagTypes, setCustomTagTypes] = useState<Record<string, "food_type" | "meal_type">>({});
+
   const [ratings, setRatings] = useState<Record<RatingKey, number>>({
     food: 0,
     service: 0,
@@ -32,47 +32,42 @@ export default function NewPostScreen() {
     cleanliness: 0,
   });
 
-  // Feature Hooks
   const { foodTypes, mealTypes } = useCategories();
   const { images, showOptions, removeImage } = useNewPostImages();
   const { location, ...locationProps } = useNewPostLocation();
 
-  // Bottom Sheet Bottom sheet control references
   const tagsSheetRef = useRef<BottomSheet>(null!);
   const ratingsSheetRef = useRef<BottomSheet>(null!);
   const locationSheetRef = useRef<BottomSheet>(null!);
 
-  // Derived Performance Calculations
   const activeRatings = Object.values(ratings).filter((v) => v > 0);
   const hasRating = activeRatings.length > 0;
   const overallRating = hasRating
     ? (
-        activeRatings.reduce((sum, val) => sum + val, 0) / activeRatings.length
-      ).toFixed(1)
+      activeRatings.reduce((sum, val) => sum + val, 0) / activeRatings.length
+    ).toFixed(1)
     : "0";
 
-  // State Management Actions
   const toggleTag = (tag: string) =>
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
 
-  const addCustomTagWithType = (formattedTag: string) => {
+  const addCustomTagWithType = (
+    formattedTag: string,
+    type: "food_type" | "meal_type",
+  ) => {
     if (!selectedTags.includes(formattedTag)) {
       setSelectedTags((prev) => [...prev, formattedTag]);
+      setCustomTagTypes((prev) => ({ ...prev, [formattedTag]: type }));
     }
   };
 
-  /**
-   * Resolves text strings into Supabase category IDs.
-   * Creates missing tags seamlessly inline to reduce code overhead.
-   */
   const resolveTagsToCategoryIds = async (
     tags: string[],
   ): Promise<string[]> => {
     if (!tags.length) return [];
 
-    // 1. Fetch matching records already present in the database
     const { data: existing, error } = await supabase
       .from("categories")
       .select("id, name")
@@ -84,14 +79,13 @@ export default function NewPostScreen() {
     const resolvedIds = existing?.map((c) => c.id) || [];
     const missingTags = tags.filter((tag) => !existingNames.includes(tag));
 
-    // 2. Safely mint missing tags as fallback entries on-the-fly
     if (missingTags.length > 0) {
       const { data: inserted, error: insertError } = await supabase
         .from("categories")
         .insert(
           missingTags.map((name) => ({
             name,
-            type: "food_type",
+            type: customTagTypes[name] ?? "food_type",
             usage_count: 1,
           })),
         )
@@ -104,7 +98,6 @@ export default function NewPostScreen() {
     return resolvedIds;
   };
 
-  // Main Event Handlers
   const handlePostSubmission = async () => {
     if (!images.length) {
       return Alert.alert(
@@ -124,7 +117,6 @@ export default function NewPostScreen() {
 
       const resolvedCategoryIds = await resolveTagsToCategoryIds(selectedTags);
 
-      // Submit fully packaged post data directly to the service wrapper
       const result = await createNewPost({
         userId: user.id,
         title: title.trim(),
@@ -138,7 +130,6 @@ export default function NewPostScreen() {
       if (!result.success)
         throw new Error(result.error || "Database transmission failed.");
 
-      // Run transactional data upkeep calculations cleanly
       if (resolvedCategoryIds.length > 0) {
         await supabase.rpc("increment_category_usage", {
           category_ids: resolvedCategoryIds,
@@ -146,7 +137,7 @@ export default function NewPostScreen() {
       }
 
       Alert.alert("Success 🎉", "Your culinary memory has been saved!", [
-        { text: "Awesome", onPress: () => router.replace("/") },
+        { text: "Awesome", onPress: () => router.replace("/home") },
       ]);
     } catch (error: any) {
       Alert.alert(

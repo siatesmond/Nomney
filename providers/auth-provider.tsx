@@ -1,16 +1,14 @@
-import { AuthContext } from "@/hooks/use-auth-context";
+import { AuthContext, Profile } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
 import { PropsWithChildren, useEffect, useState } from "react";
 
 export default function AuthProvider({ children }: PropsWithChildren) {
   const [claims, setClaims] = useState<Record<string, any> | null>(null);
-  const [profile, setProfile] = useState<any>();
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetchClaims = async () => {
-      setIsLoading(true);
-
       const { data, error } = await supabase.auth.getClaims();
 
       if (error) {
@@ -18,7 +16,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       }
 
       setClaims(data?.claims ?? null);
-      setIsLoading(false);
     };
 
     fetchClaims();
@@ -43,6 +40,8 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchProfile = async () => {
       setIsLoading(true);
 
@@ -52,15 +51,20 @@ export default function AuthProvider({ children }: PropsWithChildren) {
           .select("*")
           .eq("id", claims.sub)
           .single();
-        setProfile(data);
+
+        if (!cancelled) setProfile(data as Profile | null);
       } else {
-        setProfile(null);
+        if (!cancelled) setProfile(null);
       }
 
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     };
 
     fetchProfile();
+
+    return () => {
+      cancelled = true;
+    };
   }, [claims]);
 
   return (

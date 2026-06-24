@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 
 export default function SignOutButton() {
   const onSignOutButtonPress = async () => {
@@ -11,26 +11,11 @@ export default function SignOutButton() {
 
   return (
     <TouchableOpacity
-      style={styles.logoutButton}
+      className="px-9 py-2.5 rounded-3xl border border-[#DDD]"
       onPress={onSignOutButtonPress}
       activeOpacity={0.7}
     >
-      <Text style={styles.logoutText}>Log Out</Text>
+      <Text className="text-[#999] text-sm font-medium">Log Out</Text>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  logoutButton: {
-    paddingHorizontal: 36,
-    paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#DDD",
-  },
-  logoutText: {
-    color: "#999",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-});

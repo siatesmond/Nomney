@@ -31,10 +31,6 @@ interface Props {
 }
 
 export default function NewPostForm(props: Props) {
-  // Helper for styling active rows
-  const getLabelStyle = (isActive: boolean) =>
-    `text-sm flex-1 ${isActive ? "text-neutral-900 font-medium" : "text-neutral-400"}`;
-
   return (
     <View className="flex-1 bg-[#F9F9F9]">
       {/* Header */}
@@ -158,14 +154,13 @@ const Row = ({ icon, label, isActive, onPress, badge, onClear }: any) => (
       </View>
     )}
 
-    {/* CHANGE HERE: Only show the clear cross if onClear exists AND the row is active (has data) */}
     {onClear && isActive && (
       <TouchableOpacity
         onPress={(e) => {
-          e.stopPropagation(); // Prevents clicking the cross from firing the row's onPress
+          e.stopPropagation();
           onClear();
         }}
-        className="p-1" // Adds a nice, easy-to-tap hit box
+        className="p-1"
       >
         <Ionicons name="close-circle" size={18} color="#CCC" />
       </TouchableOpacity>

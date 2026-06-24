@@ -1,14 +1,10 @@
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { UserProfile } from "@/components/profile/UserProfile";
+import { GridPost } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Modal } from "react-native";
-
-export type GridPost = {
-  id: string;
-  imageUrl: string;
-};
 
 export default function ProfileScreen() {
   const { profile } = useAuthContext();
@@ -73,7 +69,7 @@ export default function ProfileScreen() {
 
   const fetchSavedPosts = async () => {
     const { data, error } = await supabase
-      .from("saves") // FIX: Updated from "saved_posts" to "saves"
+      .from("saves")
       .select(
         `
         post_id,

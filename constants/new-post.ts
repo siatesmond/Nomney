@@ -1,18 +1,22 @@
-/**
- * Application Constants for New Post Flow
- */
+import { Ionicons } from "@expo/vector-icons";
+import { ComponentProps } from "react";
 
-// API Keys - ensure these are defined in your .env file
+type IoniconName = ComponentProps<typeof Ionicons>["name"];
+
 export const GOOGLE_PLACES_API_KEY =
   process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ?? "";
 
-// Rating Configuration - used for dynamic generation in RatingsSheet
+// Rating Configuration
 export const RATING_CATEGORIES = [
   { key: "food", label: "Food", icon: "restaurant-outline" },
   { key: "service", label: "Service", icon: "people-outline" },
   { key: "environment", label: "Environment", icon: "leaf-outline" },
   { key: "cleanliness", label: "Cleanliness", icon: "sparkles-outline" },
-] as const;
+] as const satisfies readonly {
+  key: string;
+  label: string;
+  icon: IoniconName;
+}[];
 
 export type RatingKey = (typeof RATING_CATEGORIES)[number]["key"];
 

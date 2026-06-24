@@ -20,9 +20,6 @@ export default function PhotoGrid({
 }: PhotoGridProps) {
   const { width } = useWindowDimensions();
 
-  // Mathematical breakdown for a perfect 3-column grid:
-  // Container padding: p-5 = 20px on left + 20px on right (40px total)
-  // Grid gaps: gap-3 = 12px space between items (2 gaps per row = 24px total)
   const horizontalPadding = 40;
   const gapSpacing = 24;
   const itemSize = (width - (horizontalPadding + gapSpacing)) / 3;

@@ -14,7 +14,6 @@ export function useCategories() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // Fetch only fields needed, implicitly ordered by popularity count
         const { data, error } = await supabase
           .from("categories")
           .select("name, type")
@@ -22,7 +21,6 @@ export function useCategories() {
 
         if (error) throw error;
 
-        // Perform a single-pass extraction loop instead of dual .filter().map()
         const sorted = (data || []).reduce(
           (acc, item) => {
             if (item.type === "food_type") acc.foodTypes.push(item.name);

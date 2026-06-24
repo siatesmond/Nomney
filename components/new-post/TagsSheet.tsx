@@ -24,7 +24,6 @@ export default function TagsSheet({
   const formattedSearch = search.trim();
   const isSearching = formattedSearch.length > 0;
 
-  // Filter logic
   const filteredFood = isSearching
     ? foodTypes.filter((t) => t.toLowerCase().includes(search.toLowerCase()))
     : foodTypes.slice(0, 10);
@@ -57,8 +56,8 @@ export default function TagsSheet({
               height: "100%",
               paddingTop: 0,
               paddingBottom: 0,
-              textAlignVertical: "center", // Fixes Android vertical alignment
-              includeFontPadding: false, // Removes hidden native padding
+              textAlignVertical: "center",
+              includeFontPadding: false,
             }}
             placeholder="Search or add categories..."
             placeholderTextColor="#999"

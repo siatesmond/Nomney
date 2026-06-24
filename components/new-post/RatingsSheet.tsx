@@ -48,7 +48,7 @@ export default function RatingsSheet({
             className="flex-row items-center justify-between py-2 border-b border-neutral-100"
           >
             <View className="flex-row items-center gap-2">
-              <Ionicons name={icon as any} size={18} color="#F4522A" />
+              <Ionicons name={icon} size={18} color="#F4522A" />
               <Text className="text-sm font-medium text-neutral-900">
                 {label}
               </Text>
@@ -58,18 +58,12 @@ export default function RatingsSheet({
               {[1, 2, 3, 4, 5].map((star) => (
                 <TouchableOpacity
                   key={star}
-                  onPress={() => setRating(key as RatingKey, star)}
+                  onPress={() => setRating(key, star)}
                 >
                   <Ionicons
-                    name={
-                      star <= ratings[key as RatingKey]
-                        ? "star"
-                        : "star-outline"
-                    }
+                    name={star <= ratings[key] ? "star" : "star-outline"}
                     size={26}
-                    color={
-                      star <= ratings[key as RatingKey] ? "#F4522A" : "#D1D5DB"
-                    }
+                    color={star <= ratings[key] ? "#F4522A" : "#D1D5DB"}
                   />
                 </TouchableOpacity>
               ))}
