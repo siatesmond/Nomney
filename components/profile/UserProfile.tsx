@@ -1,6 +1,7 @@
 import { ImageGridItem } from "@/constants/types";
 import { Profile, useAuthContext } from "@/hooks/use-auth-context";
-import { supabase } from "@/lib/supabase";
+import { followUser, unfollowUser } from "@/lib/followers";
+import { getProfileWithStats, resolveAvatarUrl } from "@/lib/profile";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -44,68 +45,28 @@ export function UserProfile({
   const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         setLoadingProfile(true);
+        const stats = await getProfileWithStats(userId, currentUser?.id);
+        if (cancelled) return;
 
-        const profilePromise = supabase
-          .from("profiles")
-          .select("id, full_name, username, first_name, last_name, avatar_url")
-          .eq("id", userId)
-          .single();
-
-        const followersCountPromise = supabase
-          .from("followers")
-          .select("*", { count: "exact", head: true })
-          .eq("following_id", userId);
-
-        const followingCountPromise = supabase
-          .from("followers")
-          .select("*", { count: "exact", head: true })
-          .eq("follower_id", userId);
-
-        const relationshipCheckPromise =
-          !isOwnProfile && currentUser?.id
-            ? supabase
-              .from("followers")
-              .select("*")
-              .eq("follower_id", currentUser.id)
-              .eq("following_id", userId)
-              .maybeSingle()
-            : Promise.resolve({ data: null });
-
-        // Fire all queries simultaneously
-        const [profileRes, followersRes, followingRes, relationshipRes] =
-          await Promise.all([
-            profilePromise,
-            followersCountPromise,
-            followingCountPromise,
-            relationshipCheckPromise,
-          ]);
-
-        if (profileRes.error) throw profileRes.error;
-
-        setProfile(profileRes.data as Profile | null);
-        setFollowersCount(followersRes.count || 0);
-        setFollowingCount(followingRes.count || 0);
-        setIsFollowing(!!relationshipRes.data);
-
-        if (profileRes.data?.avatar_url) {
-          setAvatarUrl(
-            profileRes.data.avatar_url.startsWith("http")
-              ? profileRes.data.avatar_url
-              : supabase.storage
-                .from("avatars")
-                .getPublicUrl(profileRes.data.avatar_url).data.publicUrl,
-          );
-        }
+        setProfile(stats.profile);
+        setFollowersCount(stats.followersCount);
+        setFollowingCount(stats.followingCount);
+        setIsFollowing(stats.isFollowing);
+        setAvatarUrl(resolveAvatarUrl(stats.profile.avatar_url));
       } catch (err: any) {
-        setError(err.message || "Failed to load profile");
+        if (!cancelled) setError(err.message || "Failed to load profile");
       } finally {
-        setLoadingProfile(false);
+        if (!cancelled) setLoadingProfile(false);
       }
     })();
-  }, [userId, isOwnProfile, currentUser?.id]);
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, currentUser?.id]);
 
   const handleFollowToggle = async () => {
     if (isOwnProfile || !currentUser?.id) return;
@@ -113,30 +74,20 @@ export function UserProfile({
     const previouslyFollowing = isFollowing;
     const previousFollowersCount = followersCount;
 
+    // Optimistic UI
     setIsFollowing(!previouslyFollowing);
     setFollowersCount((prev) => (previouslyFollowing ? prev - 1 : prev + 1));
 
     try {
       if (previouslyFollowing) {
-        const { error: dbErr } = await supabase
-          .from("followers")
-          .delete()
-          .eq("follower_id", currentUser.id)
-          .eq("following_id", userId);
-
-        if (dbErr) throw dbErr;
+        await unfollowUser(currentUser.id, userId);
       } else {
-        const { error: dbErr } = await supabase.from("followers").insert({
-          follower_id: currentUser.id,
-          following_id: userId,
-        });
-
-        if (dbErr) throw dbErr;
+        await followUser(currentUser.id, userId);
       }
-
       onFollow?.();
     } catch (err) {
       console.error("Failed to mutate follow state:", err);
+      // Revert on failure
       setIsFollowing(previouslyFollowing);
       setFollowersCount(previousFollowersCount);
     }

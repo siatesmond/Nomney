@@ -12,6 +12,7 @@ import { DEFAULT_RATINGS, RatingKey } from "@/constants/new-post";
 import { useCategories } from "@/hooks/useCategories";
 import { useNewPostImages } from "@/hooks/useNewPostImages";
 import { useNewPostLocation } from "@/hooks/useNewPostLocation";
+import { incrementCategoryUsage, resolveTagsToCategoryIds } from "@/lib/categories";
 import { supabase } from "@/lib/supabase";
 import { createNewPost } from "@/services/postService";
 
@@ -59,41 +60,6 @@ export default function NewPostScreen() {
     }
   };
 
-  const resolveTagsToCategoryIds = async (
-    tags: string[],
-  ): Promise<string[]> => {
-    if (!tags.length) return [];
-
-    const { data: existing, error } = await supabase
-      .from("categories")
-      .select("id, name")
-      .in("name", tags);
-
-    if (error) throw error;
-
-    const existingNames = existing?.map((c) => c.name) || [];
-    const resolvedIds = existing?.map((c) => c.id) || [];
-    const missingTags = tags.filter((tag) => !existingNames.includes(tag));
-
-    if (missingTags.length > 0) {
-      const { data: inserted, error: insertError } = await supabase
-        .from("categories")
-        .insert(
-          missingTags.map((name) => ({
-            name,
-            type: customTagTypes[name] ?? "food_type",
-            usage_count: 1,
-          })),
-        )
-        .select("id");
-
-      if (insertError) throw insertError;
-      if (inserted) resolvedIds.push(...inserted.map((c) => c.id));
-    }
-
-    return resolvedIds;
-  };
-
   const handlePostSubmission = async () => {
     if (!images.length) {
       return Alert.alert(
@@ -111,7 +77,10 @@ export default function NewPostScreen() {
       if (authError || !user)
         throw new Error("Authentication session active expired.");
 
-      const resolvedCategoryIds = await resolveTagsToCategoryIds(selectedTags);
+      const resolvedCategoryIds = await resolveTagsToCategoryIds(
+        selectedTags,
+        customTagTypes,
+      );
 
       const result = await createNewPost({
         userId: user.id,
@@ -126,11 +95,7 @@ export default function NewPostScreen() {
       if (!result.success)
         throw new Error(result.error || "Database transmission failed.");
 
-      if (resolvedCategoryIds.length > 0) {
-        await supabase.rpc("increment_category_usage", {
-          category_ids: resolvedCategoryIds,
-        });
-      }
+      await incrementCategoryUsage(resolvedCategoryIds);
 
       Alert.alert("Success 🎉", "Your culinary memory has been saved!", [
         { text: "Awesome", onPress: () => router.replace("/home") },
