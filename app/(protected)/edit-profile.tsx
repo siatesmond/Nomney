@@ -1,18 +1,16 @@
 import { Avatar } from "@/components/UserAvatar";
 import { useAuthContext } from "@/hooks/use-auth-context";
+import { useAvatarPicker } from "@/hooks/useAvatarPicker";
 import {
-    EditableProfile,
-    isUsernameAvailable,
-    updateProfile,
-    uploadAvatar,
-} from "@/lib/profile";
+    UsernameStatus,
+    useUsernameAvailability,
+} from "@/hooks/useUsernameAvailability";
+import { EditableProfile, updateProfile, uploadAvatar } from "@/lib/profile";
 import { Ionicons } from "@expo/vector-icons";
 import { decode } from "base64-arraybuffer";
 import { readAsStringAsync } from "expo-file-system/legacy";
-import * as ImageManipulator from "expo-image-manipulator";
-import * as ImagePicker from "expo-image-picker";
 import { Stack, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -33,81 +31,19 @@ export default function EditProfileScreen() {
     const [firstName, setFirstName] = useState(profile?.first_name ?? "");
     const [lastName, setLastName] = useState(profile?.last_name ?? "");
     const [bio, setBio] = useState(profile?.bio ?? "");
-
-    // Avatar: localUri is a freshly-picked image not yet uploaded
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(
-        profile?.avatar_url ?? null,
-    );
-    const [localUri, setLocalUri] = useState<string | null>(null);
-
     const [saving, setSaving] = useState(false);
 
-    // Username availability check (debounced)
-    const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "too_short">("idle");
-    const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const { avatarUrl, localUri, pickAvatar } = useAvatarPicker(
+        profile?.avatar_url ?? null,
+    );
+
+    const usernameStatus = useUsernameAvailability(
+        username,
+        profile?.username ?? "",
+        userId,
+    );
+
     const isMounted = useRef(true);
-
-    useEffect(() => {
-        isMounted.current = true;
-        return () => {
-            isMounted.current = false;
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-        };
-    }, []);
-
-    useEffect(() => {
-        const trimmed = username.trim();
-
-        // Unchanged from current name → nothing to validate
-        if (trimmed === (profile?.username ?? "")) {
-            setUsernameStatus("idle");
-            return;
-        }
-        if (trimmed.length < 3) {
-            setUsernameStatus("too_short");
-            return;
-        }
-
-        setUsernameStatus("checking");
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(async () => {
-            try {
-                const ok = await isUsernameAvailable(trimmed, userId!);
-                if (isMounted.current)
-                    setUsernameStatus(ok ? "available" : "taken");
-            } catch {
-                if (isMounted.current) setUsernameStatus("idle");
-            }
-        }, 500);
-    }, [username, profile?.username, userId]);
-
-    const pickAvatar = async () => {
-        const permission =
-            await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permission.granted) {
-            return Alert.alert(
-                "Permission denied",
-                "We need access to your photos to change your avatar.",
-            );
-        }
-
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.8,
-        });
-
-        if (!result.canceled) {
-            const manip = await ImageManipulator.manipulateAsync(
-                result.assets[0].uri,
-                [{ resize: { width: 512, height: 512 } }],
-                { format: ImageManipulator.SaveFormat.JPEG, compress: 0.7 },
-            );
-            setLocalUri(manip.uri);
-            setAvatarUrl(manip.uri); // preview immediately
-        }
-    };
 
     const canSave =
         !saving &&
@@ -138,7 +74,6 @@ export default function EditProfileScreen() {
             };
 
             await updateProfile(userId, fields);
-
             await refreshProfile();
 
             Alert.alert("Saved", "Your profile has been updated.", [
@@ -181,23 +116,13 @@ export default function EditProfileScreen() {
             </View>
 
             <ScrollView keyboardShouldPersistTaps="handled">
-                {/* Avatar */}
-                <View className="items-center py-6">
-                    <Avatar
-                        avatarUrl={avatarUrl}
-                        displayName={displayName}
-                        size="lg"
-                        shadow
-                    />
-                    <TouchableOpacity onPress={pickAvatar} className="mt-3">
-                        <Text className="text-sm font-semibold text-[#F4522A]">
-                            Change Photo
-                        </Text>
-                    </TouchableOpacity>
-                </View>
+                <AvatarPicker
+                    avatarUrl={avatarUrl}
+                    displayName={displayName}
+                    onPress={pickAvatar}
+                />
 
                 <View className="px-5">
-                    {/* Username */}
                     <Field label="Username">
                         <TextInput
                             className="text-base text-neutral-900 py-2"
@@ -210,7 +135,6 @@ export default function EditProfileScreen() {
                         <UsernameHint status={usernameStatus} />
                     </Field>
 
-                    {/* First / Last name */}
                     <Field label="First Name">
                         <TextInput
                             className="text-base text-neutral-900 py-2"
@@ -231,7 +155,6 @@ export default function EditProfileScreen() {
                         />
                     </Field>
 
-                    {/* Bio */}
                     <Field label="Bio">
                         <TextInput
                             className="text-base text-neutral-900 py-2 min-h-[60px]"
@@ -258,7 +181,22 @@ export default function EditProfileScreen() {
     );
 }
 
-// --- Small presentational helpers ---
+const AvatarPicker = ({
+    avatarUrl,
+    displayName,
+    onPress,
+}: {
+    avatarUrl: string | null;
+    displayName: string;
+    onPress: () => void;
+}) => (
+    <View className="items-center py-6">
+        <Avatar avatarUrl={avatarUrl} displayName={displayName} size="lg" shadow />
+        <TouchableOpacity onPress={onPress} className="mt-3">
+            <Text className="text-sm font-semibold text-[#F4522A]">Change Photo</Text>
+        </TouchableOpacity>
+    </View>
+);
 
 const Field = ({
     label,
@@ -275,7 +213,7 @@ const Field = ({
     </View>
 );
 
-const UsernameHint = ({ status }: { status: string }) => {
+const UsernameHint = ({ status }: { status: UsernameStatus }) => {
     if (status === "checking")
         return <Text className="text-xs text-neutral-400">Checking…</Text>;
     if (status === "available")
