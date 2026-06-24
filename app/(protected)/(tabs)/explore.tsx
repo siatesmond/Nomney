@@ -16,10 +16,11 @@ import {
 } from "react-native";
 
 import { useAuthContext } from "@/hooks/use-auth-context";
-import { getComments } from "@/lib/comments";
-import { likePost, unlikePost } from "@/lib/likes";
 import { getPosts } from "@/lib/posts";
-import { savePost, unsavePost } from "@/lib/save";
+import { getComments } from "@/lib/comments";
+import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
+import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
+
 
 type Post = {
   id: string;
