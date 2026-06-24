@@ -1,4 +1,4 @@
-export type GridPost = {
+export type ImageGridItem = {
     id: string;
     imageUrl: string;
 };

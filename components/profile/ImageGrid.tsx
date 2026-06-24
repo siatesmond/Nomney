@@ -1,14 +1,10 @@
+import { ImageGridItem } from '@/constants/types';
 import { Dimensions, Image, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_COLUMNS = 3;
 const GAP = 3;
 const IMAGE_SIZE = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
-
-type ImageGridItem = {
-  id: string;
-  imageUrl: string;
-};
 
 type ImageGridProps = {
   items: ImageGridItem[];

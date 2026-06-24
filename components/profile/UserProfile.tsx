@@ -1,4 +1,4 @@
-import { GridPost } from "@/constants/types";
+import { ImageGridItem } from "@/constants/types";
 import { Profile, useAuthContext } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
@@ -13,8 +13,8 @@ type UserProfileProps = {
   isOwnProfile: boolean;
   onEdit?: () => void;
   onFollow?: () => void;
-  postImages?: GridPost[];
-  savedImages?: GridPost[];
+  postImages?: ImageGridItem[];
+  savedImages?: ImageGridItem[];
   isLoadingPosts?: boolean;
   onPostClick?: (postId: string) => void;
 };
@@ -190,8 +190,8 @@ export function UserProfile({
         <ProfileTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
         <ImageGrid
-          posts={activeTab === "Posts" ? postImages : savedImages}
-          onPostClick={onPostClick}
+          items={activeTab === "Posts" ? postImages : savedImages}
+          onPressItem={onPostClick}
         />
       </ScrollView>
     </SafeAreaView>

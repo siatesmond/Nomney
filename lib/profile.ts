@@ -10,7 +10,6 @@ export type EditableProfile = {
     avatar_url: string | null;
 };
 
-// Is this username free? Excludes the current user's own row so they can keep their name.
 export async function isUsernameAvailable(
     username: string,
     currentUserId: string,
@@ -23,11 +22,9 @@ export async function isUsernameAvailable(
         .maybeSingle();
 
     if (error) throw error;
-    return !data; // available if no other row holds it
+    return !data;
 }
 
-// Upload a new avatar under avatars/<userId>/<timestamp>.jpg,
-// then delete any older files in that folder. Returns the public URL.
 export async function uploadAvatar(
     userId: string,
     arrayBuffer: ArrayBuffer,
@@ -53,7 +50,6 @@ export async function uploadAvatar(
         .from(AVATAR_BUCKET)
         .getPublicUrl(filePath);
 
-    // Best-effort cleanup of old avatars (don't fail the save if this errors).
     if (existing && existing.length > 0) {
         const oldPaths = existing
             .filter((f) => f.name !== fileName)
@@ -66,7 +62,6 @@ export async function uploadAvatar(
     return publicUrlData.publicUrl;
 }
 
-// Save profile fields. full_name is derived from first + last here.
 export async function updateProfile(
     userId: string,
     fields: EditableProfile,

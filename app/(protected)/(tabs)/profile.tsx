@@ -1,6 +1,6 @@
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { UserProfile } from "@/components/profile/UserProfile";
-import { GridPost } from "@/constants/types";
+import { ImageGridItem } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
@@ -11,8 +11,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { profile } = useAuthContext();
 
-  const [userPosts, setUserPosts] = useState<GridPost[]>([]);
-  const [savedPosts, setSavedPosts] = useState<GridPost[]>([]);
+  const [userPosts, setUserPosts] = useState<ImageGridItem[]>([]);
+  const [savedPosts, setSavedPosts] = useState<ImageGridItem[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ export default function ProfileScreen() {
     if (error) throw error;
 
     if (data) {
-      const extractedPosts: GridPost[] = data
+      const extractedPosts: ImageGridItem[] = data
         .map((post) => {
           const sortedImages = (post.post_image || []).sort(
             (a: any, b: any) => a.display_order - b.display_order,
@@ -89,7 +89,7 @@ export default function ProfileScreen() {
     if (error) throw error;
 
     if (data) {
-      const extractedSaved: GridPost[] = data
+      const extractedSaved: ImageGridItem[] = data
         .map((item: any) => {
           const post = item.posts;
           if (!post) return null;
@@ -102,7 +102,7 @@ export default function ProfileScreen() {
             imageUrl: sortedImages[0]?.image_url,
           };
         })
-        .filter((post): post is GridPost => !!post);
+        .filter((post): post is ImageGridItem => !!post);
 
       setSavedPosts(extractedSaved);
     }
