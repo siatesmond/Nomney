@@ -7,8 +7,8 @@ import { Image, FlatList, View, Text } from "react-native";
 
 import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
-import { likePost, unlikePost } from "@/lib/likes";
-import { savePost, unsavePost } from "@/lib/save";
+import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
+import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
 import { useAuthContext } from "@/hooks/use-auth-context";
 
 type Post = {
@@ -66,6 +66,25 @@ export default function HomeScreen() {
     }
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    async function fetchUserLikesAndSaves() {
+      if (!profile?.id) return;
+
+      try {
+        const [likedIds, savedIds] = await Promise.all([
+          getUserLikedPostIds(profile.id),
+          getUserSavedPostIds(profile.id),
+        ]);
+
+        setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
+        setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchUserLikesAndSaves();
+  }, [profile?.id]);
 
   // Fetch comments when user clicks on comments
   const openComments = async (postId: string) => {
