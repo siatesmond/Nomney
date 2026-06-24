@@ -8,7 +8,7 @@ import NewPostForm from "@/components/new-post/NewPostForm";
 import RatingsSheet from "@/components/new-post/RatingsSheet";
 import TagsSheet from "@/components/new-post/TagsSheet";
 
-import { RatingKey } from "@/constants/new-post";
+import { DEFAULT_RATINGS, RatingKey } from "@/constants/new-post";
 import { useCategories } from "@/hooks/useCategories";
 import { useNewPostImages } from "@/hooks/useNewPostImages";
 import { useNewPostLocation } from "@/hooks/useNewPostLocation";
@@ -23,14 +23,12 @@ export default function NewPostScreen() {
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const [customTagTypes, setCustomTagTypes] = useState<Record<string, "food_type" | "meal_type">>({});
+  const [customTagTypes, setCustomTagTypes] = useState
+  Record < string, "food_type" | "meal_type" >
+  > ({});
 
-  const [ratings, setRatings] = useState<Record<RatingKey, number>>({
-    food: 0,
-    service: 0,
-    environment: 0,
-    cleanliness: 0,
-  });
+  const [ratings, setRatings] =
+    useState<Record<RatingKey, number>>(DEFAULT_RATINGS);
 
   const { foodTypes, mealTypes } = useCategories();
   const { images, showOptions, removeImage } = useNewPostImages();
