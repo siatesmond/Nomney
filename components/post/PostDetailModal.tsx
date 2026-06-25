@@ -1,6 +1,12 @@
+import { CommentSheet } from "@/components/comments/CommentSheet";
+import { useAuthContext } from "@/hooks/use-auth-context";
+import { getComments } from "@/lib/comments";
+import { likePost, unlikePost } from "@/lib/likes";
+import { savePost, unsavePost } from "@/lib/save";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -80,9 +86,22 @@ function RatingRing({
 }
 
 export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
+  const { profile } = useAuthContext();
+
   const [postData, setPostData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // Interactive like/save state
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [savesCount, setSavesCount] = useState(0);
+
+  // Comments
+  const [commentCount, setCommentCount] = useState(0);
+  const [sheetComments, setSheetComments] = useState<any[]>([]);
+  const commentSheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
     fetchFullPostDetails();
@@ -140,10 +159,64 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
       }
 
       setPostData(data);
+      setCommentCount((data?.comments || []).length);
+
+      // Seed interactive state from the fetched arrays
+      const likes = data?.likes || [];
+      const saves = data?.saves || [];
+      setLikesCount(likes.length);
+      setSavesCount(saves.length);
+      setLiked(likes.some((l: any) => l.user_id === profile?.id));
+      setSaved(saves.some((s: any) => s.user_id === profile?.id));
     } catch (error) {
       console.error("Error fetching full post:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Like / unlike with optimistic UI + revert
+  const toggleLike = async () => {
+    if (!profile?.id) return;
+    const wasLiked = liked;
+
+    setLiked(!wasLiked);
+    setLikesCount((c) => (wasLiked ? c - 1 : c + 1));
+
+    try {
+      if (wasLiked) await unlikePost(postId, profile.id);
+      else await likePost(postId, profile.id);
+    } catch (err) {
+      console.log("Failed to toggle like:", err);
+      setLiked(wasLiked);
+      setLikesCount((c) => (wasLiked ? c + 1 : c - 1));
+    }
+  };
+
+  const toggleSave = async () => {
+    if (!profile?.id) return;
+    const wasSaved = saved;
+
+    setSaved(!wasSaved);
+    setSavesCount((c) => (wasSaved ? c - 1 : c + 1));
+
+    try {
+      if (wasSaved) await unsavePost(postId, profile.id);
+      else await savePost(postId, profile.id);
+    } catch (err) {
+      console.log("Failed to toggle save:", err);
+      setSaved(wasSaved);
+      setSavesCount((c) => (wasSaved ? c + 1 : c - 1));
+    }
+  };
+
+  const openComments = async () => {
+    try {
+      const fresh = await getComments(postId);
+      setSheetComments(fresh);
+      commentSheetRef.current?.present();
+    } catch (err) {
+      console.log("Failed to load comments:", err);
     }
   };
 
@@ -162,7 +235,6 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
 
   const likesArray = postData.likes || [];
   const commentsArray = postData.comments || [];
-  const savesCount = postData.saves?.length || 0;
 
   const sortedImages = (postData.post_image || []).sort(
     (a: any, b: any) => (a.display_order || 0) - (b.display_order || 0),
@@ -170,10 +242,10 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
 
   const postDate = postData.created_at
     ? new Date(postData.created_at).toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
     : "";
 
   const handleScroll = (event: any) => {
@@ -293,7 +365,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
               className="absolute left-0 right-0 flex-row justify-center items-center"
               style={{ bottom: 44 }}
             >
-              {sortedImages.map((_, idx) => {
+              {sortedImages.map((_: any, idx: number) => {
                 const isActive = idx === activeImageIndex;
                 return (
                   <View
@@ -361,47 +433,47 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
           )}
 
           <View
-            className="flex-row items-center justify-between px-5 mt-4 pb-4"
+            className="flex-row justify-end px-5 mt-2 pb-4"
             style={{ borderBottomWidth: 1, borderColor: COLORS.line }}
           >
-            <View className="flex-row items-center">
-              <TouchableOpacity className="flex-row items-center">
-                <Ionicons name="heart-outline" size={22} color={COLORS.ink} />
-                <Text
-                  style={{ color: COLORS.ink, marginLeft: 6 }}
-                  className="text-sm font-bold"
-                >
-                  {likesArray.length}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-row items-center"
-                style={{ marginLeft: 20 }}
-              >
-                <Ionicons
-                  name="chatbubble-outline"
-                  size={20}
-                  color={COLORS.ink}
-                />
-                <Text
-                  style={{ color: COLORS.ink, marginLeft: 6 }}
-                  className="text-sm font-bold"
-                >
-                  {commentsArray.length}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center gap-1.5 py-2 px-3 mr-2"
+              onPress={toggleLike}
+              activeOpacity={0.7}
+            >
               <Ionicons
-                name="bookmark-outline"
-                size={19}
-                color={COLORS.muted}
+                name={liked ? "heart" : "heart-outline"}
+                size={20}
+                color={liked ? "#F4522A" : "#999"}
               />
-              <Text
-                style={{ color: COLORS.muted, marginLeft: 6 }}
-                className="text-xs font-semibold"
-              >
-                Saved ({savesCount})
+              <Text className="text-xs text-gray-500 font-semibold">
+                {likesCount}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="flex-row items-center gap-1.5 py-2 px-3 mr-2"
+              onPress={openComments}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chatbubble-outline" size={20} color="#999" />
+              <Text className="text-xs text-gray-500 font-semibold">
+                {commentCount}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="flex-row items-center gap-1.5 py-2 px-3"
+              onPress={toggleSave}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={saved ? "bookmark" : "bookmark-outline"}
+                size={20}
+                color={saved ? "#F4522A" : "#999"}
+              />
+              <Text className="text-xs text-gray-500 font-semibold">
+                {savesCount}
               </Text>
             </TouchableOpacity>
           </View>
@@ -483,32 +555,19 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
 
           {tags.length > 0 && (
             <View
-              className="px-5 py-3.5 flex-row flex-wrap items-center"
+              className="px-5 py-3.5 flex-row flex-wrap gap-2"
               style={{ borderBottomWidth: 1, borderColor: COLORS.line }}
             >
-              {tags.map((category: any, index: number) => {
-                const isMealType = category.type === "meal_type";
-                return (
-                  <View key={index} className="flex-row items-center">
-                    <Text
-                      style={{
-                        color: isMealType ? COLORS.teal : COLORS.accent,
-                      }}
-                      className="text-xs font-bold uppercase tracking-wide"
-                    >
-                      {category.name}
-                    </Text>
-                    {index < tags.length - 1 && (
-                      <Text
-                        style={{ color: COLORS.line }}
-                        className="mx-2 text-xs"
-                      >
-                        ·
-                      </Text>
-                    )}
-                  </View>
-                );
-              })}
+              {tags.map((category: any, index: number) => (
+                <View
+                  key={index}
+                  className="bg-[#FFE9E8] px-3 py-1.5 rounded-full"
+                >
+                  <Text className="text-xs text-[#FA5A40] font-semibold">
+                    {category.name}
+                  </Text>
+                </View>
+              ))}
             </View>
           )}
 
@@ -554,29 +613,43 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
           )}
 
           <View className="px-5 pt-5 pb-10">
-            <Text
-              style={{ color: COLORS.ink }}
-              className="text-xs font-black uppercase tracking-wider mb-3"
-            >
-              Comments ({commentsArray.length})
-            </Text>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text
+                style={{ color: COLORS.ink }}
+                className="text-xs font-black uppercase tracking-wider"
+              >
+                Comments ({commentCount})
+              </Text>
+              <TouchableOpacity onPress={openComments} activeOpacity={0.7}>
+                <Text
+                  style={{ color: COLORS.accent }}
+                  className="text-xs font-bold"
+                >
+                  Add comment
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {commentsArray.length === 0 ? (
-              <View className="py-6 items-center">
+              <TouchableOpacity
+                className="py-6 items-center"
+                onPress={openComments}
+                activeOpacity={0.7}
+              >
                 <Text
                   style={{ color: COLORS.muted }}
                   className="text-xs font-medium"
                 >
                   No comments yet. Start the conversation!
                 </Text>
-              </View>
+              </TouchableOpacity>
             ) : (
               commentsArray.map((comment: any, idx: number) => {
                 const commentDate = comment.created_at
                   ? new Date(comment.created_at).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                    })
+                    month: "short",
+                    day: "numeric",
+                  })
                   : "";
 
                 return (
@@ -625,6 +698,35 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
           </View>
         </View>
       </ScrollView>
+
+      <CommentSheet
+        ref={commentSheetRef}
+        postId={postId}
+        comments={sheetComments}
+        onNewCommentAdded={(newComment) => {
+          setSheetComments((prev) => [...prev, newComment]);
+          setCommentCount((c) => c + 1);
+          setPostData((prev: any) =>
+            prev
+              ? {
+                ...prev,
+                comments: [
+                  ...(prev.comments || []),
+                  {
+                    id: newComment.id,
+                    content: newComment.content,
+                    created_at: new Date().toISOString(),
+                    profiles: {
+                      username: newComment.username,
+                      avatar_url: newComment.avatar,
+                    },
+                  },
+                ],
+              }
+              : prev,
+          );
+        }}
+      />
     </View>
   );
 }

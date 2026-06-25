@@ -61,3 +61,41 @@ function mapPost(post) {
     timeAgo: timeAgo(post.created_at),
   };
 }
+
+export async function getPostDetail(postId: string) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(
+      `
+        id,
+        title,
+        caption,
+        location_name,
+        overall_rating,
+        rating_food,
+        rating_service,
+        rating_environment,
+        rating_cleanliness,
+        created_at,
+        post_image ( image_url, display_order ),
+        profiles:profiles!posts_user_id_fkey ( id, username, avatar_url ),
+        likes ( user_id, profiles:profiles ( username, avatar_url ) ),
+        saves ( user_id ),
+        comments ( id, content, created_at, profiles:profiles ( username, avatar_url ) ),
+        post_categories ( categories ( name, type ) )
+        `,
+    )
+    .eq("id", postId)
+    .single();
+
+  if (error) throw error;
+
+  if (data?.comments) {
+    data.comments.sort(
+      (a: any, b: any) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+  }
+
+  return data;
+}

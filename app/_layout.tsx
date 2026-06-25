@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import "../global.css";
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 function RootNavigator() {
   const { isLoggedIn, isLoading } = useAuthContext();
@@ -16,7 +16,7 @@ function RootNavigator() {
   useEffect(() => {
     if (!isLoading) {
       setTimeout(() => {
-        SplashScreen.hideAsync().catch(() => {});
+        SplashScreen.hideAsync().catch(() => { });
       }, 50);
     }
   }, [isLoading]);
@@ -25,11 +25,13 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {isLoggedIn ? (
+      <Stack.Protected guard={isLoggedIn}>
         <Stack.Screen name="(protected)" />
-      ) : (
+      </Stack.Protected>
+
+      <Stack.Protected guard={!isLoggedIn}>
         <Stack.Screen name="(auth)" />
-      )}
+      </Stack.Protected>
     </Stack>
   );
 }
