@@ -49,3 +49,24 @@ export async function incrementCategoryUsage(
     });
     if (error) throw error;
 }
+
+export type Category = {
+    id: string;
+    name: string;
+}
+
+export async function getCategories(limit?: number) {
+    let query = supabase
+        .from("categories")
+        .select("id, name, usage_count")
+        .order("usage_count", { ascending: false });
+
+    if (limit) {
+        query = query.limit(limit);
+    }
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    return data;
+}

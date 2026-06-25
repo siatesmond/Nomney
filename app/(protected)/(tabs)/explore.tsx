@@ -18,6 +18,7 @@ import {
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getPosts } from "@/lib/posts";
 import { getComments } from "@/lib/comments";
+import { getCategories } from "@/lib/categories";
 import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
 import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
 
@@ -38,14 +39,13 @@ type Post = {
   timeAgo: string;
 };
 
-/* temp dummy data objects */
-const CATEGORIES = ["japanese", "mexican", "cafe", "homemade"];
-
 const ListHeader = ({
   searchText,
   setSearchText,
-  selectedCategory,
-  setSelectedCategory,
+  allCategories,
+  selectedCategories,
+  toggleCategory,
+
 }) => (
   // Page Header
   <View className="px-4 pt-10 pb-4">
@@ -80,30 +80,38 @@ const ListHeader = ({
     </View>
 
     {/* Categories */}
-    <View className="flex-row gap-2 flex-wrap">
-      {CATEGORIES.map((category) => (
-        <TouchableOpacity
-          key={category}
-          onPress={() => setSelectedCategory(category)}
-          className={`px-4 py-2 rounded-full ${selectedCategory === category ? "bg-[#FA5A40]" : "bg-white"
-            }`}
-        >
-          <Text
-            className={`text-sm font-semibold ${selectedCategory === category ? "text-white" : "text-gray-600"
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: 8, paddingRight: 16 }}>
+      
+      {allCategories.map((category) => {
+        const selected = selectedCategories.includes(category.name);
+        return (
+          <TouchableOpacity
+            key={category.id}
+            onPress={() => toggleCategory(category.name)}
+            className={`px-4 py-2 rounded-full ${selected ? "bg-[#FA5A40]" : "bg-white"
               }`}
           >
-            {category}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
+            <Text
+              className={`text-sm font-semibold ${selected ? "text-white" : "text-gray-600"
+                }`}
+            >
+              {category.name}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </ScrollView>
   </View>
 
   //End of Page header
 );
 
 export default function ExploreScreen() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [allCategories, setAllCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -121,6 +129,29 @@ export default function ExploreScreen() {
   const [activePost, setActivePost] = useState<Post | null>(null);
 
   const { profile } = useAuthContext();
+
+
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const data = await getCategories(10);
+        setAllCategories(data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  const toggleCategory = (categoryName: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((c) => c !== categoryName) // unselect
+        : [...prev, categoryName], // select
+    );
+  };
+
 
   // Fetch posts when screen loads
   useEffect(() => {
@@ -154,8 +185,8 @@ export default function ExploreScreen() {
     })
   }, [posts])
 
-  // Filter posts based on search text 
-  const filteredPosts = useMemo(() => {
+  // Search Filter
+  const searchedPosts = useMemo(() => {
     const query = searchText.trim();
 
     console.log(query);
@@ -164,10 +195,19 @@ export default function ExploreScreen() {
     return fuse.search(query).map((results) => results.item);
   }, [fuse, searchText, posts])
 
+  // Category Filter buttons (narrows down search results)
+  const filteredPosts = useMemo(() => {
+    if (selectedCategories.length === 0) return searchedPosts;
+    return searchedPosts.filter((post) =>
+      selectedCategories.some((selected) => post.categories.includes(selected)),
+    );
+  }, [searchedPosts, selectedCategories]);
 
+  // Fetch user's liked and saved posts 
+  // ensures accurate update on load (icons state)
   useEffect(() => {
     async function fetchUserLikesAndSaves() {
-      if (!profile?.id) return;
+      if (!profile || !profile.id) return; // for if auth is still loading
 
       try {
         const [likedIds, savedIds] = await Promise.all([
@@ -333,8 +373,10 @@ export default function ExploreScreen() {
         <ListHeader
           searchText={searchText}
           setSearchText={setSearchText}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
+          allCategories={allCategories}
+          toggleCategory={toggleCategory}
+          selectedCategories={selectedCategories}
+
         />
         {loading ? (
           <View className="items-center py-12">
