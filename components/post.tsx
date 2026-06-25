@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { ImageCarousel } from "./ImageCarousel";
 import { Avatar } from "./UserAvatar";
+import { RatingsGrid } from "./post/RatingsGrid";
 
 type PostCardProps = {
   userId: string;
@@ -20,6 +21,12 @@ type PostCardProps = {
   distance?: string;
   liked?: boolean;
   saved?: boolean;
+  ratings?: {
+    food: number | null;
+    service: number | null;
+    environment: number | null;
+    cleanliness: number | null;
+  };
   onLike?: () => void;
   onComment?: () => void;
   onSave?: () => void;
@@ -41,6 +48,7 @@ export function PostCard({
   distance,
   liked,
   saved,
+  ratings,
   onLike,
   onComment,
   onSave,
@@ -92,7 +100,7 @@ export function PostCard({
 
       {/* Location */}
       {location && (
-        <View className="flex-row items-center px-4 pb-3 gap-1.5">
+        <View className="flex-row items-center pt-2 px-4 pb-3 gap-1.5">
           <Ionicons name="location-outline" size={20} color="#FA5A40" />
           <Text className="text-xs text-black">
             {location}
@@ -100,6 +108,9 @@ export function PostCard({
           </Text>
         </View>
       )}
+
+      {/* Ratings */}
+      {ratings && <RatingsGrid {...ratings} />}
 
       {/* Actions */}
       <View className="flex-row justify-end py-2 px-4">
