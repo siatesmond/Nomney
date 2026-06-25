@@ -23,9 +23,14 @@ export async function getPosts() {
         post_image (
             image_url
         ),
+        location_name,
         likes (count),
         comments (count), 
-        saves (count)
+        saves (count),
+        rating_food,
+        rating_service,
+        rating_environment,
+        rating_cleanliness
         `,
     )
     .order("created_at", { ascending: false });
@@ -55,10 +60,17 @@ function mapPost(post) {
         .map((p) => p.categories?.name)
         .filter(Boolean);
     })(),
+    location: post.location_name ?? undefined,
     likes: post.likes?.[0]?.count ?? 0,
     comments: post.comments?.[0]?.count ?? 0,
     saves: post.saves?.[0]?.count ?? 0,
     timeAgo: timeAgo(post.created_at),
+    ratings: {
+      food: post.rating_food ?? null,
+      service: post.rating_service ?? null,
+      environment: post.rating_environment ?? null,
+      cleanliness: post.rating_cleanliness ?? null,
+    },
   };
 }
 
