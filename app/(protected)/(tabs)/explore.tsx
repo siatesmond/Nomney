@@ -46,7 +46,7 @@ const ListHeader = ({
   setSelectedCategory,
 }) => (
   // Page Header
-  <View className="px-2 pt-10 pb-4">
+  <View className="px-4 pt-10 pb-4">
     <View className="flex-row items-center justify-between">
       {/* Text */}
       <View className="w-2/3">
@@ -300,7 +300,7 @@ export default function ExploreScreen() {
     : null;
 
   return (
-    <Screen>
+    <Screen noPadding>
       <ScrollView showsVerticalScrollIndicator={false}>
         <ListHeader
           searchText={searchText}
