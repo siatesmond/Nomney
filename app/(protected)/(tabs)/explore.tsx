@@ -21,6 +21,7 @@ import { getComments } from "@/lib/comments";
 import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
 import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
 
+import Fuse from "fuse.js";
 
 type Post = {
   id: string;
@@ -28,6 +29,7 @@ type Post = {
   caption: string;
   imageUrls: string[];
   categories: string[];
+  location: string;
   likes: number;
   comments: number;
   saves: number;
@@ -83,14 +85,12 @@ const ListHeader = ({
         <TouchableOpacity
           key={category}
           onPress={() => setSelectedCategory(category)}
-          className={`px-4 py-2 rounded-full ${
-            selectedCategory === category ? "bg-[#FA5A40]" : "bg-white"
-          }`}
+          className={`px-4 py-2 rounded-full ${selectedCategory === category ? "bg-[#FA5A40]" : "bg-white"
+            }`}
         >
           <Text
-            className={`text-sm font-semibold ${
-              selectedCategory === category ? "text-white" : "text-gray-600"
-            }`}
+            className={`text-sm font-semibold ${selectedCategory === category ? "text-white" : "text-gray-600"
+              }`}
           >
             {category}
           </Text>
@@ -136,6 +136,34 @@ export default function ExploreScreen() {
     }
     fetchPosts();
   }, []);
+
+  // Fuse Search
+  const fuse = useMemo(() => {
+    return new Fuse(posts, {
+      keys: [
+        { name: 'title', weight: 2 },
+        { name: 'caption', weight: 1 },
+        { name: 'categories', weight: 2 },
+        { name: 'location', weight: 2 },
+        { name: 'username', weight: 1.5 },
+      ],
+      threshold: 0.3, // lower -> tighter matching
+      includeScore: true,
+      useTokenSearch: true, // for multi-word search
+
+    })
+  }, [posts])
+
+  // Filter posts based on search text 
+  const filteredPosts = useMemo(() => {
+    const query = searchText.trim();
+
+    console.log(query);
+
+    if (!query) return posts;
+    return fuse.search(query).map((results) => results.item);
+  }, [fuse, searchText, posts])
+
 
   useEffect(() => {
     async function fetchUserLikesAndSaves() {
@@ -281,14 +309,14 @@ export default function ExploreScreen() {
   // Map post to Image Grid (first image per post)
   const gridItems = useMemo(
     () =>
-      posts
+      filteredPosts
         .filter((post) => post.imageUrls?.[0])
         .map((post) => ({ id: post.id, imageUrl: post.imageUrls[0] })),
-    [posts],
+    [filteredPosts],
   );
 
   const handleClickedGridItem = (postId: string) => {
-    const post = posts.find((p) => p.id === postId);
+    const post = filteredPosts.find((p) => p.id === postId);
     if (post) {
       setActivePost(post); // store clicked post in arr
     }
