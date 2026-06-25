@@ -7,15 +7,15 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Tracks whether the very first claims check has finished.
+  const [authReady, setAuthReady] = useState(false);
+
   useEffect(() => {
     const fetchClaims = async () => {
       const { data, error } = await supabase.auth.getClaims();
-
-      if (error) {
-        console.error("Error fetching claims:", error);
-      }
-
+      if (error) console.error("Error fetching claims:", error);
       setClaims(data?.claims ?? null);
+      setAuthReady(true); // ← initial check done, whatever the result
     };
 
     fetchClaims();
@@ -43,7 +43,8 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     let cancelled = false;
 
     const loadProfile = async () => {
-      setIsLoading(true);
+      // Don't resolve loading until the first claims check is done
+      if (!authReady) return;
 
       if (claims) {
         const { data } = await supabase
@@ -51,7 +52,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
           .select("*")
           .eq("id", claims.sub)
           .single();
-
         if (!cancelled) setProfile(data as Profile | null);
       } else {
         if (!cancelled) setProfile(null);
@@ -65,10 +65,8 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       cancelled = true;
     };
-  }, [claims]);
+  }, [claims, authReady]);
 
-  // Re-fetch the current user's profile on demand (e.g. after editing it).
-  // Does not toggle isLoading, so it won't flash the splash/loading gate.
   const refreshProfile = useCallback(async () => {
     if (!claims?.sub) return;
     const { data, error } = await supabase
@@ -76,7 +74,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       .select("*")
       .eq("id", claims.sub)
       .single();
-
     if (error) {
       console.error("Failed to refresh profile:", error.message);
       return;
