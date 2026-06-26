@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { COLORS } from "@/constants/theme";
 import { LocationData } from "../../constants/new-post";
+import { LocationMapPreview } from "./LocationMapPreview";
 import PhotoGrid from "./PhotoGrid";
 
 interface Props {
@@ -30,6 +31,7 @@ interface Props {
   onPostPress?: () => void;
 }
 
+// The new-post form layout: photos, title, caption, and the tag/rating/location rows.
 export default function NewPostForm(props: Props) {
   return (
     <View className="flex-1 bg-[#F9F9F9]">
@@ -52,21 +54,33 @@ export default function NewPostForm(props: Props) {
         />
 
         <View className="px-5">
-          <TextInput
-            className="text-base font-medium py-5 border-b border-neutral-200 text-neutral-900"
-            placeholder="Add a title..."
-            placeholderTextColor="#999"
-            value={props.title}
-            onChangeText={props.setTitle}
-          />
-          <TextInput
-            className="text-sm py-5 min-h-[80px] border-b border-neutral-200 text-neutral-900"
-            placeholder="Add a caption..."
-            placeholderTextColor="#999"
-            value={props.caption}
-            onChangeText={props.setCaption}
-            multiline
-          />
+          <View className="border-b border-neutral-200">
+            <TextInput
+              className="text-base font-medium pt-5 pb-2 text-neutral-900"
+              placeholder="Add a title..."
+              placeholderTextColor="#999"
+              value={props.title}
+              onChangeText={props.setTitle}
+              maxLength={150}
+            />
+            <Text className="text-xs text-neutral-400 text-right pb-2">
+              {props.title.length}/150
+            </Text>
+          </View>
+          <View className="border-b border-neutral-200">
+            <TextInput
+              className="text-sm pt-5 pb-2 min-h-[80px] text-neutral-900"
+              placeholder="Add a caption..."
+              placeholderTextColor="#999"
+              value={props.caption}
+              onChangeText={props.setCaption}
+              multiline
+              maxLength={4000}
+            />
+            <Text className="text-xs text-neutral-400 text-right pb-2">
+              {props.caption.length}/4000
+            </Text>
+          </View>
 
           {/* Form Rows */}
           <Row
@@ -102,23 +116,10 @@ export default function NewPostForm(props: Props) {
           />
 
           {props.location && (
-            <MapView
+            <LocationMapPreview
+              location={props.location}
               className="h-36 rounded-xl my-3"
-              scrollEnabled={false}
-              region={{
-                latitude: props.location.latitude,
-                longitude: props.location.longitude,
-                latitudeDelta: 0.005,
-                longitudeDelta: 0.005,
-              }}
-            >
-              <Marker
-                coordinate={{
-                  latitude: props.location.latitude,
-                  longitude: props.location.longitude,
-                }}
-              />
-            </MapView>
+            />
           )}
         </View>
       </ScrollView>
@@ -126,7 +127,7 @@ export default function NewPostForm(props: Props) {
       {/* Footer */}
       <View className="p-5 border-t border-neutral-200">
         <TouchableOpacity
-          className="bg-[#F4522A] rounded-xl py-4 items-center"
+          className="bg-accent rounded-xl py-4 items-center"
           onPress={props.onPostPress}
         >
           <Text className="text-white text-base font-semibold">Post</Text>
@@ -141,7 +142,7 @@ const Row = ({ icon, label, isActive, onPress, badge, onClear }: any) => (
     className="flex-row items-center gap-4 py-5 border-b border-neutral-200"
     onPress={onPress}
   >
-    <Ionicons name={icon} size={22} color="#F4522A" />
+    <Ionicons name={icon} size={22} color={COLORS.accent} />
     <Text
       className={`text-sm flex-1 ${isActive ? "text-neutral-900 font-medium" : "text-neutral-400"}`}
       numberOfLines={1}
@@ -149,7 +150,7 @@ const Row = ({ icon, label, isActive, onPress, badge, onClear }: any) => (
       {label}
     </Text>
     {badge && (
-      <View className="bg-[#F4522A] px-2 py-0.5 rounded-full">
+      <View className="bg-accent px-2 py-0.5 rounded-full">
         <Text className="text-white text-[10px] font-bold">{badge}</Text>
       </View>
     )}

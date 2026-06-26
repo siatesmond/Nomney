@@ -1,4 +1,6 @@
+import { Comment } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
+import { useOptimisticToggle } from "@/hooks/useOptimisticToggle";
 import { getComments } from "@/lib/comments";
 import { likePost, unlikePost } from "@/lib/likes";
 import { getPostDetail } from "@/lib/posts";
@@ -6,14 +8,12 @@ import { savePost, unsavePost } from "@/lib/save";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { RefObject, useEffect, useRef, useState } from "react";
 
-export type NewComment = {
-    id: string;
-    content: string;
-    username: string;
-    avatar: string | null;
-    timeAgo: string;
-};
+// Kept as an alias for backwards compatibility; the canonical comment
+// view-model lives in `constants/types.ts`.
+export type NewComment = Comment;
 
+// All the state and actions for the post detail screen: the post itself,
+// like/save toggles, and the comments.
 export function usePostDetail(
     postId: string,
     commentSheetRef: RefObject<BottomSheetModal | null>,
@@ -23,14 +23,24 @@ export function usePostDetail(
     const [postData, setPostData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const [liked, setLiked] = useState(false);
-    const [saved, setSaved] = useState(false);
-    const [likesCount, setLikesCount] = useState(0);
-    const [savesCount, setSavesCount] = useState(0);
+    // Like and save buttons. Start empty; we fill in the real values after the fetch below.
+    const likes = useOptimisticToggle(
+        false,
+        0,
+        () => likePost(postId, profile!.id),
+        () => unlikePost(postId, profile!.id),
+    );
+    const saves = useOptimisticToggle(
+        false,
+        0,
+        () => savePost(postId, profile!.id),
+        () => unsavePost(postId, profile!.id),
+    );
 
     const [commentCount, setCommentCount] = useState(0);
     const [sheetComments, setSheetComments] = useState<NewComment[]>([]);
 
+    // Track if the component is still on screen, so we don't set state after it's gone.
     const isMounted = useRef(true);
     useEffect(() => {
         isMounted.current = true;
@@ -39,6 +49,8 @@ export function usePostDetail(
         };
     }, []);
 
+    // Load the post, then set the like/save counts and whether the current user
+    // already liked/saved it. `cancelled` ignores a stale fetch if postId changes.
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -50,12 +62,12 @@ export function usePostDetail(
                 setPostData(data);
                 setCommentCount((data?.comments || []).length);
 
-                const likes = data?.likes || [];
-                const saves = data?.saves || [];
-                setLikesCount(likes.length);
-                setSavesCount(saves.length);
-                setLiked(likes.some((l: any) => l.user_id === profile?.id));
-                setSaved(saves.some((s: any) => s.user_id === profile?.id));
+                const likeRows = data?.likes || [];
+                const saveRows = data?.saves || [];
+                likes.setCount(likeRows.length);
+                saves.setCount(saveRows.length);
+                likes.setActive(likeRows.some((l: any) => l.user_id === profile?.id));
+                saves.setActive(saveRows.some((s: any) => s.user_id === profile?.id));
             } catch (err) {
                 console.error("Error fetching full post:", err);
             } finally {
@@ -67,34 +79,15 @@ export function usePostDetail(
         };
     }, [postId, profile?.id]);
 
-    const toggleLike = async () => {
+    // Guard against toggling while logged out (matches previous behavior).
+    const toggleLike = () => {
         if (!profile?.id) return;
-        const wasLiked = liked;
-        setLiked(!wasLiked);
-        setLikesCount((c) => (wasLiked ? c - 1 : c + 1));
-        try {
-            if (wasLiked) await unlikePost(postId, profile.id);
-            else await likePost(postId, profile.id);
-        } catch (err) {
-            console.log("Failed to toggle like:", err);
-            setLiked(wasLiked);
-            setLikesCount((c) => (wasLiked ? c + 1 : c - 1));
-        }
+        likes.toggle();
     };
 
-    const toggleSave = async () => {
+    const toggleSave = () => {
         if (!profile?.id) return;
-        const wasSaved = saved;
-        setSaved(!wasSaved);
-        setSavesCount((c) => (wasSaved ? c - 1 : c + 1));
-        try {
-            if (wasSaved) await unsavePost(postId, profile.id);
-            else await savePost(postId, profile.id);
-        } catch (err) {
-            console.log("Failed to toggle save:", err);
-            setSaved(wasSaved);
-            setSavesCount((c) => (wasSaved ? c + 1 : c - 1));
-        }
+        saves.toggle();
     };
 
     const openComments = async () => {
@@ -108,6 +101,8 @@ export function usePostDetail(
         }
     };
 
+    // After someone posts a comment: add it to the open sheet, bump the count,
+    // and also push it into postData so the inline comment list updates too.
     const handleNewComment = (newComment: NewComment) => {
         setSheetComments((prev) => [...prev, newComment]);
         setCommentCount((c) => c + 1);
@@ -135,10 +130,10 @@ export function usePostDetail(
     return {
         postData,
         loading,
-        liked,
-        saved,
-        likesCount,
-        savesCount,
+        liked: likes.active,
+        saved: saves.active,
+        likesCount: likes.count,
+        savesCount: saves.count,
         commentCount,
         sheetComments,
         toggleLike,

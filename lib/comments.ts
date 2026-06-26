@@ -1,5 +1,17 @@
+import { Comment } from "@/constants/types";
 import { supabase } from "./supabase";
 import { timeAgo } from "./utils/timeAgo";
+
+function mapComment(row: any): Comment {
+  const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+  return {
+    id: row.id,
+    content: row.content,
+    username: profile?.username ?? null,
+    avatar: profile?.avatar_url ?? null,
+    timeAgo: timeAgo(row.created_at),
+  };
+}
 
 // Get comments acc to post id
 export async function getComments(postId: string) {
@@ -21,13 +33,7 @@ export async function getComments(postId: string) {
 
   if (error) throw error;
 
-  return data.map((comment) => ({
-    id: comment.id,
-    content: comment.content,
-    username: comment.profiles?.username,
-    avatar: comment.profiles?.avatar_url,
-    timeAgo: timeAgo(comment.created_at),
-  }));
+  return data.map(mapComment);
 }
 
 // Add a comment to post
@@ -58,11 +64,5 @@ export async function addComment(
 
   if (error) throw error;
 
-  return {
-    id: data.id,
-    content: data.content,
-    username: data.profiles?.username,
-    avatar: data.profiles?.avatar_url,
-    timeAgo: timeAgo(data.created_at),
-  };
+  return mapComment(data);
 }

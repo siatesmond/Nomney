@@ -1,3 +1,4 @@
+// Shared bits for the new-post screen: rating categories, location shape, defaults.
 import { Ionicons } from "@expo/vector-icons";
 import { ComponentProps } from "react";
 

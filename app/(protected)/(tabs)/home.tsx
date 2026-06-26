@@ -1,6 +1,6 @@
 import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostCard } from "@/components/post";
-import { Screen } from "@/components/styles/Screen";
+import { Screen } from "@/components/ui/Screen";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useEffect, useRef, useState } from "react";
 import { Image, FlatList, View, Text } from "react-native";

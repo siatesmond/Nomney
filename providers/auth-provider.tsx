@@ -7,7 +7,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Tracks whether the very first claims check has finished.
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
@@ -15,7 +14,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
       const { data, error } = await supabase.auth.getClaims();
       if (error) console.error("Error fetching claims:", error);
       setClaims(data?.claims ?? null);
-      setAuthReady(true); // ← initial check done, whatever the result
+      setAuthReady(true);
     };
 
     fetchClaims();
@@ -27,6 +26,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
 
       if (_event === "SIGNED_OUT") {
         setClaims(null);
+        setProfile(null);
         return;
       }
 
@@ -43,7 +43,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     let cancelled = false;
 
     const loadProfile = async () => {
-      // Don't resolve loading until the first claims check is done
       if (!authReady) return;
 
       if (claims) {

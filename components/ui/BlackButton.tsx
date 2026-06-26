@@ -1,3 +1,4 @@
+// Black pill button used on the login / register screens.
 import { Text, TouchableOpacity, TouchableOpacityProps } from "react-native";
 
 type ButtonProps = TouchableOpacityProps & {

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { ImageCarousel } from "./ImageCarousel";
@@ -54,6 +55,7 @@ export function PostCard({
   onSave,
 }: PostCardProps) {
   const [cardWidth, setCardWidth] = useState(0);
+  const router = useRouter();
 
   return (
     <View
@@ -62,7 +64,12 @@ export function PostCard({
     >
       {/* Header */}
       <View className="px-4 pt-3 pb-2">
-        <View className="flex-row items-center gap-3">
+        <TouchableOpacity
+          className="flex-row items-center gap-3"
+          activeOpacity={0.7}
+          disabled={!userId}
+          onPress={() => router.push(`/user/${userId}`)}
+        >
           <Avatar
             avatarUrl={avatarUrl}
             displayName={username}
@@ -75,7 +82,7 @@ export function PostCard({
             </Text>
             <Text className="text-xs text-gray-500 mt-0.5">{timeAgo}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Title & Caption */}

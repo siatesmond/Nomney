@@ -1,3 +1,4 @@
+// Swipeable photo gallery for the post detail view, with dots at the bottom.
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Dimensions, Image, ScrollView, View } from "react-native";

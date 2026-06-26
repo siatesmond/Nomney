@@ -1,3 +1,5 @@
+// Shows the picked photos in a grid, with an add button and an x to remove each one.
+import { COLORS } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Image,
@@ -50,7 +52,7 @@ export default function PhotoGrid({
           className="rounded-xl border border-neutral-300 border-dashed items-center justify-center bg-neutral-50/50"
           onPress={showOptions}
         >
-          <Ionicons name="add" size={26} color="#F4522A" />
+          <Ionicons name="add" size={26} color={COLORS.accent} />
           <Text className="text-xs text-neutral-400 font-medium mt-0.5">
             Add
           </Text>

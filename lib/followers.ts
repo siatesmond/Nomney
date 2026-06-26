@@ -1,17 +1,9 @@
-import { supabase } from "./supabase";
+import { createJoinTable } from "./joinTable";
 
-export async function followUser(followerId: string, followingId: string) {
-    const { error } = await supabase
-        .from("followers")
-        .insert({ follower_id: followerId, following_id: followingId });
-    if (error) throw error;
-}
+const followers = createJoinTable("followers", "follower_id", "following_id");
 
-export async function unfollowUser(followerId: string, followingId: string) {
-    const { error } = await supabase
-        .from("followers")
-        .delete()
-        .eq("follower_id", followerId)
-        .eq("following_id", followingId);
-    if (error) throw error;
-}
+export const followUser = (followerId: string, followingId: string) =>
+    followers.add(followerId, followingId);
+
+export const unfollowUser = (followerId: string, followingId: string) =>
+    followers.remove(followerId, followingId);

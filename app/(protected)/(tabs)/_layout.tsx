@@ -1,3 +1,4 @@
+import { COLORS } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Tabs } from "expo-router";
 import { ComponentProps } from "react";
@@ -14,7 +15,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#F4522A",
+        tabBarActiveTintColor: COLORS.accent,
         tabBarInactiveTintColor: "#999",
       }}
     >

@@ -1,4 +1,6 @@
+// Bottom sheet for rating food, service, environment and cleanliness (tap stars 1-5).
 import { RATING_CATEGORIES, RatingKey } from "@/constants/new-post";
+import { COLORS } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import { RefObject } from "react";
@@ -33,7 +35,7 @@ export default function RatingsSheet({
 
         {/* Overall Score Banner */}
         <View className="items-center py-3 border-b border-neutral-100 mb-1">
-          <Text className="text-5xl font-bold text-[#F4522A]">
+          <Text className="text-5xl font-bold text-accent">
             {hasRating ? overallRating() : "—"}
           </Text>
           <Text className="text-xs text-neutral-400 mt-1 uppercase tracking-wider">
@@ -48,7 +50,7 @@ export default function RatingsSheet({
             className="flex-row items-center justify-between py-2 border-b border-neutral-100"
           >
             <View className="flex-row items-center gap-2">
-              <Ionicons name={icon} size={18} color="#F4522A" />
+              <Ionicons name={icon} size={18} color={COLORS.accent} />
               <Text className="text-sm font-medium text-neutral-900">
                 {label}
               </Text>
@@ -63,7 +65,7 @@ export default function RatingsSheet({
                   <Ionicons
                     name={star <= ratings[key] ? "star" : "star-outline"}
                     size={26}
-                    color={star <= ratings[key] ? "#F4522A" : "#D1D5DB"}
+                    color={star <= ratings[key] ? COLORS.accent : "#D1D5DB"}
                   />
                 </TouchableOpacity>
               ))}
@@ -73,7 +75,7 @@ export default function RatingsSheet({
 
         {/* Confirmation Button */}
         <TouchableOpacity
-          className="bg-[#F4522A] rounded-xl py-4 items-center mt-2"
+          className="bg-accent rounded-xl py-4 items-center mt-2"
           onPress={() => sheetRef.current?.close()}
         >
           <Text className="text-white text-base font-semibold">Done</Text>

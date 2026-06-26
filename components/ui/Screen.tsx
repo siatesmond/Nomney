@@ -1,3 +1,4 @@
+// Basic page wrapper with the app background and default padding.
 import { ReactNode } from "react";
 import { View } from "react-native";
 

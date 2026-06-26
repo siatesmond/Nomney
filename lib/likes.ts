@@ -1,33 +1,15 @@
-import { supabase } from "./supabase";
+import { createJoinTable } from "./joinTable";
+
+const likes = createJoinTable("likes", "post_id", "user_id");
 
 // Like post
-export async function likePost(postId: string, userId: string) {
-  const { error } = await supabase
-    .from("likes")
-    .insert({ post_id: postId, user_id: userId });
-
-  if (error) throw error;
-}
+export const likePost = (postId: string, userId: string) =>
+  likes.add(postId, userId);
 
 // Unlike post
-export async function unlikePost(postId: string, userId: string) {
-  const { error } = await supabase
-    .from("likes")
-    .delete()
-    .eq("post_id", postId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
-}
+export const unlikePost = (postId: string, userId: string) =>
+  likes.remove(postId, userId);
 
 // Get all post ids the current user has already liked
-export async function getUserLikedPostIds(userId: string): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("likes")
-    .select("post_id")
-    .eq("user_id", userId);
-
-  if (error) throw error;
-
-  return (data ?? []).map((row) => row.post_id);
-}
+export const getUserLikedPostIds = (userId: string): Promise<string[]> =>
+  likes.listColumn("post_id", "user_id", userId);

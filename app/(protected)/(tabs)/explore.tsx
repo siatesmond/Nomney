@@ -1,7 +1,7 @@
 import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostCard } from "@/components/post";
 import { ImageGrid } from "@/components/profile/ImageGrid";
-import { Screen } from "@/components/styles/Screen";
+import { Screen } from "@/components/ui/Screen";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -91,7 +91,7 @@ const ListHeader = ({
           <TouchableOpacity
             key={category.id}
             onPress={() => toggleCategory(category.name)}
-            className={`px-4 py-2 rounded-full ${selected ? "bg-[#FA5A40]" : "bg-white"
+            className={`px-4 py-2 rounded-full ${selected ? "bg-accent" : "bg-white"
               }`}
           >
             <Text

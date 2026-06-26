@@ -1,3 +1,4 @@
+// Bottom sheet to set a location: search for a place or use your current GPS spot.
 import { Ionicons } from "@expo/vector-icons";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { RefObject } from "react";
@@ -8,8 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { COLORS } from "@/constants/theme";
 import { LocationData } from "../../constants/new-post";
+import { LocationMapPreview } from "./LocationMapPreview";
 
 interface LocationSheetProps {
   sheetRef: RefObject<BottomSheet>;
@@ -84,7 +86,7 @@ export default function LocationSheet({
             </View>
 
             <TouchableOpacity
-              className="bg-[#F4522A] rounded-lg h-12 px-4 items-center justify-center"
+              className="bg-accent rounded-lg h-12 px-4 items-center justify-center"
               onPress={() => searchLocation(locationSearch)}
             >
               {searchLoading ? (
@@ -97,15 +99,15 @@ export default function LocationSheet({
 
           {/* GPS Trigger */}
           <TouchableOpacity
-            className="flex-row items-center gap-2 h-12 px-3 border border-[#F4522A] rounded-lg"
+            className="flex-row items-center gap-2 h-12 px-3 border border-accent rounded-lg"
             onPress={useCurrentLocation}
           >
             {gpsLoading ? (
-              <ActivityIndicator color="#F4522A" size="small" />
+              <ActivityIndicator color={COLORS.accent} size="small" />
             ) : (
-              <Ionicons name="navigate" size={16} color="#F4522A" />
+              <Ionicons name="navigate" size={16} color={COLORS.accent} />
             )}
-            <Text className="text-sm text-[#F4522A] font-medium">
+            <Text className="text-sm text-accent font-medium">
               Use my current location
             </Text>
           </TouchableOpacity>
@@ -120,7 +122,7 @@ export default function LocationSheet({
               <Ionicons
                 name="location-outline"
                 size={16}
-                color="#F4522A"
+                color={COLORS.accent}
                 className="mt-0.5"
               />
               <View className="flex-1">
@@ -157,25 +159,11 @@ export default function LocationSheet({
                 </Text>
               )}
 
-              <MapView
-                style={{ height: 200, width: "100%" }}
+              <LocationMapPreview
+                location={location}
                 className="rounded-xl mt-1"
-                scrollEnabled={false}
-                zoomEnabled={false}
-                region={{
-                  latitude: location.latitude,
-                  longitude: location.longitude,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005,
-                }}
-              >
-                <Marker
-                  coordinate={{
-                    latitude: location.latitude,
-                    longitude: location.longitude,
-                  }}
-                />
-              </MapView>
+                style={{ height: 200, width: "100%" }}
+              />
             </View>
           )}
         </BottomSheetScrollView>
@@ -183,7 +171,7 @@ export default function LocationSheet({
         {/* Footer Action */}
         <View className="p-5 border-t border-neutral-200 bg-white">
           <TouchableOpacity
-            className={`rounded-xl py-4 items-center ${!location ? "bg-neutral-200" : "bg-[#F4522A]"}`}
+            className={`rounded-xl py-4 items-center ${!location ? "bg-neutral-200" : "bg-accent"}`}
             onPress={() => location && sheetRef.current?.close()}
             disabled={!location}
           >

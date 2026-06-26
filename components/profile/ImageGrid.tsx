@@ -1,3 +1,4 @@
+// 3-column grid of post thumbnails. Tap one to open it.
 import { ImageGridItem } from '@/constants/types';
 import { Dimensions, Image, TouchableOpacity, View } from 'react-native';
 

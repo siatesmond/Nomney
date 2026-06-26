@@ -1,6 +1,9 @@
+// The Posts / Saved toggle on a profile.
 import { Text, TouchableOpacity, View } from "react-native";
 
-const ACCENT = "#F4522A";
+import { COLORS } from "@/constants/theme";
+
+const ACCENT = COLORS.accent;
 
 type Tab = "Posts" | "Saved";
 
@@ -19,7 +22,7 @@ export function ProfileTabs({ activeTab, onTabChange }: ProfileTabsProps) {
         return (
           <TouchableOpacity
             key={tab}
-            className={`flex-1 py-2 rounded-[20px] items-center ${isActive ? "bg-[#F4522A]" : ""
+            className={`flex-1 py-2 rounded-[20px] items-center ${isActive ? "bg-accent" : ""
               }`}
             style={
               isActive

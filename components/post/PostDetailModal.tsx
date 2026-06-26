@@ -1,14 +1,19 @@
+// Full post view: photos, ratings, caption, likes and comments.
+import { Avatar } from "@/components/UserAvatar";
 import { CommentSheet } from "@/components/comments/CommentSheet";
 import { DetailImageCarousel } from "@/components/post/DetailImageCarousel";
+import { PostActions } from "@/components/post/PostActions";
 import { PostHeaderOverlay } from "@/components/post/PostHeaderOverlay";
 import { RatingRing } from "@/components/post/RatingRing";
 import { RatingsGrid } from "@/components/post/RatingsGrid";
+import { Tag } from "@/components/ui/Tag";
+import { COLORS } from "@/constants/theme";
 import { usePostDetail } from "@/hooks/usePostDetail";
-import { Ionicons } from "@expo/vector-icons";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
 } from "@gorhom/bottom-sheet";
+import { useRouter } from "expo-router";
 import { useRef } from "react";
 import {
   ActivityIndicator,
@@ -25,15 +30,8 @@ interface PostDetailModalProps {
   onClose: () => void;
 }
 
-const COLORS = {
-  ink: "#1C1917",
-  paper: "#FAF7F2",
-  line: "#E9E2D6",
-  accent: "#F4522A",
-  muted: "#8A8378",
-};
-
 export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
+  const router = useRouter();
   const commentSheetRef = useRef<BottomSheetModal>(null);
   const {
     postData,
@@ -81,6 +79,14 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
     .map((item: any) => item.categories)
     .filter((c: any) => c?.name);
 
+  const authorId = postData.profiles?.id ?? null;
+
+  const goToAuthorProfile = () => {
+    if (!authorId) return;
+    onClose();
+    router.push(`/user/${authorId}`);
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
@@ -98,6 +104,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                 username={postData.profiles?.username ?? null}
                 locationName={postData.location_name ?? null}
                 onClose={onClose}
+                onPressProfile={authorId ? goToAuthorProfile : undefined}
               />
             </View>
 
@@ -150,49 +157,19 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
 
               {/* Action row */}
               <View
-                className="flex-row justify-end px-5 mt-2 pb-4"
+                className="px-5 mt-2 pb-4"
                 style={{ borderBottomWidth: 1, borderColor: COLORS.line }}
               >
-                <TouchableOpacity
-                  className="flex-row items-center gap-1.5 py-2 px-3 mr-2"
-                  onPress={toggleLike}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={liked ? "heart" : "heart-outline"}
-                    size={20}
-                    color={liked ? "#F4522A" : "#999"}
-                  />
-                  <Text className="text-xs text-gray-500 font-semibold">
-                    {likesCount}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className="flex-row items-center gap-1.5 py-2 px-3 mr-2"
-                  onPress={openComments}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="chatbubble-outline" size={20} color="#999" />
-                  <Text className="text-xs text-gray-500 font-semibold">
-                    {commentCount}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  className="flex-row items-center gap-1.5 py-2 px-3"
-                  onPress={toggleSave}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={saved ? "bookmark" : "bookmark-outline"}
-                    size={20}
-                    color={saved ? "#F4522A" : "#999"}
-                  />
-                  <Text className="text-xs text-gray-500 font-semibold">
-                    {savesCount}
-                  </Text>
-                </TouchableOpacity>
+                <PostActions
+                  liked={liked}
+                  saved={saved}
+                  likes={likesCount}
+                  comments={commentCount}
+                  saves={savesCount}
+                  onLike={toggleLike}
+                  onComment={openComments}
+                  onSave={toggleSave}
+                />
               </View>
 
               {/* Ratings breakdown */}
@@ -210,14 +187,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                   style={{ borderBottomWidth: 1, borderColor: COLORS.line }}
                 >
                   {tags.map((category: any, index: number) => (
-                    <View
-                      key={index}
-                      className="bg-[#FFE9E8] px-3 py-1.5 rounded-full"
-                    >
-                      <Text className="text-xs text-[#FA5A40] font-semibold">
-                        {category.name}
-                      </Text>
-                    </View>
+                    <Tag key={index} label={category.name} />
                   ))}
                 </View>
               )}
@@ -232,11 +202,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                     {likesArray.slice(0, 3).map((like: any, idx: number) => (
                       <Image
                         key={idx}
-                        source={{
-                          uri:
-                            like.profiles?.avatar_url ||
-                            "https://via.placeholder.com/150",
-                        }}
+                        source={{ uri: like.profiles?.avatar_url || undefined }}
                         className="w-6 h-6 rounded-full bg-slate-200"
                         style={{
                           marginLeft: -8,
@@ -310,13 +276,11 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                           borderColor: COLORS.line,
                         }}
                       >
-                        <Image
-                          source={{
-                            uri:
-                              comment.profiles?.avatar_url ||
-                              "https://via.placeholder.com/150",
-                          }}
-                          className="w-8 h-8 rounded-full bg-slate-200"
+                        <Avatar
+                          avatarUrl={comment.profiles?.avatar_url ?? null}
+                          displayName={comment.profiles?.username || "user"}
+                          size="xs"
+                          shadow={false}
                         />
                         <View className="flex-1" style={{ marginLeft: 12 }}>
                           <View className="flex-row items-baseline justify-between">

@@ -1,3 +1,4 @@
+// Bottom sheet to pick tags/categories. You can search the list or add a new one.
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { RefObject, useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -77,12 +78,12 @@ export default function TagsSheet({
                 <TouchableOpacity
                   key={tag}
                   onPress={() => toggleTag(tag)}
-                  className="flex-row items-center bg-[#FFF3F0] border border-[#FDCBC0] px-3 py-1 rounded-full"
+                  className="flex-row items-center bg-accent-tint border border-accent-border px-3 py-1 rounded-full"
                 >
-                  <Text className="text-xs text-[#F4522A] font-medium mr-1.5">
+                  <Text className="text-xs text-accent font-medium mr-1.5">
                     {tag}
                   </Text>
-                  <Text className="text-[10px] text-[#F4522A] font-bold">
+                  <Text className="text-[10px] text-accent font-bold">
                     ✕
                   </Text>
                 </TouchableOpacity>
@@ -135,7 +136,7 @@ export default function TagsSheet({
         </BottomSheetScrollView>
 
         <TouchableOpacity
-          className="bg-[#F4522A] rounded-xl py-4 items-center"
+          className="bg-accent rounded-xl py-4 items-center"
           onPress={() => sheetRef.current?.close()}
         >
           <Text className="text-white font-semibold">Done</Text>
@@ -156,7 +157,7 @@ const Section = ({ title, tags, selected, onToggle }: any) => (
         <TouchableOpacity
           key={tag}
           onPress={() => onToggle(tag)}
-          className={`px-4 py-2 rounded-full border ${selected.includes(tag) ? "bg-[#F4522A] border-[#F4522A]" : "border-neutral-200"}`}
+          className={`px-4 py-2 rounded-full border ${selected.includes(tag) ? "bg-accent border-accent" : "border-neutral-200"}`}
         >
           <Text
             className={`text-xs ${selected.includes(tag) ? "text-white" : "text-neutral-700"}`}
@@ -169,7 +170,7 @@ const Section = ({ title, tags, selected, onToggle }: any) => (
   </View>
 );
 
-const CreateBtn = ({ label, onPress, color = "bg-[#F4522A]" }: any) => (
+const CreateBtn = ({ label, onPress, color = "bg-accent" }: any) => (
   <TouchableOpacity
     onPress={onPress}
     className={`flex-1 ${color} py-2 rounded-lg items-center`}

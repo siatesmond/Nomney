@@ -1,30 +1,44 @@
+// The bar floating over the post photo: avatar + name (tap to open profile),
+// optional location, and a close button.
 import { Ionicons } from "@expo/vector-icons";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
+
+import { Avatar } from "@/components/UserAvatar";
+import { ScrimIconButton } from "@/components/ui/ScrimIconButton";
+import { SCRIM } from "@/constants/theme";
 
 export function PostHeaderOverlay({
     avatarUrl,
     username,
     locationName,
     onClose,
+    onPressProfile,
 }: {
     avatarUrl: string | null;
     username: string | null;
     locationName: string | null;
     onClose: () => void;
+    onPressProfile?: () => void;
 }) {
+    const displayName = username || "food_reviewer";
     return (
         <View className="absolute top-12 left-3 right-3 flex-row items-center justify-between">
-            <View
+            <TouchableOpacity
                 className="flex-row items-center px-2.5 py-1.5 rounded-full"
-                style={{ backgroundColor: "rgba(28,25,23,0.55)" }}
+                style={{ backgroundColor: SCRIM }}
+                activeOpacity={0.7}
+                disabled={!onPressProfile}
+                onPress={onPressProfile}
             >
-                <Image
-                    source={{ uri: avatarUrl || "https://via.placeholder.com/150" }}
-                    className="w-7 h-7 rounded-full bg-slate-200"
+                <Avatar
+                    avatarUrl={avatarUrl}
+                    displayName={displayName}
+                    size="xs"
+                    shadow={false}
                 />
                 <View style={{ marginLeft: 8 }}>
                     <Text className="text-white text-xs font-bold" numberOfLines={1}>
-                        {username || "food_reviewer"}
+                        {displayName}
                     </Text>
                     {locationName && (
                         <View className="flex-row items-center">
@@ -39,16 +53,9 @@ export function PostHeaderOverlay({
                         </View>
                     )}
                 </View>
-            </View>
-
-            <TouchableOpacity
-                onPress={onClose}
-                className="w-8 h-8 rounded-full items-center justify-center"
-                style={{ backgroundColor: "rgba(28,25,23,0.55)" }}
-                activeOpacity={0.7}
-            >
-                <Ionicons name="close" size={17} color="#fff" />
             </TouchableOpacity>
+
+            <ScrimIconButton icon="close" onPress={onClose} />
         </View>
     );
 }

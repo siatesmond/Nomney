@@ -1,3 +1,4 @@
+// Turns a date into a short label like "5s", "3m", "2h", "4d", "1w".
 export function timeAgo(date: string) {
   // diff between current and given time in secs
   const seconds = Math.floor(

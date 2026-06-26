@@ -6,7 +6,21 @@ module.exports = {
   ],
   presets: [require("nativewind/preset")],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        accent: {
+          DEFAULT: "#F4522A",
+          soft: "#FFE9E8",
+          tint: "#FFF3F0",
+          border: "#FDCBC0",
+        },
+        ink: "#1C1917",
+        paper: "#FAF7F2",
+        line: "#E9E2D6",
+        muted: "#8A8378",
+        gold: "#E8A23D",
+      },
+    },
   },
   plugins: [],
 };

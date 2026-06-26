@@ -1,4 +1,5 @@
 import { Avatar } from "@/components/UserAvatar";
+import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { useAvatarPicker } from "@/hooks/useAvatarPicker";
 import {
@@ -21,6 +22,7 @@ import {
     View,
 } from "react-native";
 
+// Form to edit your profile: username, name, bio and photo.
 export default function EditProfileScreen() {
     const router = useRouter();
     const { profile, claims, refreshProfile } = useAuthContext();
@@ -107,7 +109,7 @@ export default function EditProfileScreen() {
                 </Text>
                 <TouchableOpacity onPress={handleSave} disabled={!canSave}>
                     <Text
-                        className={`text-base font-semibold ${canSave ? "text-[#F4522A]" : "text-neutral-300"
+                        className={`text-base font-semibold ${canSave ? "text-accent" : "text-neutral-300"
                             }`}
                     >
                         Save
@@ -174,7 +176,7 @@ export default function EditProfileScreen() {
 
             {saving && (
                 <View className="absolute inset-0 bg-black/30 justify-center items-center">
-                    <ActivityIndicator size="large" color="#F4522A" />
+                    <ActivityIndicator size="large" color={COLORS.accent} />
                 </View>
             )}
         </View>
@@ -193,7 +195,7 @@ const AvatarPicker = ({
     <View className="items-center py-6">
         <Avatar avatarUrl={avatarUrl} displayName={displayName} size="lg" shadow />
         <TouchableOpacity onPress={onPress} className="mt-3">
-            <Text className="text-sm font-semibold text-[#F4522A]">Change Photo</Text>
+            <Text className="text-sm font-semibold text-accent">Change Photo</Text>
         </TouchableOpacity>
     </View>
 );

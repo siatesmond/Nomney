@@ -2,9 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text } from "react-native";
-import { Button } from "../../components/styles/BlackButton";
-import { InputWithIcon } from "../../components/styles/InputWithIcon";
-import { Screen } from "../../components/styles/Screen";
+import { Button } from "../../components/ui/BlackButton";
+import { InputWithIcon } from "../../components/ui/InputWithIcon";
+import { Screen } from "../../components/ui/Screen";
 import { supabase } from "../../lib/supabase";
 
 export default function Login() {

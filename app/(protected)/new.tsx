@@ -9,13 +9,15 @@ import RatingsSheet from "@/components/new-post/RatingsSheet";
 import TagsSheet from "@/components/new-post/TagsSheet";
 
 import { DEFAULT_RATINGS, RatingKey } from "@/constants/new-post";
+import { COLORS } from "@/constants/theme";
 import { useCategories } from "@/hooks/useCategories";
 import { useNewPostImages } from "@/hooks/useNewPostImages";
 import { useNewPostLocation } from "@/hooks/useNewPostLocation";
 import { incrementCategoryUsage, resolveTagsToCategoryIds } from "@/lib/categories";
+import { createNewPost } from "@/lib/posts";
 import { supabase } from "@/lib/supabase";
-import { createNewPost } from "@/services/postService";
 
+// New post screen. Holds all the form state and saves the post when you tap Post.
 export default function NewPostScreen() {
   const router = useRouter();
 
@@ -60,14 +62,7 @@ export default function NewPostScreen() {
     }
   };
 
-  const handlePostSubmission = async () => {
-    if (!images.length) {
-      return Alert.alert(
-        "Missing Photos",
-        "Please select or snap at least one photo for your post.",
-      );
-    }
-
+  const submitPost = async () => {
     setLoading(true);
     try {
       const {
@@ -97,7 +92,7 @@ export default function NewPostScreen() {
 
       await incrementCategoryUsage(resolvedCategoryIds);
 
-      Alert.alert("Success 🎉", "Your culinary memory has been saved!", [
+      Alert.alert("Post Created!!!", "Your memory has been created!!!!", [
         { text: "Awesome", onPress: () => router.replace("/home") },
       ]);
     } catch (error: any) {
@@ -108,6 +103,43 @@ export default function NewPostScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePostSubmission = () => {
+    // Required
+    if (!images.length) {
+      return Alert.alert(
+        "Missing Photos",
+        "Please select or snap at least one photo for your post.",
+      );
+    }
+
+    // Optional-but-nudged
+    const missing: string[] = [];
+    if (!title.trim()) missing.push("a title");
+    if (!hasRating) missing.push("a rating (it will be saved as 0)");
+    if (!selectedTags.length) missing.push("a category or tag");
+    if (!location) missing.push("a location");
+
+    if (missing.length > 0) {
+      const list =
+        missing.length === 1
+          ? missing[0]
+          : missing.slice(0, -1).join(", ") +
+          " and " +
+          missing[missing.length - 1];
+
+      return Alert.alert(
+        "Almost there!!",
+        `You haven't added ${list}. Post anyway?`,
+        [
+          { text: "Go back", style: "cancel" },
+          { text: "Post anyway", onPress: submitPost },
+        ],
+      );
+    }
+
+    submitPost();
   };
 
   return (
@@ -135,7 +167,7 @@ export default function NewPostScreen() {
 
       {loading && (
         <View className="absolute inset-0 bg-black/30 justify-center items-center z-[999]">
-          <ActivityIndicator size="large" color="#F4522A" />
+          <ActivityIndicator size="large" color={COLORS.accent} />
         </View>
       )}
 

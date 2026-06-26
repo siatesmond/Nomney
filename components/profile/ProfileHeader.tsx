@@ -1,3 +1,4 @@
+// Top of a profile: avatar, name, bio, follower counts, and the follow or edit button.
 import SignOutButton from "@/components/social-auth-buttons/sign-out-button";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Avatar } from "../UserAvatar";
@@ -6,6 +7,7 @@ type ProfileHeaderProps = {
   avatarUrl: string | null;
   displayName: string;
   username: string | null;
+  bio: string | null;
   isOwnProfile: boolean;
   onEditPress: () => void;
   onFollowPress: () => void;
@@ -18,6 +20,7 @@ export function ProfileHeader({
   avatarUrl,
   displayName,
   username,
+  bio,
   isOwnProfile,
   onEditPress,
   onFollowPress,
@@ -26,6 +29,12 @@ export function ProfileHeader({
   followingCount,
 }: ProfileHeaderProps) {
   const showUnfollowStyle = !isOwnProfile && isFollowing;
+
+  const bioText = bio?.trim()
+    ? bio
+    : isOwnProfile
+      ? "Add a bio to tell people about your taste. ✍️"
+      : "This person prefers to let the food do the talking. 🍜";
 
   return (
     <View className="items-center pt-7 px-6 pb-5">
@@ -42,8 +51,16 @@ export function ProfileHeader({
         {displayName}
       </Text>
       {username && (
-        <Text className="text-[13px] text-[#999] mb-4">@{username}</Text>
+        <Text className="text-[13px] text-[#999] mb-2">@{username}</Text>
       )}
+
+      {/* Bio */}
+      <Text
+        className={`text-[13px] text-center leading-5 mb-4 max-w-[280px] ${bio?.trim() ? "text-[#444]" : "text-[#AAA] italic"
+          }`}
+      >
+        {bioText}
+      </Text>
 
       {/* Instagram-Style Stats Row */}
       <View className="flex-row justify-center gap-10 mb-5">
@@ -63,7 +80,7 @@ export function ProfileHeader({
 
       {/* Conditional Rendering based on isOwnProfile */}
       <TouchableOpacity
-        className={`px-9 py-2.5 rounded-3xl ${showUnfollowStyle ? "bg-[#EEE]" : "bg-[#F4522A]"
+        className={`px-9 py-2.5 rounded-3xl ${showUnfollowStyle ? "bg-[#EEE]" : "bg-accent"
           }`}
         style={{ elevation: showUnfollowStyle ? 0 : 4 }}
         activeOpacity={0.85}

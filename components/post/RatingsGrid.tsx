@@ -1,10 +1,13 @@
+// 2x2 grid showing the food / service / environment / cleanliness star ratings.
 import { Ionicons } from "@expo/vector-icons";
 import { ComponentProps } from "react";
 import { Text, View } from "react-native";
 
-const LINE = "#E9E2D6";
-const GOLD = "#E8A23D";
-const MUTED = "#8A8378";
+import { COLORS } from "@/constants/theme";
+
+const LINE = COLORS.line;
+const GOLD = COLORS.gold;
+const MUTED = COLORS.muted;
 
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 

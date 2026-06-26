@@ -1,5 +1,7 @@
 import { Image, Text, View, StyleSheet } from 'react-native';
 
+import { COLORS } from '@/constants/theme';
+
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 type AvatarProps = {
@@ -46,27 +48,27 @@ export function Avatar({
 const SIZES = {
   xs: {
     wrapper: { width: 32, height: 32, borderRadius: 16 },
-    fallback: { backgroundColor: '#F4522A' },
+    fallback: { backgroundColor: COLORS.accent },
     text: { fontSize: 12, fontWeight: '700' as const },
   },
   sm: {
     wrapper: { width: 48, height: 48, borderRadius: 24 },
-    fallback: { backgroundColor: '#F4522A' },
+    fallback: { backgroundColor: COLORS.accent },
     text: { fontSize: 18, fontWeight: '700' as const },
   },
   md: {
     wrapper: { width: 64, height: 64, borderRadius: 32 },
-    fallback: { backgroundColor: '#F4522A' },
+    fallback: { backgroundColor: COLORS.accent },
     text: { fontSize: 24, fontWeight: '700' as const },
   },
   lg: {
     wrapper: { width: 96, height: 96, borderRadius: 48 },
-    fallback: { backgroundColor: '#F4522A' },
+    fallback: { backgroundColor: COLORS.accent },
     text: { fontSize: 36, fontWeight: '700' as const },
   },
   xl: {
     wrapper: { width: 128, height: 128, borderRadius: 64 },
-    fallback: { backgroundColor: '#F4522A' },
+    fallback: { backgroundColor: COLORS.accent },
     text: { fontSize: 48, fontWeight: '700' as const },
   },
 };

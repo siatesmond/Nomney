@@ -1,33 +1,15 @@
-import { supabase } from "./supabase";
+import { createJoinTable } from "./joinTable";
+
+const saves = createJoinTable("saves", "post_id", "user_id");
 
 // Save post
-export async function savePost(postId: string, userId: string) {
-  const { error } = await supabase
-    .from("saves")
-    .insert({ post_id: postId, user_id: userId });
-
-  if (error) throw error;
-}
+export const savePost = (postId: string, userId: string) =>
+  saves.add(postId, userId);
 
 // Unsave post
-export async function unsavePost(postId: string, userId: string) {
-  const { error } = await supabase
-    .from("saves")
-    .delete()
-    .eq("post_id", postId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
-}
+export const unsavePost = (postId: string, userId: string) =>
+  saves.remove(postId, userId);
 
 // Get all post ids the current user has already saved
-export async function getUserSavedPostIds(userId: string): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("saves")
-    .select("post_id")
-    .eq("user_id", userId);
-
-  if (error) throw error;
-
-  return (data ?? []).map((row) => row.post_id);
-}
+export const getUserSavedPostIds = (userId: string): Promise<string[]> =>
+  saves.listColumn("post_id", "user_id", userId);

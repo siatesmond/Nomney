@@ -1,3 +1,5 @@
+// Light/dark colors for the Themed text/view components (Expo default).
+// App brand colors live in theme.ts, not here.
 const tintColorLight = "#2f95dc";
 const tintColorDark = "#fff";
 

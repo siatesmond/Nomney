@@ -1,5 +1,5 @@
 import { ImageGridItem } from "@/constants/types";
-import { Profile } from "@/hooks/use-auth-context";
+import { Profile } from "@/constants/types";
 import { supabase } from "./supabase";
 
 const AVATAR_BUCKET = "avatars";

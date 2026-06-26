@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Text } from "react-native";
-import { Screen } from "../../components/styles/Screen";
-import { InputWithIcon } from "../../components/styles/InputWithIcon";
-import { Button } from "../../components/styles/BlackButton";
+import { Screen } from "../../components/ui/Screen";
+import { InputWithIcon } from "../../components/ui/InputWithIcon";
+import { Button } from "../../components/ui/BlackButton";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";

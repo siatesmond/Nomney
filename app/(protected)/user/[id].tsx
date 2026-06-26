@@ -1,16 +1,21 @@
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { UserProfile } from "@/components/profile/UserProfile";
+import { ScrimIconButton } from "@/components/ui/ScrimIconButton";
 import { ImageGridItem } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getSavedPostImages, getUserPostImages } from "@/lib/profile";
-import { useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Modal } from "react-native";
+import { Modal, View } from "react-native";
 
-// Your own profile tab. Loads your posts + saved posts and shows them.
-export default function ProfileScreen() {
+// Someone else's profile. Opens when you tap a name or avatar on a post.
+// If the id is your own, it just shows your profile instead.
+export default function UserProfileScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuthContext();
+
+  const isOwnProfile = !!profile?.id && profile.id === id;
 
   const [userPosts, setUserPosts] = useState<ImageGridItem[]>([]);
   const [savedPosts, setSavedPosts] = useState<ImageGridItem[]>([]);
@@ -18,15 +23,15 @@ export default function ProfileScreen() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!id) return;
 
     let cancelled = false;
     (async () => {
       try {
         setLoadingPosts(true);
         const [posts, saved] = await Promise.all([
-          getUserPostImages(profile.id),
-          getSavedPostImages(profile.id),
+          getUserPostImages(id),
+          getSavedPostImages(id),
         ]);
         if (cancelled) return;
         setUserPosts(posts);
@@ -41,20 +46,30 @@ export default function ProfileScreen() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.id]);
+  }, [id]);
 
-  if (!profile) return null;
+  if (!id) return null;
 
   return (
-    <>
+    <View className="flex-1 bg-[#F9F9F9]">
+      <Stack.Screen options={{ headerShown: false }} />
+
       <UserProfile
-        userId={profile.id}
-        isOwnProfile={true}
+        userId={id}
+        isOwnProfile={isOwnProfile}
         onEdit={() => router.push("/edit-profile")}
         postImages={userPosts}
         savedImages={savedPosts}
         isLoadingPosts={loadingPosts}
         onPostClick={(postId) => setSelectedPostId(postId)}
+      />
+
+      {/* Floating back button */}
+      <ScrimIconButton
+        icon="chevron-back"
+        size={20}
+        onPress={() => router.back()}
+        className="absolute top-14 left-4 w-9 h-9"
       />
 
       <Modal
@@ -70,6 +85,6 @@ export default function ProfileScreen() {
           />
         )}
       </Modal>
-    </>
+    </View>
   );
 }

@@ -1,3 +1,4 @@
+import { Category } from "@/constants/types";
 import { supabase } from "./supabase";
 
 // Resolves tag names into category IDs, creating any that don't exist yet.
@@ -50,12 +51,7 @@ export async function incrementCategoryUsage(
     if (error) throw error;
 }
 
-export type Category = {
-    id: string;
-    name: string;
-}
-
-export async function getCategories(limit?: number) {
+export async function getCategories(limit?: number): Promise<Category[]> {
     let query = supabase
         .from("categories")
         .select("id, name, usage_count")

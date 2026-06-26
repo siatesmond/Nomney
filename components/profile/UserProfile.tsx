@@ -1,4 +1,7 @@
+// Shared profile layout, used for both your own profile and other people's.
+// Loads the profile + follower stats and handles follow/unfollow.
 import { ImageGridItem } from "@/constants/types";
+import { COLORS } from "@/constants/theme";
 import { Profile, useAuthContext } from "@/hooks/use-auth-context";
 import { followUser, unfollowUser } from "@/lib/followers";
 import { getProfileWithStats, resolveAvatarUrl } from "@/lib/profile";
@@ -20,7 +23,7 @@ type UserProfileProps = {
   onPostClick?: (postId: string) => void;
 };
 
-const ACCENT = "#F4522A";
+const ACCENT = COLORS.accent;
 
 export function UserProfile({
   userId,
@@ -131,6 +134,7 @@ export function UserProfile({
           avatarUrl={avatarUrl}
           displayName={displayName}
           username={profile.username}
+          bio={profile.bio}
           isOwnProfile={isOwnProfile}
           onEditPress={onEdit}
           onFollowPress={handleFollowToggle}

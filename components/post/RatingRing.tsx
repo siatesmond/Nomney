@@ -1,9 +1,12 @@
+// Round badge showing the overall rating, or "N/A" if there's no rating.
 import { Text, View } from "react-native";
 
-const ACCENT = "#F4522A";
-const ACCENT_SOFT = "#FFEDE5";
-const LINE = "#E9E2D6";
-const MUTED = "#8A8378";
+import { COLORS } from "@/constants/theme";
+
+const ACCENT = COLORS.accent;
+const ACCENT_SOFT = COLORS.accentSoft;
+const LINE = COLORS.line;
+const MUTED = COLORS.muted;
 
 export function RatingRing({
     rating,

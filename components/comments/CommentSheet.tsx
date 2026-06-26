@@ -6,19 +6,14 @@ import {
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useState } from "react";
-import { Image, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Avatar } from "@/components/UserAvatar";
+import { COLORS } from "@/constants/theme";
+import { Comment } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { addComment } from "@/lib/comments";
-
-type Comment = {
-  id: string;
-  content: string;
-  username: string;
-  avatar: string | null;
-  timeAgo: string;
-};
 
 type CommentSheetProps = {
   comments: Comment[];
@@ -31,7 +26,7 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
 >(({ comments, postId, onNewCommentAdded }, ref) => {
   const snapPoints = useMemo(() => ["60%"], []);
   const insets = useSafeAreaInsets();
-  const [inputValue, setInputValue] = useState(""); // input comment
+  const [inputValue, setInputValue] = useState("");
 
   const { profile } = useAuthContext();
 
@@ -39,7 +34,7 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
     if (!inputValue.trim() || !postId || !profile?.id) return;
     try {
       const newComment = await addComment(postId, profile.id, inputValue);
-      onNewCommentAdded(newComment); // update UI with newly added comment
+      onNewCommentAdded(newComment);
 
       console.log("New comment:", JSON.stringify(newComment, null, 2));
       setInputValue("");
@@ -58,10 +53,14 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
     return (
       <View className="mb-3">
         <View className="flex-row items-start">
-          <Image
-            source={{ uri: item.avatar ?? undefined }}
-            className="w-9 h-9 rounded-full mr-2.5 bg-gray-200"
-          />
+          <View className="mr-2.5">
+            <Avatar
+              avatarUrl={item.avatar}
+              displayName={item.username || "user"}
+              size="xs"
+              shadow={false}
+            />
+          </View>
           <View className="flex-1">
             <View className="flex-row items-center gap-2">
               <Text className="font-bold">{item.username}</Text>
@@ -137,7 +136,7 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
           />
           <Text
             onPress={handleAddComment}
-            style={{ fontWeight: "700", color: "#FA5A40" }}
+            style={{ fontWeight: "700", color: COLORS.accent }}
           >
             Send
           </Text>
