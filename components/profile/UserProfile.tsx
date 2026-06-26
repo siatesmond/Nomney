@@ -5,7 +5,8 @@ import { COLORS } from "@/constants/theme";
 import { Profile, useAuthContext } from "@/hooks/use-auth-context";
 import { followUser, unfollowUser } from "@/lib/followers";
 import { getProfileWithStats, resolveAvatarUrl } from "@/lib/profile";
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ImageGrid } from "./ImageGrid";
@@ -47,13 +48,11 @@ export function UserProfile({
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const loadProfile = useCallback(
+    async (signal: { cancelled: boolean }) => {
       try {
-        setLoadingProfile(true);
         const stats = await getProfileWithStats(userId, currentUser?.id);
-        if (cancelled) return;
+        if (signal.cancelled) return;
 
         setProfile(stats.profile);
         setFollowersCount(stats.followersCount);
@@ -61,17 +60,31 @@ export function UserProfile({
         setIsFollowing(stats.isFollowing);
         setAvatarUrl(resolveAvatarUrl(stats.profile.avatar_url));
       } catch (err: any) {
-        if (!cancelled) setError(err.message || "Failed to load profile");
+        if (!signal.cancelled) setError(err.message || "Failed to load profile");
       } finally {
-        if (!cancelled) setLoadingProfile(false);
+        if (!signal.cancelled) setLoadingProfile(false);
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // Re-fetch when your own profile changes (e.g. after editing the avatar),
-    // not just when the user id changes.
-  }, [userId, currentUser?.id, currentUser?.avatar_url]);
+    },
+    [userId, currentUser?.id],
+  );
+
+  // Re-fetch every time the screen comes into focus, so the avatar and the
+  // follower/following counts stay correct after editing or following/unfollowing
+  // (even when the change happened on a different screen).
+  const hasLoaded = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      const signal = { cancelled: false };
+      // Only show the full-screen spinner the first time, not on silent refreshes.
+      if (!hasLoaded.current) setLoadingProfile(true);
+      loadProfile(signal).finally(() => {
+        hasLoaded.current = true;
+      });
+      return () => {
+        signal.cancelled = true;
+      };
+    }, [loadProfile]),
+  );
 
   const handleFollowToggle = async () => {
     if (isOwnProfile || !currentUser?.id) return;
