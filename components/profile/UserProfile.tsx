@@ -69,7 +69,9 @@ export function UserProfile({
     return () => {
       cancelled = true;
     };
-  }, [userId, currentUser?.id]);
+    // Re-fetch when your own profile changes (e.g. after editing the avatar),
+    // not just when the user id changes.
+  }, [userId, currentUser?.id, currentUser?.avatar_url]);
 
   const handleFollowToggle = async () => {
     if (isOwnProfile || !currentUser?.id) return;
