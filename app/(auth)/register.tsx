@@ -83,6 +83,9 @@ export default function Register() {
     return () => clearTimeout(timeout);
   }, [password]);
 
+  const capitalize = (str: string) =>
+    str.trim().charAt(0).toUpperCase() + str.trim().slice(1).toLowerCase();
+
   // Register
   const handleRegister = async () => {
     setFirstNameError("");
@@ -137,8 +140,8 @@ export default function Register() {
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: capitalize(firstName),
+            last_name: capitalize(lastName),
             username: username,
           },
         },
@@ -167,7 +170,7 @@ export default function Register() {
 
       console.log("Sign up successful:", data);
       // Register success
-      router.replace("/home");
+      router.replace("/register-success");
     } catch (err) {
       console.error("Unexpected error:", err);
       setFormError("An unexpected error occurred. Please try again.");
@@ -199,7 +202,7 @@ export default function Register() {
           setFirstNameError("");
           setFormError("");
         }}
-        autoCapitalize="none"
+        autoCapitalize="words"
       />
 
       {/* Last Name Input */}
@@ -212,7 +215,7 @@ export default function Register() {
           setLastNameError("");
           setFormError("");
         }}
-        autoCapitalize="none"
+        autoCapitalize="words"
       />
 
       {/* Username Input */}
