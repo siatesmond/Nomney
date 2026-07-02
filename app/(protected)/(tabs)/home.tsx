@@ -3,13 +3,14 @@ import { PostCard } from "@/components/post";
 import { Screen } from "@/components/ui/Screen";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useEffect, useRef, useState } from "react";
-import { Image, FlatList, View, Text } from "react-native";
+import { Image, FlatList, View, Text, Pressable } from "react-native";
 
 import { getComments } from "@/lib/comments";
 import { getPosts } from "@/lib/posts";
 import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
 import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
 import { useAuthContext } from "@/hooks/use-auth-context";
+import { router } from "expo-router";
 
 type Post = {
   id: string;
@@ -187,6 +188,16 @@ export default function HomeScreen() {
   return (
     <Screen>
       <View className="flex-1">
+<Pressable
+  onPress={() => {
+    console.log("Button tapped");
+    router.push("/register-success");
+  }}
+  style={{ padding: 16, backgroundColor: "yellow" }}
+>
+  <Text>Go to success page</Text>
+</Pressable>
+
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
