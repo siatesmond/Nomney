@@ -3,8 +3,8 @@ import { UserProfile } from "@/components/profile/UserProfile";
 import { ImageGridItem } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getSavedPostImages, getUserPostImages } from "@/lib/profile";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import { Modal } from "react-native";
 
 // Your own profile tab. Loads your posts + saved posts and shows them.
@@ -17,31 +17,39 @@ export default function ProfileScreen() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    let cancelled = false;
-    (async () => {
+  const loadContent = useCallback(
+    async (signal: { cancelled: boolean }) => {
+      if (!profile?.id) return;
       try {
-        setLoadingPosts(true);
         const [posts, saved] = await Promise.all([
           getUserPostImages(profile.id),
           getSavedPostImages(profile.id),
         ]);
-        if (cancelled) return;
+        if (signal.cancelled) return;
         setUserPosts(posts);
         setSavedPosts(saved);
       } catch (error: any) {
         console.error("Error loading profile content:", error.message);
       } finally {
-        if (!cancelled) setLoadingPosts(false);
+        if (!signal.cancelled) setLoadingPosts(false);
       }
-    })();
+    },
+    [profile?.id],
+  );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [profile?.id]);
+  const hasLoaded = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      const signal = { cancelled: false };
+      if (!hasLoaded.current) setLoadingPosts(true);
+      loadContent(signal).finally(() => {
+        hasLoaded.current = true;
+      });
+      return () => {
+        signal.cancelled = true;
+      };
+    }, [loadContent]),
+  );
 
   if (!profile) return null;
 

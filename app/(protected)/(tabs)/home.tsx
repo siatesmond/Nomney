@@ -2,14 +2,15 @@ import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/ui/Screen";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useEffect, useRef, useState } from "react";
-import { Image, FlatList, View, Text } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FlatList, Image, Text, View } from "react-native";
 
-import { getComments } from "@/lib/comments";
-import { getPosts } from "@/lib/posts";
-import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
-import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
 import { useAuthContext } from "@/hooks/use-auth-context";
+import { getComments } from "@/lib/comments";
+import { getUserLikedPostIds, likePost, unlikePost } from "@/lib/likes";
+import { getPosts } from "@/lib/posts";
+import { getUserSavedPostIds, savePost, unsavePost } from "@/lib/save";
 
 type Post = {
   id: string;
@@ -67,24 +68,30 @@ export default function HomeScreen() {
     fetchPosts();
   }, []);
 
-  useEffect(() => {
-    async function fetchUserLikesAndSaves() {
+  // Refresh which posts you've liked/saved every time Home is focused, so the
+  // icons stay in sync with the DB (e.g. after saving/unsaving on another screen).
+  useFocusEffect(
+    useCallback(() => {
       if (!profile?.id) return;
-
-      try {
-        const [likedIds, savedIds] = await Promise.all([
-          getUserLikedPostIds(profile.id),
-          getUserSavedPostIds(profile.id),
-        ]);
-
-        setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
-        setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchUserLikesAndSaves();
-  }, [profile?.id]);
+      let cancelled = false;
+      (async () => {
+        try {
+          const [likedIds, savedIds] = await Promise.all([
+            getUserLikedPostIds(profile.id),
+            getUserSavedPostIds(profile.id),
+          ]);
+          if (cancelled) return;
+          setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
+          setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
+        } catch (error) {
+          console.log(error);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [profile?.id]),
+  );
 
   // Fetch comments when user clicks on comments
   const openComments = async (postId: string) => {
@@ -135,11 +142,18 @@ export default function HomeScreen() {
       console.log(error);
       console.log("Failed to update liked count");
 
-      // Revert action if db is unable to update
+      // Revert both the icon and the count if the db update failed.
       setLikedPosts((prev) => ({
         ...prev,
         [postId]: !prev[postId],
       }));
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, likes: isLiked ? post.likes + 1 : post.likes - 1 }
+            : post,
+        ),
+      );
     }
   };
 
@@ -177,10 +191,18 @@ export default function HomeScreen() {
       console.log(error);
       console.log("Failed to update saved count");
 
+      // Revert both the icon and the count if the db update failed.
       setSavedPosts((prev) => ({
         ...prev,
         [postId]: !prev[postId],
       }));
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, saves: isSaved ? post.saves + 1 : post.saves - 1 }
+            : post,
+        ),
+      );
     }
   };
 
