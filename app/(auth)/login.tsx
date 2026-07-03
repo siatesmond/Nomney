@@ -136,7 +136,7 @@ export default function Login() {
       />
 
       {/* Forgot password */}
-      <Link href="/" className="text-[#707070] font-medium">
+      <Link href="/forgot-password" className="text-[#707070] font-medium">
         Forgot password?
       </Link>
 
