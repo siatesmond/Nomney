@@ -54,6 +54,11 @@
         {
           "locationWhenInUsePermission": "Allow $(BUNDLE_DISPLAY_NAME) to use your location."
         }
+      ],
+      "expo-web-browser",
+      [
+        "@react-native-google-signin/google-signin",
+        { "iosUrlScheme": "com.googleusercontent.apps.placeholder" }
       ]
     ],
     "experiments": {

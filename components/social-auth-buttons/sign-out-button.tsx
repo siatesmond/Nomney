@@ -1,11 +1,25 @@
 import { supabase } from "@/lib/supabase";
 import { Text, TouchableOpacity } from "react-native";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 export default function SignOutButton() {
   const onSignOutButtonPress = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error signing out:", error);
+    try {
+      // Always sign out of Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      // Only sign out of Google if a Google session exists
+      const hasGoogleSession = await GoogleSignin.hasPreviousSignIn();
+
+      if (hasGoogleSession) {
+        await GoogleSignin.signOut();
+      }
+
+      if (error) {
+        console.error("Error signing out:", error);
+      }
+    } catch (err) {
+      console.error("Error signing out:", err);
     }
   };
 
