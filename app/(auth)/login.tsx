@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text } from "react-native";
+import { Text, Image } from "react-native";
 import { Button } from "../../components/ui/BlackButton";
+import { GoogleButton } from "../../components/ui/GoogleButton";
 import { InputWithIcon } from "../../components/ui/InputWithIcon";
 import { Screen } from "../../components/ui/Screen";
 import { supabase } from "../../lib/supabase";
+import { useGoogleAuth } from "../../hooks/use-google-auth";
 
 export default function Login() {
   // Form state
@@ -25,6 +27,9 @@ export default function Login() {
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
   };
+
+  // Google OAuth
+  const { signInWithGoogle, googleLoading, googleError } = useGoogleAuth();
 
   // Checks email while typing
   useEffect(() => {
@@ -69,7 +74,7 @@ export default function Login() {
     try {
       setLoading(true);
 
-      // Supabase auth req
+      // Supabase auth req with email and pw
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -93,11 +98,20 @@ export default function Login() {
       ? emailError
       : !password
         ? passwordError
-        : emailError || passwordError);
+        : emailError || passwordError) ||
+    googleError;
 
   return (
     <Screen>
-      <Text className="text-3xl font-bold mb-8">Login</Text>
+      {/* Logo */}
+      <Image
+        source={require("../../assets/images/icon/icon_v1.png")}
+        className="w-40 h-40 self-center mb-6"
+        resizeMode="contain"
+      />
+
+      {/* Header */}
+      <Text className="text-3xl text-center font-bold mb-8">Welcome back!</Text>
 
       {/* Email Input */}
       <InputWithIcon
@@ -164,7 +178,16 @@ export default function Login() {
         disabled={loading}
       />
 
-     {/* Register link */}
+      <Text className="text-[#707070] font-medium text-center mt-6">or </Text>
+
+      {/* Sign in or create an account using Google OAuth */}
+      <GoogleButton
+        title="Continue with Google"
+        onPress={signInWithGoogle}
+        loading={googleLoading}
+      />
+
+      {/* Register link */}
       <Text className="text-[#707070] font-medium text-center mt-6">
         New here?{" "}
         <Link href="/register" asChild>

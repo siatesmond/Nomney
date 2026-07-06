@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Text } from "react-native";
+import { Text, Image, View } from "react-native";
 import { Screen } from "../../components/ui/Screen";
 import { InputWithIcon } from "../../components/ui/InputWithIcon";
 import { Button } from "../../components/ui/BlackButton";
+import { GoogleButton } from "../../components/ui/GoogleButton";
 import { Link, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
+import { useGoogleAuth } from "../../hooks/use-google-auth";
 
 export default function Register() {
   // Form state
@@ -28,6 +30,9 @@ export default function Register() {
 
   // Show/Hide password toggle
   const [showPassword, setShowPassword] = useState(false);
+
+  // Google OAuth
+  const { signInWithGoogle, googleLoading, googleError } = useGoogleAuth();
 
   // Basic format Email check
   const isValidEmail = (email: string) => {
@@ -134,7 +139,24 @@ export default function Register() {
     try {
       setLoading(true);
 
-      // Sign up user - trigger will automatically create profile
+      // Check if username is already taken
+      const { data: available, error: checkError } = await supabase.rpc(
+        "is_username_available",
+        {
+          username_to_check: username,
+        },
+      );
+
+      if (checkError) {
+        console.error("Failed to check username:", checkError);
+      }
+
+      if (!available) {
+        setUsernameError("That username is already taken");
+        return;
+      }
+
+      // Create a new account
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -169,6 +191,7 @@ export default function Register() {
       }
 
       console.log("Sign up successful:", data);
+
       // Register success
       router.replace("/register-success");
     } catch (err) {
@@ -186,37 +209,54 @@ export default function Register() {
     lastNameError ||
     usernameError ||
     emailError ||
-    passwordError;
+    passwordError ||
+    googleError;
 
   return (
     <Screen>
-      <Text className="text-3xl font-bold mb-8">Sign up</Text>
-
-      {/* First Name Input */}
-      <InputWithIcon
-        icon={<Ionicons name="person-outline" size={20} color="#838383" />}
-        placeholder="First Name"
-        value={firstName}
-        onChangeText={(text) => {
-          setFirstName(text);
-          setFirstNameError("");
-          setFormError("");
-        }}
-        autoCapitalize="words"
+      {/* Logo */}
+      <Image
+        source={require("../../assets/images/icon/icon_v1.png")}
+        className="w-40 h-40 self-center mb-6"
+        resizeMode="contain"
       />
 
-      {/* Last Name Input */}
-      <InputWithIcon
-        icon={<Ionicons name="person-outline" size={20} color="#838383" />}
-        placeholder="Last Name"
-        value={lastName}
-        onChangeText={(text) => {
-          setLastName(text);
-          setLastNameError("");
-          setFormError("");
-        }}
-        autoCapitalize="words"
-      />
+      {/* Header*/}
+      <Text className="text-3xl text-center font-bold mb-8">
+        Create an account
+      </Text>
+
+      <View className="flex-row gap-3">
+        <View className="flex-1">
+          {/* First Name Input */}
+          <InputWithIcon
+            icon={<Ionicons name="person-outline" size={20} color="#838383" />}
+            placeholder="First Name"
+            value={firstName}
+            onChangeText={(text) => {
+              setFirstName(text);
+              setFirstNameError("");
+              setFormError("");
+            }}
+            autoCapitalize="words"
+          />
+        </View>
+
+        <View className="flex-1">
+          {/* Last Name Input */}
+          <InputWithIcon
+            icon={<Ionicons name="person-outline" size={20} color="#838383" />}
+            placeholder="Last Name"
+            value={lastName}
+            onChangeText={(text) => {
+              setLastName(text);
+              setLastNameError("");
+              setFormError("");
+            }}
+            autoCapitalize="words"
+          />
+        </View>
+      </View>
 
       {/* Username Input */}
       <InputWithIcon
@@ -224,7 +264,7 @@ export default function Register() {
         placeholder="Username"
         value={username}
         onChangeText={(text) => {
-          setUsername(text);
+          setUsername(text.toLowerCase());
           setUsernameError("");
           setFormError("");
         }}
@@ -284,10 +324,18 @@ export default function Register() {
         </Text>
       ) : null}
 
+      {/* Create Account Button */}
       <Button
         title={loading ? "Creating..." : "Create account"}
         onPress={handleRegister}
         disabled={loading}
+      />
+
+      {/* Sign in or create an account using Google OAuth */}
+      <GoogleButton
+        title="Continue with Google"
+        onPress={signInWithGoogle}
+        loading={googleLoading}
       />
 
       <Text className="text-[#707070] font-medium text-center mt-6">
