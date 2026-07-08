@@ -86,6 +86,8 @@ export async function getPostDetail(postId: string) {
         title,
         caption,
         location_name,
+        latitude,
+        longitude,
         overall_rating,
         rating_food,
         rating_service,
@@ -252,5 +254,145 @@ export async function createNewPost(payload: SubmitPostPayload) {
     }
 
     return { success: false, error: error.message };
+  }
+}
+
+// Pulls the storage path out of a public image URL so we can delete the file.
+// e.g. ".../object/public/posts/<userId>/<file>.jpeg" -> "<userId>/<file>.jpeg"
+function storagePathFromUrl(url: string): string | null {
+  const marker = "/object/public/posts/";
+  const i = url.indexOf(marker);
+  return i === -1 ? null : url.slice(i + marker.length);
+}
+
+interface UpdatePostPayload {
+  postId: string;
+  userId: string;
+  title: string;
+  caption: string;
+  // Current photos in display order: a mix of existing URLs (start with http)
+  // and newly picked local files (need uploading).
+  images: string[];
+  // The photo URLs the post had before this edit, so we can spot removed ones.
+  originalImageUrls: string[];
+  selectedCategoryIds: string[];
+  location: {
+    name: string;
+    latitude: number;
+    longitude: number;
+  } | null;
+  ratings: {
+    food: number;
+    service: number;
+    environment: number;
+    cleanliness: number;
+    overall: number;
+  };
+}
+
+// Updates a post the current user owns: its fields, photos and tags.
+// (Who is allowed to update is enforced by RLS on the server.)
+export async function updatePost(payload: UpdatePostPayload) {
+  const {
+    postId,
+    userId,
+    images,
+    originalImageUrls,
+    selectedCategoryIds,
+    location,
+    ratings,
+  } = payload;
+
+  try {
+    // 1. Update the main post row.
+    const { error: postError } = await supabase
+      .from("posts")
+      .update({
+        title: payload.title || null,
+        caption: payload.caption || null,
+        location_name: location?.name || null,
+        latitude: location?.latitude || null,
+        longitude: location?.longitude || null,
+        rating_food: ratings.food,
+        rating_service: ratings.service,
+        rating_environment: ratings.environment,
+        rating_cleanliness: ratings.cleanliness,
+        overall_rating: ratings.overall,
+      })
+      .eq("id", postId);
+    if (postError) throw postError;
+
+    // 2. Photos. Keep existing URLs as-is, upload any new local files, and
+    //    build the final ordered list.
+    const finalUrls: string[] = [];
+    for (const uri of images) {
+      if (uri.startsWith("http")) {
+        finalUrls.push(uri);
+      } else {
+        const { publicUrl } = await uploadImageToStorage(uri, userId);
+        finalUrls.push(publicUrl);
+      }
+    }
+
+    // Delete storage files for photos the user removed.
+    const removed = originalImageUrls.filter((u) => !finalUrls.includes(u));
+    const removedPaths = removed
+      .map(storagePathFromUrl)
+      .filter((p): p is string => !!p);
+    if (removedPaths.length > 0) {
+      await supabase.storage.from("posts").remove(removedPaths);
+    }
+
+    // Rewrite the post_image rows so order matches what the user sees.
+    await supabase.from("post_image").delete().eq("post_id", postId);
+    if (finalUrls.length > 0) {
+      const { error: imgError } = await supabase.from("post_image").insert(
+        finalUrls.map((url, index) => ({
+          post_id: postId,
+          image_url: url,
+          display_order: index,
+        })),
+      );
+      if (imgError) throw imgError;
+    }
+
+    // 3. Tags/categories: clear and re-add the current selection.
+    await supabase.from("post_categories").delete().eq("post_id", postId);
+    if (selectedCategoryIds.length > 0) {
+      const { error: catError } = await supabase.from("post_categories").insert(
+        selectedCategoryIds.map((catId) => ({
+          post_id: postId,
+          category_id: catId,
+        })),
+      );
+      if (catError) throw catError;
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating post:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+// Deletes a post the current user owns, plus its photos from storage.
+// The post's likes/saves/comments/images/categories rows are removed by the
+// database via ON DELETE CASCADE (see the SQL in the docs), and RLS makes sure
+// only the owner can delete.
+export async function deletePost(postId: string) {
+  // Grab the image URLs first so we can clean up storage after the row is gone.
+  const { data: imgs } = await supabase
+    .from("post_image")
+    .select("image_url")
+    .eq("post_id", postId);
+
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  if (error) throw error;
+
+  const paths = (imgs || [])
+    .map((r) => storagePathFromUrl(r.image_url))
+    .filter((p): p is string => !!p);
+  if (paths.length > 0) {
+    await supabase.storage.from("posts").remove(paths);
   }
 }

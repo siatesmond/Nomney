@@ -29,9 +29,13 @@ interface Props {
   location: LocationData | null;
   clearLocation: () => void;
   onPostPress?: () => void;
+  // Let the edit screen reuse this form with its own wording.
+  headerTitle?: string;
+  submitLabel?: string;
 }
 
 // The new-post form layout: photos, title, caption, and the tag/rating/location rows.
+// Reused by the edit-post screen via headerTitle / submitLabel.
 export default function NewPostForm(props: Props) {
   return (
     <View className="flex-1 bg-[#F9F9F9]">
@@ -41,7 +45,7 @@ export default function NewPostForm(props: Props) {
           <Text className="text-2xl text-neutral-900">✕</Text>
         </TouchableOpacity>
         <Text className="text-base font-semibold text-neutral-900">
-          New Post
+          {props.headerTitle ?? "New Post"}
         </Text>
         <View className="w-6" />
       </View>
@@ -130,7 +134,9 @@ export default function NewPostForm(props: Props) {
           className="bg-accent rounded-xl py-4 items-center"
           onPress={props.onPostPress}
         >
-          <Text className="text-white text-base font-semibold">Post</Text>
+          <Text className="text-white text-base font-semibold">
+            {props.submitLabel ?? "Post"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

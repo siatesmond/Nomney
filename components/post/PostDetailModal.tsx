@@ -8,7 +8,9 @@ import { RatingRing } from "@/components/post/RatingRing";
 import { RatingsGrid } from "@/components/post/RatingsGrid";
 import { Tag } from "@/components/ui/Tag";
 import { COLORS } from "@/constants/theme";
+import { useAuthContext } from "@/hooks/use-auth-context";
 import { usePostDetail } from "@/hooks/usePostDetail";
+import { deletePost } from "@/lib/posts";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
@@ -17,6 +19,7 @@ import { useRouter } from "expo-router";
 import { useRef } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   Text,
@@ -32,6 +35,7 @@ interface PostDetailModalProps {
 
 export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
   const router = useRouter();
+  const { profile: currentUser } = useAuthContext();
   const commentSheetRef = useRef<BottomSheetModal>(null);
   const {
     postData,
@@ -80,11 +84,37 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
     .filter((c: any) => c?.name);
 
   const authorId = postData.profiles?.id ?? null;
+  const isOwner = !!authorId && authorId === currentUser?.id;
 
   const goToAuthorProfile = () => {
     if (!authorId) return;
     onClose();
     router.push(`/user/${authorId}`);
+  };
+
+  // Close the modal first, then open the edit screen (the modal sits above the
+  // navigation stack, so a push would otherwise be hidden behind it).
+  const goToEdit = () => {
+    onClose();
+    router.push(`/edit-post/${postId}`);
+  };
+
+  const confirmDelete = () => {
+    Alert.alert("Delete post?", "This can't be undone.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deletePost(postId);
+            onClose();
+          } catch (err: any) {
+            Alert.alert("Delete failed", err.message || "Please try again.");
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -105,6 +135,8 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
                 locationName={postData.location_name ?? null}
                 onClose={onClose}
                 onPressProfile={authorId ? goToAuthorProfile : undefined}
+                onEdit={isOwner ? goToEdit : undefined}
+                onDelete={isOwner ? confirmDelete : undefined}
               />
             </View>
 

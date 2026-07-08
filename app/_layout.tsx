@@ -24,10 +24,13 @@ function RootNavigator() {
 
   if (isLoading) return null;
 
-  // Determine if user is currently in Reset Password process
+  // Determine if user is currently in Reset Password process.
+  // Cast to string[]: expo-router types useSegments() so .includes() with a
+  // plain string otherwise trips a "not assignable to never" error.
+  const currentSegments = segments as string[];
   const isResettingPassword =
-    segments.includes("reset-password") ||
-    segments.includes("password-success");
+    currentSegments.includes("reset-password") ||
+    currentSegments.includes("password-success");
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

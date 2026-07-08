@@ -13,12 +13,17 @@ export function PostHeaderOverlay({
     locationName,
     onClose,
     onPressProfile,
+    onEdit,
+    onDelete,
 }: {
     avatarUrl: string | null;
     username: string | null;
     locationName: string | null;
     onClose: () => void;
     onPressProfile?: () => void;
+    // Only passed when the current user owns the post.
+    onEdit?: () => void;
+    onDelete?: () => void;
 }) {
     const displayName = username || "food_reviewer";
     return (
@@ -55,7 +60,15 @@ export function PostHeaderOverlay({
                 </View>
             </TouchableOpacity>
 
-            <ScrimIconButton icon="close" onPress={onClose} />
+            <View className="flex-row items-center gap-2">
+                {onEdit && (
+                    <ScrimIconButton icon="create-outline" onPress={onEdit} />
+                )}
+                {onDelete && (
+                    <ScrimIconButton icon="trash-outline" onPress={onDelete} />
+                )}
+                <ScrimIconButton icon="close" onPress={onClose} />
+            </View>
         </View>
     );
 }

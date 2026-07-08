@@ -3,8 +3,9 @@ import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { Alert } from "react-native";
 
-export function useNewPostImages() {
-  const [images, setImages] = useState<string[]>([]);
+// `initial` lets the edit screen start with the post's existing photos.
+export function useNewPostImages(initial: string[] = []) {
+  const [images, setImages] = useState<string[]>(initial);
   const MAX_IMAGES = 6;
 
   const processImage = async (uri: string) => {

@@ -8,8 +8,9 @@ const formatLocationName = (p: Location.LocationGeocodedAddress) =>
     .filter(Boolean)
     .join(", ");
 
-export function useNewPostLocation() {
-  const [location, setLocation] = useState<LocationData | null>(null);
+// `initial` lets the edit screen start with the post's existing location.
+export function useNewPostLocation(initial: LocationData | null = null) {
+  const [location, setLocation] = useState<LocationData | null>(initial);
   const [locationSearch, setLocationSearch] = useState("");
   const [searchResults, setSearchResults] = useState<LocationData[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
