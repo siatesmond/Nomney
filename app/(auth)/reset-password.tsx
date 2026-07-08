@@ -19,7 +19,9 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState("");
+
+  const [showResend, setShowResend] = useState(false);
 
   // Password validation (min 8 chars, at least 1 uppercase, 1 lowercase, 1 digit, 1 symbol)
   const isValidPassword = (password: string) => {
@@ -62,10 +64,18 @@ export default function ResetPassword() {
       });
 
       if (error) {
-        console.error("Verify code error:", error);
-        setOtpError(
-          error.message || "Invalid or expired code. Please try again.",
-        );
+        if (
+          error.message.toLowerCase().includes("expired") ||
+          error.message.toLowerCase().includes("invalid")
+        ) {
+          setOtpError(
+            "The verification code is invalid or has expired. Please check the code or request a new one.",
+          );
+          setShowResend(true);
+        } else {
+          setOtpError(error.message);
+        }
+
         return;
       }
 
@@ -95,6 +105,29 @@ export default function ResetPassword() {
     }
   };
 
+  // Resend OTP 
+  const handleResendCode = async () => {
+    try {
+      setLoading(true);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email || "");
+
+      if (error) {
+        setSuccess("");
+        setOtpError(error.message);
+        return;
+      }
+
+      setSuccess("A new verification code has been sent to your email.");
+
+      setOtpCode("");
+      setOtpError("");
+      setShowResend(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Reset Password Form
   return (
     <Screen>
@@ -104,6 +137,7 @@ export default function ResetPassword() {
         password.
       </Text>
 
+      {/* OTP Code input */}
       <InputWithIcon
         icon={<Ionicons name="key-outline" size={20} color="#838383" />}
         placeholder="6-digit code"
@@ -111,26 +145,11 @@ export default function ResetPassword() {
         onChangeText={(text) => {
           setOtpCode(text);
           setOtpError("");
+          setSuccess("");
+          setShowResend(false);
         }}
         keyboardType="number-pad"
       />
-
-      {/* Invalid OTP Error */}
-      {otpError ? (
-        <Text
-          style={{
-            backgroundColor: "#FEE2E2",
-            color: "#B91C1C",
-            padding: 10,
-            borderRadius: 8,
-            marginTop: 14,
-            textAlign: "center",
-            fontSize: 13,
-          }}
-        >
-          {otpError}
-        </Text>
-      ) : null}
 
       {/* New Password Input */}
       <InputWithIcon
@@ -153,6 +172,7 @@ export default function ResetPassword() {
         }
       />
 
+      {/* Password Validation Message */}
       {passwordError ? (
         <Text
           style={{
@@ -169,12 +189,61 @@ export default function ResetPassword() {
         </Text>
       ) : null}
 
+      {/* Invalid OTP Error */}
+      {otpError ? (
+        <Text
+          style={{
+            backgroundColor: "#FEE2E2",
+            color: "#B91C1C",
+            padding: 10,
+            borderRadius: 8,
+            marginTop: 14,
+            textAlign: "center",
+            fontSize: 13,
+          }}
+        >
+          {otpError}
+        </Text>
+      ) : null}
+
+      {/* Success Message */}
+      {success ? (
+        <Text
+          style={{
+            backgroundColor: "#DCFCE7",
+            color: "#166534",
+            padding: 10,
+            borderRadius: 8,
+            marginTop: 14,
+            textAlign: "center",
+            fontSize: 13,
+          }}
+        >
+          {success}
+        </Text>
+      ) : null}
+
       {/* Reset Password Button*/}
       <Button
         title={loading ? "Updating..." : "Reset password"}
         onPress={handleVerifyAndReset}
         disabled={loading}
       />
+
+      {/* Resend Code Button*/}
+      {showResend && (
+        <Text
+          onPress={handleResendCode}
+          style={{
+            textAlign: "center",
+            color: "#000000",
+            marginTop: 18,
+            fontWeight: "600",
+          }}
+        >
+          Resend code
+        </Text>
+      )}
     </Screen>
   );
 }
