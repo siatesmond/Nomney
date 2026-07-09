@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "@/constants/theme";
 import { LocationData } from "../../constants/new-post";
 import { LocationMapPreview } from "./LocationMapPreview";
@@ -37,11 +38,21 @@ interface Props {
 // The new-post form layout: photos, title, caption, and the tag/rating/location rows.
 // Reused by the edit-post screen via headerTitle / submitLabel.
 export default function NewPostForm(props: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
     <View className="flex-1 bg-[#F9F9F9]">
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-5 pt-8 pb-4 border-b border-neutral-200">
-        <TouchableOpacity onPress={() => router.back()}>
+      {/* Header — pad down past the status bar / notch so the close button
+          isn't stuck under it (untappable on Android). */}
+      <View
+        className="flex-row items-center justify-between px-5 pb-4 border-b border-neutral-200"
+        style={{ paddingTop: insets.top + 12 }}
+      >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          className="py-1 pr-2"
+        >
           <Text className="text-2xl text-neutral-900">✕</Text>
         </TouchableOpacity>
         <Text className="text-base font-semibold text-neutral-900">
