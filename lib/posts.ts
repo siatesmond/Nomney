@@ -117,6 +117,36 @@ export async function getPostDetail(postId: string) {
   return data;
 }
 
+export type PostLocation = {
+  id: string;
+  title: string;
+  locationName: string;
+  latitude: number;
+  longitude: number;
+};
+
+// Every post by `userId` that has a saved location — used by the Map tab.
+export async function getUserPostLocations(
+  userId: string,
+): Promise<PostLocation[]> {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, title, location_name, latitude, longitude")
+    .eq("user_id", userId)
+    .not("latitude", "is", null)
+    .not("longitude", "is", null);
+
+  if (error) throw error;
+
+  return (data ?? []).map((p: any) => ({
+    id: p.id,
+    title: p.title ?? "Untitled",
+    locationName: p.location_name ?? "",
+    latitude: Number(p.latitude),
+    longitude: Number(p.longitude),
+  }));
+}
+
 interface SubmitPostPayload {
   userId: string;
   title: string;
