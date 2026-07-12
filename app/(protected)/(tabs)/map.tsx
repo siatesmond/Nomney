@@ -1,12 +1,13 @@
-// Map tab: drops a small photo-card pin for every post of yours that has a
-// location. Tapping a pin lets you view the post or open it in Google Maps.
+// Map tab: shows each of your located posts as a little photo marker
+// (Instagram/Snapchat style). Tapping one lets you view the post or open it in
+// Google Maps.
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   Linking,
@@ -34,6 +35,81 @@ const MAP_STYLE = [
   { featureType: "poi.park", elementType: "labels", stylers: [{ visibility: "off" }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
+
+// A post shown as a photo marker: a small rounded thumbnail with a pointer.
+function PhotoMarker({
+  loc,
+  onPress,
+}: {
+  loc: PostLocation;
+  onPress: () => void;
+}) {
+  // react-native-maps only renders a custom marker view while
+  // tracksViewChanges is true, but leaving it on hurts performance. So we keep
+  // it on until the photo has loaded, then switch it off.
+  const [tracks, setTracks] = useState(true);
+
+  // No photo? Give the icon a moment to paint, then stop tracking.
+  useEffect(() => {
+    if (loc.imageUrl) return;
+    const t = setTimeout(() => setTracks(false), 800);
+    return () => clearTimeout(t);
+  }, [loc.imageUrl]);
+
+  return (
+    <Marker
+      coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+      onPress={onPress}
+      anchor={{ x: 0.5, y: 1 }}
+      tracksViewChanges={tracks}
+    >
+      <View className="items-center">
+        <View
+          style={{
+            width: 54,
+            height: 54,
+            borderRadius: 14,
+            borderWidth: 3,
+            borderColor: COLORS.accent,
+            backgroundColor: "#fff",
+            overflow: "hidden",
+          }}
+        >
+          {loc.imageUrl ? (
+            <Image
+              source={{ uri: loc.imageUrl }}
+              style={{ width: "100%", height: "100%" }}
+              resizeMode="cover"
+              onLoad={() => setTracks(false)}
+              onError={() => setTracks(false)}
+            />
+          ) : (
+            <View
+              className="flex-1 items-center justify-center"
+              style={{ backgroundColor: COLORS.accent }}
+            >
+              <Ionicons name="restaurant" size={22} color="#fff" />
+            </View>
+          )}
+        </View>
+        {/* Little pointer so the photo reads as a pin. */}
+        <View
+          style={{
+            width: 0,
+            height: 0,
+            borderLeftWidth: 7,
+            borderRightWidth: 7,
+            borderTopWidth: 9,
+            borderLeftColor: "transparent",
+            borderRightColor: "transparent",
+            borderTopColor: COLORS.accent,
+            marginTop: -1,
+          }}
+        />
+      </View>
+    </Marker>
+  );
+}
 
 export default function MapScreen() {
   const { profile } = useAuthContext();
@@ -95,14 +171,11 @@ export default function MapScreen() {
           zoomControlEnabled
           onPress={() => setSelected(null)}
         >
-          {/* Native pins (no custom view) so they never clip on the New
-              Architecture. The photo shows in the card when you tap. */}
           {locations.map((loc) => (
-            <Marker
+            <PhotoMarker
               key={loc.id}
-              coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+              loc={loc}
               onPress={() => setSelected(loc)}
-              pinColor={COLORS.accent}
             />
           ))}
         </MapView>
