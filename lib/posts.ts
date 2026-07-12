@@ -27,8 +27,10 @@ export async function getPosts() {
             image_url
         ),
         location_name,
+        latitude,
+        longitude,
         likes (count),
-        comments (count), 
+        comments (count),
         saves (count),
         rating_food,
         rating_service,
@@ -64,6 +66,8 @@ function mapPost(post: any): Post {
         .filter(Boolean);
     })(),
     location: post.location_name ?? undefined,
+    latitude: post.latitude ?? null,
+    longitude: post.longitude ?? null,
     likes: post.likes?.[0]?.count ?? 0,
     comments: post.comments?.[0]?.count ?? 0,
     saves: post.saves?.[0]?.count ?? 0,

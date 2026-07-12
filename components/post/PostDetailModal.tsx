@@ -9,6 +9,7 @@ import { RatingsGrid } from "@/components/post/RatingsGrid";
 import { Tag } from "@/components/ui/Tag";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
+import { useOpenLocationOnMap } from "@/hooks/useOpenLocationOnMap";
 import { usePostDetail } from "@/hooks/usePostDetail";
 import { addComment } from "@/lib/comments";
 import { deletePost } from "@/lib/posts";
@@ -38,6 +39,7 @@ interface PostDetailModalProps {
 export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
   const router = useRouter();
   const { profile: currentUser } = useAuthContext();
+  const openLocationOnMap = useOpenLocationOnMap();
   const commentSheetRef = useRef<BottomSheetModal>(null);
   const [commentText, setCommentText] = useState("");
   const {
@@ -100,6 +102,19 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
   const goToEdit = () => {
     onClose();
     router.push(`/edit-post/${postId}`);
+  };
+
+  // Same idea: close the modal, then jump to the Map tab focused on this spot.
+  const hasCoords =
+    postData.latitude != null && postData.longitude != null;
+  const goToLocation = () => {
+    if (!hasCoords) return;
+    onClose();
+    openLocationOnMap({
+      latitude: postData.latitude,
+      longitude: postData.longitude,
+      name: postData.location_name ?? undefined,
+    });
   };
 
   const submitComment = async () => {
@@ -384,6 +399,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
             locationName={postData.location_name ?? null}
             onClose={onClose}
             onPressProfile={authorId ? goToAuthorProfile : undefined}
+            onPressLocation={hasCoords ? goToLocation : undefined}
             onEdit={isOwner ? goToEdit : undefined}
             onDelete={isOwner ? confirmDelete : undefined}
           />

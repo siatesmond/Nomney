@@ -1,3 +1,4 @@
+import { useOpenLocationOnMap } from "@/hooks/useOpenLocationOnMap";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -19,6 +20,8 @@ type PostCardProps = {
   comments: number;
   saves: number;
   location?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   distance?: string;
   liked?: boolean;
   saved?: boolean;
@@ -46,6 +49,8 @@ export function PostCard({
   comments,
   saves,
   location,
+  latitude,
+  longitude,
   distance,
   liked,
   saved,
@@ -56,6 +61,8 @@ export function PostCard({
 }: PostCardProps) {
   const [cardWidth, setCardWidth] = useState(0);
   const router = useRouter();
+  const openLocationOnMap = useOpenLocationOnMap();
+  const hasCoords = latitude != null && longitude != null;
 
   return (
     <View
@@ -105,15 +112,26 @@ export function PostCard({
         ))}
       </View>
 
-      {/* Location */}
+      {/* Location — tap to see it on the map */}
       {location && (
-        <View className="flex-row items-center pt-2 px-4 pb-3 gap-1.5">
+        <TouchableOpacity
+          className="flex-row items-center pt-2 px-4 pb-3 gap-1.5"
+          activeOpacity={0.7}
+          disabled={!hasCoords}
+          onPress={() =>
+            openLocationOnMap({
+              latitude: latitude!,
+              longitude: longitude!,
+              name: location,
+            })
+          }
+        >
           <Ionicons name="location-outline" size={20} color="#FA5A40" />
           <Text className="text-xs text-black">
             {location}
             {distance && `, ${distance} away`}
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
 
       {/* Ratings */}

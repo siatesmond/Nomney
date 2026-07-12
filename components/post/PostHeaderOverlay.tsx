@@ -13,6 +13,7 @@ export function PostHeaderOverlay({
     locationName,
     onClose,
     onPressProfile,
+    onPressLocation,
     onEdit,
     onDelete,
 }: {
@@ -21,6 +22,7 @@ export function PostHeaderOverlay({
     locationName: string | null;
     onClose: () => void;
     onPressProfile?: () => void;
+    onPressLocation?: () => void;
     // Only passed when the current user owns the post.
     onEdit?: () => void;
     onDelete?: () => void;
@@ -51,7 +53,12 @@ export function PostHeaderOverlay({
                             {displayName}
                         </Text>
                         {locationName && (
-                            <View className="flex-row items-center">
+                            <TouchableOpacity
+                                className="flex-row items-center"
+                                activeOpacity={0.7}
+                                disabled={!onPressLocation}
+                                onPress={onPressLocation}
+                            >
                                 <Ionicons name="location-sharp" size={10} color="#FFD9CC" />
                                 <Text
                                     className="text-[10px] text-white/85 font-medium"
@@ -60,7 +67,7 @@ export function PostHeaderOverlay({
                                 >
                                     {locationName}
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                         )}
                     </View>
                 </TouchableOpacity>

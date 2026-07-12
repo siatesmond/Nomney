@@ -36,6 +36,8 @@ export type Post = {
     imageUrls: string[];
     categories: string[];
     location?: string;
+    latitude?: number | null;
+    longitude?: number | null;
     likes: number;
     comments: number;
     saves: number;

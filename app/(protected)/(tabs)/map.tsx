@@ -20,7 +20,7 @@ import { countryForCoord } from "@/lib/geocode";
 import { getPostLocations, MapScope, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -96,6 +96,15 @@ export default function MapScreen() {
   // A searched place that has no post of yours — shown as a plain pin.
   const [searchedPlace, setSearchedPlace] = useState<LocationData | null>(null);
 
+  // When opened from a post's location (Home / post detail), fly there.
+  const focusParams = useLocalSearchParams<{
+    focusLat?: string;
+    focusLng?: string;
+    focusName?: string;
+    focusTs?: string;
+  }>();
+  const handledFocus = useRef<string | null>(null);
+
   const goToSearchResult = (r: LocationData) => {
     onLocationSearchChange(""); // clear the box + results
     Keyboard.dismiss();
@@ -124,6 +133,30 @@ export default function MapScreen() {
       setSearchedPlace(r); // no post here just drop a pin
     }
   };
+
+  // Handle "show on map" from a post's location. Wait a beat so the freshly
+  // focused map is ready, then fly there (and show the post if we have it).
+  useEffect(() => {
+    const { focusLat, focusLng, focusName, focusTs } = focusParams;
+    if (!focusLat || !focusLng) return;
+    const key = focusTs ?? `${focusLat},${focusLng}`;
+    if (handledFocus.current === key) return;
+    handledFocus.current = key;
+
+    const lat = Number(focusLat);
+    const lng = Number(focusLng);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+    const t = setTimeout(() => {
+      goToSearchResult({
+        name: focusName || "Location",
+        latitude: lat,
+        longitude: lng,
+      });
+    }, 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusParams.focusLat, focusParams.focusLng, focusParams.focusTs]);
 
   // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
