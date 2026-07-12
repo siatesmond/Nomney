@@ -44,21 +44,18 @@ function PostMarker({
       tracksViewChanges
       anchor={{ x: 0.5, y: 1 }}
     >
-      <View className="items-center">
-        <View style={styles.markerCard}>
-          {loc.imageUrl ? (
-            <Image
-              source={{ uri: loc.imageUrl }}
-              style={styles.markerImg}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.markerImg, styles.markerFallback]}>
-              <Ionicons name="restaurant" size={18} color={COLORS.accent} />
-            </View>
-          )}
-        </View>
-        <View style={styles.markerPointer} />
+      <View style={styles.markerCard}>
+        {loc.imageUrl ? (
+          <Image
+            source={{ uri: loc.imageUrl }}
+            style={styles.markerImg}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.markerImg, styles.markerFallback]}>
+            <Ionicons name="restaurant" size={22} color={COLORS.accent} />
+          </View>
+        )}
       </View>
     </Marker>
   );
@@ -233,38 +230,26 @@ export default function MapScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Instagram-style portrait photo card: white frame + rounded corners + shadow.
   markerCard: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 3,
-    borderWidth: 2,
-    borderColor: COLORS.accent,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
   },
   markerImg: {
-    width: 46,
-    height: 46,
-    borderRadius: 9,
+    width: 54,
+    height: 72,
+    borderRadius: 11,
     backgroundColor: "#eee",
   },
   markerFallback: {
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.accentSoft,
-  },
-  markerPointer: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: COLORS.accent,
-    marginTop: -1,
   },
 });
