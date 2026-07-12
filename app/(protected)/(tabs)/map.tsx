@@ -154,6 +154,9 @@ export default function MapScreen() {
     if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
     focusAnimated.current = false;
+    // Switch to Everyone so the post is loaded no matter whose it is — avoids a
+    // misleading "no post here" when it's someone else's post.
+    setScope("everyone");
     setPendingFocus({ name: focusName || "Location", latitude: lat, longitude: lng });
   }, [focusParams.focusLat, focusParams.focusLng, focusParams.focusTs]);
 
@@ -198,6 +201,7 @@ export default function MapScreen() {
     useCallback(() => {
       if (!profile?.id) return;
       let cancelled = false;
+      setLocationsLoaded(false); // reset so a focus resolves against fresh data
       (async () => {
         try {
           const data = await getPostLocations(scope, profile.id);
