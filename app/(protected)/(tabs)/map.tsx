@@ -643,13 +643,13 @@ export default function MapScreen() {
                     position: "absolute",
                     left: p.x,
                     top: p.y,
-                    width: 140,
+                    width: 160,
                     alignItems: "center",
-                    transform: [{ translateX: -70 }, { translateY: -58 }],
+                    transform: [{ translateX: -80 }, { translateY: -70 }],
                   }}
                 >
                   <View
-                    className="bg-white rounded-full px-2.5 py-1"
+                    className="bg-white rounded-xl px-2.5 py-1.5"
                     style={{
                       elevation: 3,
                       shadowColor: "#000",
@@ -660,10 +660,16 @@ export default function MapScreen() {
                   >
                     <Text
                       numberOfLines={1}
-                      className="text-[10px] font-semibold"
-                      style={{ color: COLORS.ink, maxWidth: 120 }}
+                      className="text-[11px] font-semibold text-center"
+                      style={{ color: COLORS.ink, maxWidth: 140 }}
                     >
                       {searchedPlace.name}
+                    </Text>
+                    <Text
+                      className="text-[9px] text-center"
+                      style={{ color: COLORS.muted }}
+                    >
+                      Currently no post here
                     </Text>
                   </View>
                   <Ionicons
