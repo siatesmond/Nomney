@@ -16,7 +16,7 @@ import { getPostLocations, MapScope, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -42,6 +42,27 @@ const EMPTY_TEXT: Record<MapScope, string> = {
   following: "No located posts from people you follow yet.",
   everyone: "No located posts yet.",
 };
+
+// Country isn't stored on posts, so we reverse-geocode each coordinate to find
+// it. Cached by rounded coordinate so we don't geocode the same spot twice.
+// (Reverse geocoding doesn't need location permission.)
+const countryCache = new Map<string, string | null>();
+
+async function countryForCoord(
+  latitude: number,
+  longitude: number,
+): Promise<string | null> {
+  const key = `${latitude.toFixed(2)},${longitude.toFixed(2)}`;
+  if (countryCache.has(key)) return countryCache.get(key) ?? null;
+  try {
+    const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+    const country = place?.country ?? null;
+    countryCache.set(key, country);
+    return country;
+  } catch {
+    return null;
+  }
+}
 
 // Falls back to Singapore when you have no pinned posts yet.
 const DEFAULT_REGION: Region = {
@@ -268,6 +289,9 @@ export default function MapScreen() {
   const [mediaW, setMediaW] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
 
+  // Country per post (post id -> country name), filled by reverse-geocoding.
+  const [postCountries, setPostCountries] = useState<Record<string, string>>({});
+
   // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
     useCallback(() => {
@@ -286,6 +310,42 @@ export default function MapScreen() {
       };
     }, [profile?.id, scope]),
   );
+
+  // Figure out each post's country (for the country chips) whenever the pins
+  // change. Runs in the background; cached so it's cheap on repeat.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const entries: [string, string][] = [];
+      for (const loc of locations) {
+        const country = await countryForCoord(loc.latitude, loc.longitude);
+        if (country) entries.push([loc.id, country]);
+      }
+      if (!cancelled) setPostCountries(Object.fromEntries(entries));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [locations]);
+
+  // The distinct countries present, sorted for the chip row.
+  const countries = useMemo(
+    () => Array.from(new Set(Object.values(postCountries))).sort(),
+    [postCountries],
+  );
+
+  // Fly/zoom the map to fit all posts in the chosen country.
+  const zoomToCountry = (country: string) => {
+    const coords = locations
+      .filter((l) => postCountries[l.id] === country)
+      .map((l) => ({ latitude: l.latitude, longitude: l.longitude }));
+    if (coords.length === 0) return;
+    setSelected(null);
+    mapRef.current?.fitToCoordinates(coords, {
+      edgePadding: { top: 140, right: 80, bottom: 160, left: 80 },
+      animated: true,
+    });
+  };
 
   // Center the map on the user's current GPS location (asking permission the
   // first time). Turning permission on also shows the blue "you are here" dot.
@@ -395,6 +455,35 @@ export default function MapScreen() {
             );
           })}
         </View>
+
+        {/* Country chips — tap to zoom to that country's posts. Only shown
+            once posts span more than one country. */}
+        {countries.length > 1 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-2"
+            contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+          >
+            {countries.map((c) => (
+              <TouchableOpacity
+                key={c}
+                activeOpacity={0.8}
+                onPress={() => zoomToCountry(c)}
+                className="px-3 py-1.5 rounded-full"
+                style={{
+                  borderWidth: 1,
+                  borderColor: COLORS.line,
+                  backgroundColor: "#fff",
+                }}
+              >
+                <Text className="text-xs font-medium" style={{ color: COLORS.ink }}>
+                  {c}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       {/* Map card */}
