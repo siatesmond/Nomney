@@ -37,40 +37,6 @@ const MAP_STYLE = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-// A small photo-card marker representing one post.
-function PostMarker({
-  loc,
-  onPress,
-}: {
-  loc: PostLocation;
-  onPress: () => void;
-}) {
-  return (
-    <Marker
-      coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-      onPress={onPress}
-      // Keep tracking view changes so the remote photo reliably renders into
-      // the marker — turning it off leaves the image blank on Android.
-      tracksViewChanges
-      anchor={{ x: 0.5, y: 1 }}
-    >
-      <View style={styles.markerCard}>
-        {loc.imageUrl ? (
-          <Image
-            source={{ uri: loc.imageUrl }}
-            style={styles.markerImg}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.markerImg, styles.markerFallback]}>
-            <Ionicons name="restaurant" size={22} color={COLORS.accent} />
-          </View>
-        )}
-      </View>
-    </Marker>
-  );
-}
-
 export default function MapScreen() {
   const { profile } = useAuthContext();
 
@@ -134,12 +100,30 @@ export default function MapScreen() {
           radius={60}
           onPress={() => setSelected(null)}
         >
+          {/* Markers must be DIRECT children of the map for clustering to
+              detect them — don't wrap them in a custom component. */}
           {locations.map((loc) => (
-            <PostMarker
+            <Marker
               key={loc.id}
-              loc={loc}
+              coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
               onPress={() => setSelected(loc)}
-            />
+              tracksViewChanges
+              anchor={{ x: 0.5, y: 1 }}
+            >
+              <View style={styles.markerCard}>
+                {loc.imageUrl ? (
+                  <Image
+                    source={{ uri: loc.imageUrl }}
+                    style={styles.markerImg}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.markerImg, styles.markerFallback]}>
+                    <Ionicons name="restaurant" size={22} color={COLORS.accent} />
+                  </View>
+                )}
+              </View>
+            </Marker>
           ))}
         </MapView>
 
