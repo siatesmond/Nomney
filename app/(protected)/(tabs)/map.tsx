@@ -15,7 +15,7 @@ import { useAuthContext } from "@/hooks/use-auth-context";
 import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   Image,
   Linking,
@@ -124,6 +124,7 @@ function PhotoCard({ loc }: { loc: PostLocation }) {
 export default function MapScreen() {
   const { profile } = useAuthContext();
 
+  const mapRef = useRef<MapView>(null);
   const [locations, setLocations] = useState<PostLocation[]>([]);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [mapSize, setMapSize] = useState<Size>({ width: 0, height: 0 });
@@ -149,6 +150,20 @@ export default function MapScreen() {
     }, [profile?.id]),
   );
 
+  // Tap a card: show its info and fly/zoom the map to that spot.
+  const focusLocation = (loc: PostLocation) => {
+    setSelected(loc);
+    mapRef.current?.animateToRegion(
+      {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
+      500,
+    );
+  };
+
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
     Linking.openURL(url).catch(() => {});
@@ -173,6 +188,7 @@ export default function MapScreen() {
         style={{ borderWidth: 1, borderColor: COLORS.line }}
       >
         <MapView
+          ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={DEFAULT_REGION}
           customMapStyle={MAP_STYLE}
@@ -199,7 +215,7 @@ export default function MapScreen() {
               <TouchableOpacity
                 key={loc.id}
                 activeOpacity={0.85}
-                onPress={() => setSelected(loc)}
+                onPress={() => focusLocation(loc)}
                 style={{
                   position: "absolute",
                   left: p.x,
