@@ -110,10 +110,12 @@ export default function MapScreen() {
                 onPress={onPress}
                 tracksViewChanges
               >
-                <View style={styles.clusterBubble}>
-                  <Text style={styles.clusterText}>
-                    {properties.point_count}
-                  </Text>
+                <View style={styles.markerWrap}>
+                  <View style={styles.clusterBubble}>
+                    <Text style={styles.clusterText}>
+                      {properties.point_count}
+                    </Text>
+                  </View>
                 </View>
               </Marker>
             );
@@ -130,18 +132,20 @@ export default function MapScreen() {
               tracksViewChanges
               anchor={{ x: 0.5, y: 1 }}
             >
-              <View style={styles.markerCard}>
-                {loc.imageUrl ? (
-                  <Image
-                    source={{ uri: loc.imageUrl }}
-                    style={styles.markerImg}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={[styles.markerImg, styles.markerFallback]}>
-                    <Ionicons name="restaurant" size={22} color={COLORS.accent} />
-                  </View>
-                )}
+              <View style={styles.markerWrap}>
+                <View style={styles.markerCard}>
+                  {loc.imageUrl ? (
+                    <Image
+                      source={{ uri: loc.imageUrl }}
+                      style={styles.markerImg}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={[styles.markerImg, styles.markerFallback]}>
+                      <Ionicons name="restaurant" size={22} color={COLORS.accent} />
+                    </View>
+                  )}
+                </View>
               </View>
             </Marker>
           ))}
@@ -235,6 +239,14 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   // Instagram-style portrait photo card. A real border defines the white frame
   // because marker shadows don't render into the pin bitmap on Android.
+  // Transparent padding around every marker so the New-Architecture clipping
+  // bug eats the empty space instead of the visible card/bubble.
+  markerWrap: {
+    padding: 12,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   // No shadow/elevation here: on Android that clips the marker's corners.
   // A thin border defines the white frame instead.
   markerCard: {
