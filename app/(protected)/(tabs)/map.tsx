@@ -98,6 +98,26 @@ export default function MapScreen() {
           clusterColor={COLORS.accent}
           clusterTextColor="#fff"
           radius={60}
+          // The library's default cluster bubble renders blank on some devices,
+          // so draw our own visible orange count bubble.
+          renderCluster={(cluster: any) => {
+            const { id, geometry, onPress, properties } = cluster;
+            const [lng, lat] = geometry.coordinates;
+            return (
+              <Marker
+                key={`cluster-${id}`}
+                coordinate={{ latitude: lat, longitude: lng }}
+                onPress={onPress}
+                tracksViewChanges
+              >
+                <View style={styles.clusterBubble}>
+                  <Text style={styles.clusterText}>
+                    {properties.point_count}
+                  </Text>
+                </View>
+              </Marker>
+            );
+          }}
           onPress={() => setSelected(null)}
         >
           {/* Markers must be DIRECT children of the map for clustering to
@@ -234,5 +254,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: COLORS.accentSoft,
+  },
+  clusterBubble: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+  },
+  clusterText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
