@@ -28,6 +28,15 @@ const DEFAULT_REGION = {
   longitudeDelta: 0.4,
 };
 
+// Hide Google's own business/POI/transit pins so only our post pins show —
+// gives the clean look of the Instagram / Snapchat map.
+const MAP_STYLE = [
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.business", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "labels", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
 // A small photo-card marker representing one post.
 function PostMarker({
   loc,
@@ -114,6 +123,7 @@ export default function MapScreen() {
         <MapView
           style={{ flex: 1 }}
           initialRegion={DEFAULT_REGION}
+          customMapStyle={MAP_STYLE}
           zoomEnabled
           scrollEnabled
           rotateEnabled
