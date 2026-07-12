@@ -1,5 +1,5 @@
 import { CommentSheet } from "@/components/comments/CommentSheet";
-import { PostCard } from "@/components/post";
+import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { ImageGrid } from "@/components/profile/ImageGrid";
 import { Screen } from "@/components/ui/Screen";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -387,34 +388,20 @@ export default function ExploreScreen() {
         )}
       </ScrollView>
 
-      {/* Full post view overlay above grids  */}
-      {!!activePostLatest && (
-        <View
-          className="absolute top-0 left-0 right-0 bottom-0 bg-white"
-          style={{ elevation: 10 }}
-        >
-          <Screen>
-            <View className="flex-row justify-end px-4 pt-3">
-              <TouchableOpacity
-                onPress={() => setActivePost(null)}
-                className="p-2"
-              >
-                <Ionicons name="close" size={26} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-              <PostCard
-                {...activePostLatest}
-                liked={!!likedPosts[activePostLatest.id]}
-                saved={!!savedPosts[activePostLatest.id]}
-                onLike={() => toggleLike(activePostLatest.id)}
-                onComment={() => openComments(activePostLatest.id)}
-                onSave={() => toggleSave(activePostLatest.id)}
-              />
-            </ScrollView>
-          </Screen>
-        </View>
-      )}
+      {/* Full post detail view */}
+      <Modal
+        visible={!!activePost}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setActivePost(null)}
+      >
+        {activePost && (
+          <PostDetailModal
+            postId={activePost.id}
+            onClose={() => setActivePost(null)}
+          />
+        )}
+      </Modal>
 
       {/* Comment Bottom Sheet */}
       <CommentSheet
