@@ -1,14 +1,3 @@
-// Map tab: shows each of your located posts as a little photo card
-// (Instagram/Snapchat style). Tapping one lets you view the post or open it in
-// Google Maps.
-//
-// The photo cards are drawn as normal views layered ON TOP of the map (not as
-// native map markers). react-native-maps custom markers render blank/clipped on
-// the New Architecture, so instead we project each coordinate to a screen
-// position ourselves and drop an ordinary view there — ordinary views never
-// clip. We recompute those positions on every region change so the cards track
-// the map live while you drag/zoom. (This flat projection assumes the map isn't
-// rotated or tilted, so those gestures are disabled.)
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { LocationData } from "@/constants/new-post";
 import { COLORS } from "@/constants/theme";
@@ -35,7 +24,6 @@ import {
 import MapView, { Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// The three map scopes and their button labels.
 const SCOPES: { key: MapScope; label: string }[] = [
   { key: "mine", label: "Mine" },
   { key: "following", label: "Following" },
@@ -48,9 +36,6 @@ const EMPTY_TEXT: Record<MapScope, string> = {
   everyone: "No located posts yet.",
 };
 
-// Country isn't stored on posts, so we reverse-geocode each coordinate to find
-// it. Cached by rounded coordinate so we don't geocode the same spot twice.
-// (Reverse geocoding doesn't need location permission.)
 const countryCache = new Map<string, string | null>();
 
 async function countryForCoord(
@@ -69,7 +54,7 @@ async function countryForCoord(
   }
 }
 
-// Falls back to Singapore when you have no pinned posts yet.
+// Falls back to Singapore when have no pinned posts yet.
 const DEFAULT_REGION: Region = {
   latitude: 1.3521,
   longitude: 103.8198,
@@ -77,7 +62,6 @@ const DEFAULT_REGION: Region = {
   longitudeDelta: 0.4,
 };
 
-// Hide Google's own business/POI/transit pins so only our post cards show —
 // gives the clean look of the Instagram / Snapchat map.
 const MAP_STYLE = [
   { featureType: "poi", stylers: [{ visibility: "off" }] },
@@ -92,9 +76,6 @@ const CARD_H = 72;
 
 type Size = { width: number; height: number };
 
-// Turn a lat/long into an x/y on the map view, using the visible region and the
-// map's pixel size. Returns null if we don't know the size yet or it's well off
-// screen. Linear projection — accurate enough at city zoom, no rotation/tilt.
 function project(
   loc: { latitude: number; longitude: number },
   region: Region,
@@ -394,7 +375,7 @@ export default function MapScreen() {
 
     // Match by place NAME, not coordinates. Shops in the same mall share almost
     // identical coordinates, so distance can't tell "Ghost Bingsu" from
-    // "Ji De Chi" — but a post made from a place stored that place's exact name.
+    // "Ji De Chi" but a post made from a place stored that place's exact name.
     // If no post has that name, we just drop a pin.
     const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
     const target = norm(r.name);
@@ -406,7 +387,7 @@ export default function MapScreen() {
       setSelectedPosts([match]);
     } else {
       setSelectedPosts([]);
-      setSearchedPlace(r); // no post here — just drop a pin
+      setSearchedPlace(r); // no post here just drop a pin
     }
   };
 
@@ -452,7 +433,7 @@ export default function MapScreen() {
     [postCountries],
   );
 
-  // Fly/zoom the map to fit all posts in the chosen country.
+  // Zoom the map to fit all posts in the chosen country.
   const zoomToCountry = (country: string) => {
     const coords = locations
       .filter((l) => postCountries[l.id] === country)
@@ -554,7 +535,7 @@ export default function MapScreen() {
 
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
-    Linking.openURL(url).catch(() => {});
+    Linking.openURL(url).catch(() => { });
     setSelectedPosts([]);
   };
 
@@ -707,9 +688,9 @@ export default function MapScreen() {
                   // anchor the pointer (bottom-centre) on the point.
                   transform: isCluster
                     ? [
-                        { translateX: -CLUSTER_SIZE / 2 },
-                        { translateY: -CLUSTER_SIZE / 2 },
-                      ]
+                      { translateX: -CLUSTER_SIZE / 2 },
+                      { translateY: -CLUSTER_SIZE / 2 },
+                    ]
                     : [{ translateX: -CARD_W / 2 }, { translateY: -CARD_H }],
                 }}
               >
