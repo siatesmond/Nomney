@@ -11,7 +11,6 @@ function TabBarIcon(props: {
   return <Ionicons size={24} {...props} />;
 }
 
-// Big orange circular "+" button that sits raised in the middle of the tab bar.
 function AddPostButton() {
   return (
     <View className="flex-1 items-center justify-center">
