@@ -288,7 +288,10 @@ export default function MapScreen() {
   const [locations, setLocations] = useState<PostLocation[]>([]);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [mapSize, setMapSize] = useState<Size>({ width: 0, height: 0 });
-  const [selected, setSelected] = useState<PostLocation | null>(null);
+  // The post(s) shown in the bottom card. Usually one; more than one when
+  // several posts share the same spot (e.g. shops in the same mall).
+  const [selectedPosts, setSelectedPosts] = useState<PostLocation[]>([]);
+  const [postIndex, setPostIndex] = useState(0);
   const [openPostId, setOpenPostId] = useState<string | null>(null);
   // Gallery state for the tapped-card photo swiper.
   const [mediaW, setMediaW] = useState(0);
@@ -334,9 +337,10 @@ export default function MapScreen() {
     if (match) {
       setSearchedPlace(null); // the post's own pin already marks the spot
       setPhotoIndex(0);
-      setSelected(match);
+      setPostIndex(0);
+      setSelectedPosts([match]);
     } else {
-      setSelected(null);
+      setSelectedPosts([]);
       setSearchedPlace(r); // no post here — just drop a pin
     }
   };
@@ -389,7 +393,7 @@ export default function MapScreen() {
       .filter((l) => postCountries[l.id] === country)
       .map((l) => ({ latitude: l.latitude, longitude: l.longitude }));
     if (coords.length === 0) return;
-    setSelected(null);
+    setSelectedPosts([]);
     mapRef.current?.fitToCoordinates(coords, {
       edgePadding: { top: 140, right: 80, bottom: 160, left: 80 },
       animated: true,
@@ -429,10 +433,11 @@ export default function MapScreen() {
     }
   };
 
-  // Tap a card: show its info and fly/zoom the map to that spot.
+  // Tap a single card: show its info and fly/zoom the map to that spot.
   const focusLocation = (loc: PostLocation) => {
-    setSelected(loc);
+    setSelectedPosts([loc]);
     setPhotoIndex(0);
+    setPostIndex(0);
     mapRef.current?.animateToRegion(
       {
         latitude: loc.latitude,
@@ -444,21 +449,44 @@ export default function MapScreen() {
     );
   };
 
-  // Tap a cluster: zoom the map to fit its members so they spread apart.
-  const zoomToCluster = (members: PostLocation[]) => {
-    mapRef.current?.fitToCoordinates(
-      members.map((m) => ({ latitude: m.latitude, longitude: m.longitude })),
-      {
-        edgePadding: { top: 140, right: 100, bottom: 160, left: 100 },
-        animated: true,
-      },
+  // Tap a cluster. If its posts are basically at the same spot (a mall, say),
+  // zooming can't separate them — so show them all in the card to swipe
+  // through. Otherwise, zoom in to fit them so they spread apart.
+  const onClusterPress = (members: PostLocation[]) => {
+    const [first] = members;
+    const sameSpot = members.every(
+      (m) =>
+        Math.abs(m.latitude - first.latitude) < 0.0005 &&
+        Math.abs(m.longitude - first.longitude) < 0.0005,
     );
+    if (sameSpot) {
+      setPostIndex(0);
+      setPhotoIndex(0);
+      setSelectedPosts(members);
+      mapRef.current?.animateToRegion(
+        {
+          latitude: first.latitude,
+          longitude: first.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        400,
+      );
+    } else {
+      mapRef.current?.fitToCoordinates(
+        members.map((m) => ({ latitude: m.latitude, longitude: m.longitude })),
+        {
+          edgePadding: { top: 140, right: 100, bottom: 160, left: 100 },
+          animated: true,
+        },
+      );
+    }
   };
 
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
     Linking.openURL(url).catch(() => {});
-    setSelected(null);
+    setSelectedPosts([]);
   };
 
   return (
@@ -578,7 +606,7 @@ export default function MapScreen() {
           showsUserLocation={locationGranted}
           showsMyLocationButton={false}
           onPress={() => {
-            setSelected(null);
+            setSelectedPosts([]);
             setSearchedPlace(null);
           }}
           onLayout={(e) => setMapSize(e.nativeEvent.layout)}
@@ -599,7 +627,7 @@ export default function MapScreen() {
                 activeOpacity={0.85}
                 onPress={() =>
                   isCluster
-                    ? zoomToCluster(c.members)
+                    ? onClusterPress(c.members)
                     : focusLocation(c.members[0])
                 }
                 style={{
@@ -794,116 +822,180 @@ export default function MapScreen() {
         )}
       </View>
 
-      {/* Selected card */}
-      {selected && (
-        <View
-          className="absolute bottom-6 left-4 right-4 bg-white rounded-2xl p-4"
-          style={{
-            elevation: 8,
-            shadowColor: "#000",
-            shadowOpacity: 0.15,
-            shadowRadius: 10,
-            shadowOffset: { width: 0, height: 4 },
-          }}
-        >
-          {selected.imageUrls.length > 0 && (
+      {/* Selected card — one post, or several that share the same spot. */}
+      {selectedPosts.length > 0 &&
+        (() => {
+          const multi = selectedPosts.length > 1;
+          const post =
+            selectedPosts[Math.min(postIndex, selectedPosts.length - 1)];
+          return (
             <View
-              onLayout={(e) => setMediaW(e.nativeEvent.layout.width)}
-              style={{ marginBottom: 10 }}
-            >
-              {mediaW > 0 && (
-                <ScrollView
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  onMomentumScrollEnd={(e) =>
-                    setPhotoIndex(
-                      Math.round(e.nativeEvent.contentOffset.x / mediaW),
-                    )
-                  }
-                  style={{ borderRadius: 12, backgroundColor: "#fff" }}
-                >
-                  {/* contain (not cover) so the whole photo shows, uncropped. */}
-                  {selected.imageUrls.map((url, i) => (
-                    <Image
-                      key={i}
-                      source={{ uri: url }}
-                      style={{ width: mediaW, height: 240 }}
-                      resizeMode="contain"
-                    />
-                  ))}
-                </ScrollView>
-              )}
-
-              {/* Page dots when there's more than one photo. */}
-              {selected.imageUrls.length > 1 && (
-                <View className="flex-row justify-center mt-2">
-                  {selected.imageUrls.map((_, i) => (
-                    <View
-                      key={i}
-                      style={{
-                        width: i === photoIndex ? 16 : 6,
-                        height: 6,
-                        borderRadius: 3,
-                        marginHorizontal: 3,
-                        backgroundColor:
-                          i === photoIndex ? COLORS.accent : COLORS.line,
-                      }}
-                    />
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-          <Text
-            style={{ color: COLORS.ink }}
-            className="text-base font-bold"
-            numberOfLines={1}
-          >
-            {selected.title}
-          </Text>
-          {scope !== "mine" && !!selected.username && (
-            <Text style={{ color: COLORS.muted }} className="text-xs mt-0.5">
-              by @{selected.username}
-            </Text>
-          )}
-          {!!selected.locationName && (
-            <View className="flex-row items-center mt-1">
-              <Ionicons name="location-sharp" size={13} color={COLORS.accent} />
-              <Text
-                style={{ color: COLORS.muted }}
-                className="text-xs ml-1 flex-1"
-                numberOfLines={1}
-              >
-                {selected.locationName}
-              </Text>
-            </View>
-          )}
-          <View className="flex-row gap-3 mt-3">
-            <TouchableOpacity
-              className="flex-1 rounded-xl py-3 items-center"
-              style={{ backgroundColor: COLORS.accent }}
-              activeOpacity={0.85}
-              onPress={() => {
-                setOpenPostId(selected.id);
-                setSelected(null);
+              className="absolute bottom-6 left-4 right-4 bg-white rounded-2xl p-4"
+              style={{
+                elevation: 8,
+                shadowColor: "#000",
+                shadowOpacity: 0.15,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 4 },
               }}
             >
-              <Text className="text-white font-semibold text-sm">View post</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-1 rounded-xl py-3 items-center"
-              style={{ borderWidth: 1, borderColor: COLORS.line }}
-              activeOpacity={0.85}
-              onPress={() => openInGoogleMaps(selected)}
-            >
-              <Text style={{ color: COLORS.ink }} className="font-semibold text-sm">
-                Google Maps
+              {multi && (
+                <Text
+                  className="text-xs font-semibold mb-2"
+                  style={{ color: COLORS.muted }}
+                >
+                  {selectedPosts.length} posts here · swipe to browse
+                </Text>
+              )}
+
+              <View
+                onLayout={(e) => setMediaW(e.nativeEvent.layout.width)}
+                style={{ marginBottom: 10 }}
+              >
+                {mediaW > 0 &&
+                  (multi ? (
+                    // Swipe between the posts at this spot (first photo of each).
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={(e) =>
+                        setPostIndex(
+                          Math.round(e.nativeEvent.contentOffset.x / mediaW),
+                        )
+                      }
+                      style={{ borderRadius: 12, backgroundColor: "#fff" }}
+                    >
+                      {selectedPosts.map((p) => (
+                        <Image
+                          key={p.id}
+                          source={{ uri: p.imageUrl }}
+                          style={{ width: mediaW, height: 240 }}
+                          resizeMode="contain"
+                        />
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    // Swipe between this single post's photos.
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={(e) =>
+                        setPhotoIndex(
+                          Math.round(e.nativeEvent.contentOffset.x / mediaW),
+                        )
+                      }
+                      style={{ borderRadius: 12, backgroundColor: "#fff" }}
+                    >
+                      {post.imageUrls.map((url, i) => (
+                        <Image
+                          key={i}
+                          source={{ uri: url }}
+                          style={{ width: mediaW, height: 240 }}
+                          resizeMode="contain"
+                        />
+                      ))}
+                    </ScrollView>
+                  ))}
+
+                {/* Dots: over the posts when multiple, else over the photos. */}
+                {multi ? (
+                  <View className="flex-row justify-center mt-2">
+                    {selectedPosts.map((_, i) => (
+                      <View
+                        key={i}
+                        style={{
+                          width: i === postIndex ? 16 : 6,
+                          height: 6,
+                          borderRadius: 3,
+                          marginHorizontal: 3,
+                          backgroundColor:
+                            i === postIndex ? COLORS.accent : COLORS.line,
+                        }}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  post.imageUrls.length > 1 && (
+                    <View className="flex-row justify-center mt-2">
+                      {post.imageUrls.map((_, i) => (
+                        <View
+                          key={i}
+                          style={{
+                            width: i === photoIndex ? 16 : 6,
+                            height: 6,
+                            borderRadius: 3,
+                            marginHorizontal: 3,
+                            backgroundColor:
+                              i === photoIndex ? COLORS.accent : COLORS.line,
+                          }}
+                        />
+                      ))}
+                    </View>
+                  )
+                )}
+              </View>
+
+              <Text
+                style={{ color: COLORS.ink }}
+                className="text-base font-bold"
+                numberOfLines={1}
+              >
+                {post.title}
               </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+              {scope !== "mine" && !!post.username && (
+                <Text style={{ color: COLORS.muted }} className="text-xs mt-0.5">
+                  by @{post.username}
+                </Text>
+              )}
+              {!!post.locationName && (
+                <View className="flex-row items-center mt-1">
+                  <Ionicons
+                    name="location-sharp"
+                    size={13}
+                    color={COLORS.accent}
+                  />
+                  <Text
+                    style={{ color: COLORS.muted }}
+                    className="text-xs ml-1 flex-1"
+                    numberOfLines={1}
+                  >
+                    {post.locationName}
+                  </Text>
+                </View>
+              )}
+              <View className="flex-row gap-3 mt-3">
+                <TouchableOpacity
+                  className="flex-1 rounded-xl py-3 items-center"
+                  style={{ backgroundColor: COLORS.accent }}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    setOpenPostId(post.id);
+                    setSelectedPosts([]);
+                  }}
+                >
+                  <Text className="text-white font-semibold text-sm">
+                    View post
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="flex-1 rounded-xl py-3 items-center"
+                  style={{ borderWidth: 1, borderColor: COLORS.line }}
+                  activeOpacity={0.85}
+                  onPress={() => openInGoogleMaps(post)}
+                >
+                  <Text
+                    style={{ color: COLORS.ink }}
+                    className="font-semibold text-sm"
+                  >
+                    Google Maps
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          );
+        })()}
 
       {/* Post detail */}
       <Modal
