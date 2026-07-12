@@ -110,44 +110,25 @@ export default function MapScreen() {
                 onPress={onPress}
                 tracksViewChanges
               >
-                <View style={styles.markerWrap}>
-                  <View style={styles.clusterBubble}>
-                    <Text style={styles.clusterText}>
-                      {properties.point_count}
-                    </Text>
-                  </View>
+                <View style={styles.clusterBubble}>
+                  <Text style={styles.clusterText}>
+                    {properties.point_count}
+                  </Text>
                 </View>
               </Marker>
             );
           }}
           onPress={() => setSelected(null)}
         >
-          {/* Markers must be DIRECT children of the map for clustering to
-              detect them — don't wrap them in a custom component. */}
+          {/* Native pins (no custom view) so they never clip on the New
+              Architecture. The photo shows in the card when you tap. */}
           {locations.map((loc) => (
             <Marker
               key={loc.id}
               coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
               onPress={() => setSelected(loc)}
-              tracksViewChanges
-              anchor={{ x: 0.5, y: 1 }}
-            >
-              <View style={styles.markerWrap}>
-                <View style={styles.markerCard}>
-                  {loc.imageUrl ? (
-                    <Image
-                      source={{ uri: loc.imageUrl }}
-                      style={styles.markerImg}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={[styles.markerImg, styles.markerFallback]}>
-                      <Ionicons name="restaurant" size={22} color={COLORS.accent} />
-                    </View>
-                  )}
-                </View>
-              </View>
-            </Marker>
+              pinColor={COLORS.accent}
+            />
           ))}
         </MapView>
 
@@ -173,6 +154,19 @@ export default function MapScreen() {
             shadowOffset: { width: 0, height: 4 },
           }}
         >
+          {!!selected.imageUrl && (
+            <Image
+              source={{ uri: selected.imageUrl }}
+              style={{
+                width: "100%",
+                height: 150,
+                borderRadius: 12,
+                marginBottom: 10,
+                backgroundColor: "#eee",
+              }}
+              resizeMode="cover"
+            />
+          )}
           <Text
             style={{ color: COLORS.ink }}
             className="text-base font-bold"
@@ -239,34 +233,6 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   // Instagram-style portrait photo card. A real border defines the white frame
   // because marker shadows don't render into the pin bitmap on Android.
-  // Transparent padding around every marker so the New-Architecture clipping
-  // bug eats the empty space instead of the visible card/bubble.
-  markerWrap: {
-    padding: 12,
-    backgroundColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // No shadow/elevation here: on Android that clips the marker's corners.
-  // A thin border defines the white frame instead.
-  markerCard: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.18)",
-  },
-  markerImg: {
-    width: 52,
-    height: 68,
-    borderRadius: 11,
-    backgroundColor: "#eee",
-  },
-  markerFallback: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.accentSoft,
-  },
   clusterBubble: {
     width: 46,
     height: 46,
