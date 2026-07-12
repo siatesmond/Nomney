@@ -11,13 +11,11 @@ import {
   Image,
   Linking,
   Modal,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView from "react-native-map-clustering";
-import { Marker } from "react-native-maps";
+import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Falls back to Singapore when you have no pinned posts yet.
@@ -95,29 +93,6 @@ export default function MapScreen() {
           rotateEnabled
           pitchEnabled
           zoomControlEnabled
-          clusterColor={COLORS.accent}
-          clusterTextColor="#fff"
-          radius={60}
-          // The library's default cluster bubble renders blank on some devices,
-          // so draw our own visible orange count bubble.
-          renderCluster={(cluster: any) => {
-            const { id, geometry, onPress, properties } = cluster;
-            const [lng, lat] = geometry.coordinates;
-            return (
-              <Marker
-                key={`cluster-${id}`}
-                coordinate={{ latitude: lat, longitude: lng }}
-                onPress={onPress}
-                tracksViewChanges
-              >
-                <View style={styles.clusterBubble}>
-                  <Text style={styles.clusterText}>
-                    {properties.point_count}
-                  </Text>
-                </View>
-              </Marker>
-            );
-          }}
           onPress={() => setSelected(null)}
         >
           {/* Native pins (no custom view) so they never clip on the New
@@ -229,23 +204,3 @@ export default function MapScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  // Instagram-style portrait photo card. A real border defines the white frame
-  // because marker shadows don't render into the pin bitmap on Android.
-  clusterBubble: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 3,
-    borderColor: "#fff",
-  },
-  clusterText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-});
