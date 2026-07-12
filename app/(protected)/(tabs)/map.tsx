@@ -12,11 +12,13 @@
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
-import { getUserPostLocations, PostLocation } from "@/lib/posts";
+import { getPostLocations, MapScope, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
+  Alert,
   Image,
   Linking,
   Modal,
@@ -27,6 +29,19 @@ import {
 } from "react-native";
 import MapView, { Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+// The three map scopes and their button labels.
+const SCOPES: { key: MapScope; label: string }[] = [
+  { key: "mine", label: "Mine" },
+  { key: "following", label: "Following" },
+  { key: "everyone", label: "Everyone" },
+];
+
+const EMPTY_TEXT: Record<MapScope, string> = {
+  mine: "No pinned posts yet. Add a location to a post and it'll show up here.",
+  following: "No located posts from people you follow yet.",
+  everyone: "No located posts yet.",
+};
 
 // Falls back to Singapore when you have no pinned posts yet.
 const DEFAULT_REGION: Region = {
@@ -208,6 +223,8 @@ export default function MapScreen() {
   const { profile } = useAuthContext();
 
   const mapRef = useRef<MapView>(null);
+  const [scope, setScope] = useState<MapScope>("mine");
+  const [locationGranted, setLocationGranted] = useState(false);
   const [locations, setLocations] = useState<PostLocation[]>([]);
   const [region, setRegion] = useState<Region>(DEFAULT_REGION);
   const [mapSize, setMapSize] = useState<Size>({ width: 0, height: 0 });
@@ -217,14 +234,14 @@ export default function MapScreen() {
   const [mediaW, setMediaW] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
 
-  // Reload pins whenever the tab is focused, so new posts show up.
+  // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
     useCallback(() => {
       if (!profile?.id) return;
       let cancelled = false;
       (async () => {
         try {
-          const data = await getUserPostLocations(profile.id);
+          const data = await getPostLocations(scope, profile.id);
           if (!cancelled) setLocations(data);
         } catch (err) {
           console.log("Failed to load post locations:", err);
@@ -233,8 +250,41 @@ export default function MapScreen() {
       return () => {
         cancelled = true;
       };
-    }, [profile?.id]),
+    }, [profile?.id, scope]),
   );
+
+  // Center the map on the user's current GPS location (asking permission the
+  // first time). Turning permission on also shows the blue "you are here" dot.
+  const recenterToMe = async () => {
+    try {
+      let granted = locationGranted;
+      if (!granted) {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        granted = status === "granted";
+        setLocationGranted(granted);
+      }
+      if (!granted) {
+        return Alert.alert(
+          "Location needed",
+          "Turn on location access to center the map on you.",
+        );
+      }
+      const { coords } = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      mapRef.current?.animateToRegion(
+        {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          latitudeDelta: 0.02,
+          longitudeDelta: 0.02,
+        },
+        500,
+      );
+    } catch {
+      Alert.alert("Location error", "Couldn't get your current location.");
+    }
+  };
 
   // Tap a card: show its info and fly/zoom the map to that spot.
   const focusLocation = (loc: PostLocation) => {
@@ -275,9 +325,35 @@ export default function MapScreen() {
       style={{ backgroundColor: COLORS.paper }}
     >
       <View className="px-5 pt-2 pb-3">
-        <Text className="text-2xl font-bold" style={{ color: COLORS.ink }}>
-          My Map
+        <Text className="text-2xl font-bold mb-2" style={{ color: COLORS.ink }}>
+          Map
         </Text>
+
+        {/* Scope toggle: Mine / Following / Everyone */}
+        <View
+          className="flex-row rounded-full p-1"
+          style={{ backgroundColor: "#EEE" }}
+        >
+          {SCOPES.map(({ key, label }) => {
+            const active = scope === key;
+            return (
+              <TouchableOpacity
+                key={key}
+                activeOpacity={0.8}
+                onPress={() => setScope(key)}
+                className="flex-1 py-2 rounded-full items-center"
+                style={active ? { backgroundColor: COLORS.accent } : undefined}
+              >
+                <Text
+                  className="text-xs font-semibold"
+                  style={{ color: active ? "#fff" : COLORS.muted }}
+                >
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       {/* Map card */}
@@ -295,6 +371,8 @@ export default function MapScreen() {
           rotateEnabled={false}
           pitchEnabled={false}
           zoomControlEnabled
+          showsUserLocation={locationGranted}
+          showsMyLocationButton={false}
           onPress={() => setSelected(null)}
           onLayout={(e) => setMapSize(e.nativeEvent.layout)}
           onRegionChange={setRegion}
@@ -341,11 +419,26 @@ export default function MapScreen() {
           })}
         </View>
 
+        {/* Recenter-to-me button */}
+        <TouchableOpacity
+          onPress={recenterToMe}
+          activeOpacity={0.85}
+          className="absolute top-3 right-3 w-11 h-11 rounded-full items-center justify-center bg-white"
+          style={{
+            elevation: 4,
+            shadowColor: "#000",
+            shadowOpacity: 0.15,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: 2 },
+          }}
+        >
+          <Ionicons name="locate" size={20} color={COLORS.accent} />
+        </TouchableOpacity>
+
         {locations.length === 0 && (
           <View className="absolute inset-0 items-center justify-center px-8">
             <Text style={{ color: COLORS.muted }} className="text-sm text-center">
-              No pinned posts yet. Add a location to a post and it&apos;ll show
-              up here.
+              {EMPTY_TEXT[scope]}
             </Text>
           </View>
         )}
@@ -419,6 +512,11 @@ export default function MapScreen() {
           >
             {selected.title}
           </Text>
+          {scope !== "mine" && !!selected.username && (
+            <Text style={{ color: COLORS.muted }} className="text-xs mt-0.5">
+              by @{selected.username}
+            </Text>
+          )}
           {!!selected.locationName && (
             <View className="flex-row items-center mt-1">
               <Ionicons name="location-sharp" size={13} color={COLORS.accent} />

@@ -125,39 +125,65 @@ export type PostLocation = {
   longitude: number;
   imageUrl?: string; // first photo, used for the map pin
   imageUrls: string[]; // all photos, used for the tapped-card gallery
+  username?: string; // who posted it (shown for Following / Everyone)
 };
 
-// Every post by `userId` that has a saved location — used by the Map tab.
-export async function getUserPostLocations(
+// Which posts the Map tab shows.
+export type MapScope = "mine" | "following" | "everyone";
+
+function mapPostLocation(p: any): PostLocation {
+  const images = Array.isArray(p.post_image) ? p.post_image.slice() : [];
+  images.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
+  const imageUrls = images
+    .map((img: any) => img.image_url)
+    .filter(Boolean) as string[];
+  const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+  return {
+    id: p.id,
+    title: p.title ?? "Untitled",
+    locationName: p.location_name ?? "",
+    latitude: Number(p.latitude),
+    longitude: Number(p.longitude),
+    imageUrl: imageUrls[0],
+    imageUrls,
+    username: profile?.username ?? undefined,
+  };
+}
+
+// Located posts for the Map tab, scoped to your own, people you follow, or
+// everyone. Reading others' posts relies on the posts table's public SELECT
+// policy (same one the feed already uses).
+export async function getPostLocations(
+  scope: MapScope,
   userId: string,
 ): Promise<PostLocation[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from("posts")
     .select(
-      "id, title, location_name, latitude, longitude, post_image ( image_url, display_order )",
+      "id, title, location_name, latitude, longitude, post_image ( image_url, display_order ), profiles:profiles!posts_user_id_fkey ( username )",
     )
-    .eq("user_id", userId)
     .not("latitude", "is", null)
     .not("longitude", "is", null);
 
-  if (error) throw error;
+  if (scope === "mine") {
+    query = query.eq("user_id", userId);
+  } else if (scope === "following") {
+    const { data: follows, error: fErr } = await supabase
+      .from("followers")
+      .select("following_id")
+      .eq("follower_id", userId);
+    if (fErr) throw fErr;
+    const ids = (follows ?? []).map((f: any) => f.following_id);
+    if (ids.length === 0) return [];
+    query = query.in("user_id", ids).limit(300);
+  } else {
+    // everyone
+    query = query.limit(300);
+  }
 
-  return (data ?? []).map((p: any) => {
-    const images = Array.isArray(p.post_image) ? p.post_image.slice() : [];
-    images.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
-    const imageUrls = images
-      .map((img: any) => img.image_url)
-      .filter(Boolean) as string[];
-    return {
-      id: p.id,
-      title: p.title ?? "Untitled",
-      locationName: p.location_name ?? "",
-      latitude: Number(p.latitude),
-      longitude: Number(p.longitude),
-      imageUrl: imageUrls[0],
-      imageUrls,
-    };
-  });
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map(mapPostLocation);
 }
 
 interface SubmitPostPayload {
