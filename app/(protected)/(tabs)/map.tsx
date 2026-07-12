@@ -7,7 +7,7 @@ import { useAuthContext } from "@/hooks/use-auth-context";
 import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Image,
   Linking,
@@ -44,26 +44,16 @@ function PhotoMarker({
   loc: PostLocation;
   onPress: () => void;
 }) {
-  // react-native-maps only paints a custom marker view while tracksViewChanges
-  // is true, but leaving it on hurts performance. Keep it on, then turn it off
-  // a short moment AFTER the photo loads — flipping it off on the load event
-  // itself snapshots the marker before the image has actually drawn (blank).
-  const [tracks, setTracks] = useState(true);
-  const stopTrackingSoon = () => setTimeout(() => setTracks(false), 600);
-
-  // No photo? Give the icon a moment to paint, then stop tracking.
-  useEffect(() => {
-    if (loc.imageUrl) return;
-    const t = setTimeout(() => setTracks(false), 800);
-    return () => clearTimeout(t);
-  }, [loc.imageUrl]);
-
+  // Keep tracksViewChanges ON. Freezing the marker snapshot on this
+  // (New Architecture) setup captures a half-laid-out frame and clips the
+  // photo; continuous tracking re-renders the full view every frame so it
+  // shows correctly. Fine for a small number of markers.
   return (
     <Marker
       coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
       onPress={onPress}
       anchor={{ x: 0.5, y: 1 }}
-      tracksViewChanges={tracks}
+      tracksViewChanges={true}
     >
       {/* Explicit width/height + a little top padding: on Android the marker
           snapshot can be sized before layout settles and clip the top, so we
@@ -94,8 +84,6 @@ function PhotoMarker({
               source={{ uri: loc.imageUrl }}
               style={{ width: 48, height: 48 }}
               resizeMode="cover"
-              onLoad={stopTrackingSoon}
-              onError={stopTrackingSoon}
             />
           ) : (
             <View
