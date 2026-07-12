@@ -24,6 +24,7 @@ import {
   Modal,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -291,6 +292,9 @@ export default function MapScreen() {
 
   // Country per post (post id -> country name), filled by reverse-geocoding.
   const [postCountries, setPostCountries] = useState<Record<string, string>>({});
+  // When there are lots of countries we show a searchable picker instead of chips.
+  const [countryModal, setCountryModal] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
 
   // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
@@ -456,34 +460,59 @@ export default function MapScreen() {
           })}
         </View>
 
-        {/* Country chips — tap to zoom to that country's posts. Only shown
-            once posts span more than one country. */}
-        {countries.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mt-2"
-            contentContainerStyle={{ gap: 8, paddingRight: 8 }}
-          >
-            {countries.map((c) => (
-              <TouchableOpacity
-                key={c}
-                activeOpacity={0.8}
-                onPress={() => zoomToCountry(c)}
-                className="px-3 py-1.5 rounded-full"
-                style={{
-                  borderWidth: 1,
-                  borderColor: COLORS.line,
-                  backgroundColor: "#fff",
-                }}
+        {/* Country picker — tap to zoom to that country's posts. Only shown
+            once posts span more than one country. A short list shows as chips;
+            a long list collapses into a searchable dropdown. */}
+        {countries.length > 1 &&
+          (countries.length <= 6 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="mt-2"
+              contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+            >
+              {countries.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  activeOpacity={0.8}
+                  onPress={() => zoomToCountry(c)}
+                  className="px-3 py-1.5 rounded-full"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: COLORS.line,
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  <Text
+                    className="text-xs font-medium"
+                    style={{ color: COLORS.ink }}
+                  >
+                    {c}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setCountryModal(true)}
+              className="mt-2 self-start flex-row items-center px-3 py-2 rounded-full"
+              style={{
+                borderWidth: 1,
+                borderColor: COLORS.line,
+                backgroundColor: "#fff",
+              }}
+            >
+              <Ionicons name="earth" size={14} color={COLORS.accent} />
+              <Text
+                className="text-xs font-medium mx-1.5"
+                style={{ color: COLORS.ink }}
               >
-                <Text className="text-xs font-medium" style={{ color: COLORS.ink }}>
-                  {c}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+                Countries ({countries.length})
+              </Text>
+              <Ionicons name="chevron-down" size={14} color={COLORS.muted} />
+            </TouchableOpacity>
+          ))}
       </View>
 
       {/* Map card */}
@@ -705,6 +734,66 @@ export default function MapScreen() {
             onClose={() => setOpenPostId(null)}
           />
         )}
+      </Modal>
+
+      {/* Searchable country picker (used when there are many countries) */}
+      <Modal
+        visible={countryModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCountryModal(false)}
+      >
+        <View className="flex-1 justify-end">
+          <TouchableOpacity
+            className="absolute inset-0"
+            style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+            activeOpacity={1}
+            onPress={() => setCountryModal(false)}
+          />
+          <View
+            className="bg-white rounded-t-3xl px-5 pt-5 pb-8"
+            style={{ maxHeight: "70%" }}
+          >
+            <Text className="text-base font-bold mb-3" style={{ color: COLORS.ink }}>
+              Jump to a country
+            </Text>
+            <TextInput
+              placeholder="Search country"
+              placeholderTextColor={COLORS.muted}
+              value={countrySearch}
+              onChangeText={setCountrySearch}
+              className="rounded-xl px-3 py-2 mb-3 text-sm"
+              style={{ borderWidth: 1, borderColor: COLORS.line, color: COLORS.ink }}
+            />
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {countries
+                .filter((c) =>
+                  c.toLowerCase().includes(countrySearch.trim().toLowerCase()),
+                )
+                .map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    className="py-3 flex-row items-center"
+                    style={{ borderBottomWidth: 1, borderColor: COLORS.line }}
+                    onPress={() => {
+                      setCountryModal(false);
+                      setCountrySearch("");
+                      zoomToCountry(c);
+                    }}
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={16}
+                      color={COLORS.accent}
+                    />
+                    <Text className="text-sm ml-2" style={{ color: COLORS.ink }}>
+                      {c}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
