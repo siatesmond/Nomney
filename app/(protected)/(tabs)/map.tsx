@@ -378,7 +378,7 @@ export default function MapScreen() {
                       Math.round(e.nativeEvent.contentOffset.x / mediaW),
                     )
                   }
-                  style={{ borderRadius: 12, backgroundColor: "#000" }}
+                  style={{ borderRadius: 12, backgroundColor: "#fff" }}
                 >
                   {/* contain (not cover) so the whole photo shows, uncropped. */}
                   {selected.imageUrls.map((url, i) => (
