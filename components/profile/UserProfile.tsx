@@ -5,7 +5,7 @@ import { COLORS } from "@/constants/theme";
 import { Profile, useAuthContext } from "@/hooks/use-auth-context";
 import { followUser, unfollowUser } from "@/lib/followers";
 import { getProfileWithStats, resolveAvatarUrl } from "@/lib/profile";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -37,6 +37,7 @@ export function UserProfile({
   onPostClick = () => { },
 }: UserProfileProps) {
   const { profile: currentUser } = useAuthContext();
+  const router = useRouter();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -153,6 +154,18 @@ export function UserProfile({
           isOwnProfile={isOwnProfile}
           onEditPress={onEdit}
           onFollowPress={handleFollowToggle}
+          onFollowersPress={() =>
+            router.push({
+              pathname: "/follows/[id]",
+              params: { id: userId, tab: "followers" },
+            })
+          }
+          onFollowingPress={() =>
+            router.push({
+              pathname: "/follows/[id]",
+              params: { id: userId, tab: "following" },
+            })
+          }
           isFollowing={isFollowing}
           followersCount={followersCount}
           followingCount={followingCount}

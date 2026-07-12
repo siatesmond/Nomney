@@ -11,6 +11,8 @@ type ProfileHeaderProps = {
   isOwnProfile: boolean;
   onEditPress: () => void;
   onFollowPress: () => void;
+  onFollowersPress?: () => void;
+  onFollowingPress?: () => void;
   isFollowing: boolean;
   followersCount: number;
   followingCount: number;
@@ -24,6 +26,8 @@ export function ProfileHeader({
   isOwnProfile,
   onEditPress,
   onFollowPress,
+  onFollowersPress,
+  onFollowingPress,
   isFollowing,
   followersCount,
   followingCount,
@@ -62,20 +66,28 @@ export function ProfileHeader({
         {bioText}
       </Text>
 
-      {/* Instagram-Style Stats Row */}
+      {/* Instagram-Style Stats Row — tap to see who */}
       <View className="flex-row justify-center gap-10 mb-5">
-        <View className="items-center">
+        <TouchableOpacity
+          className="items-center"
+          activeOpacity={0.7}
+          onPress={onFollowersPress}
+        >
           <Text className="text-lg font-bold text-[#1A1A1A]">
             {followersCount}
           </Text>
           <Text className="text-xs text-[#666] mt-0.5">Followers</Text>
-        </View>
-        <View className="items-center">
+        </TouchableOpacity>
+        <TouchableOpacity
+          className="items-center"
+          activeOpacity={0.7}
+          onPress={onFollowingPress}
+        >
           <Text className="text-lg font-bold text-[#1A1A1A]">
             {followingCount}
           </Text>
           <Text className="text-xs text-[#666] mt-0.5">Following</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Conditional Rendering based on isOwnProfile */}

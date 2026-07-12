@@ -54,6 +54,14 @@ export type Comment = {
     timeAgo: string;
 };
 
+// A user shown in a followers / following list.
+export type FollowUser = {
+    id: string;
+    username: string | null;
+    full_name: string | null;
+    avatar_url: string | null;
+};
+
 // A tag/category.
 export type Category = {
     id: string;
