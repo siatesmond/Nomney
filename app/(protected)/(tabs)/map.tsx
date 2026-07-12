@@ -35,17 +35,13 @@ function PostMarker({
   loc: PostLocation;
   onPress: () => void;
 }) {
-  // Redraw the marker until the image loads, then stop for performance.
-  const [tracks, setTracks] = useState(true);
-  useEffect(() => {
-    if (!loc.imageUrl) setTracks(false);
-  }, [loc.imageUrl]);
-
   return (
     <Marker
       coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
       onPress={onPress}
-      tracksViewChanges={tracks}
+      // Keep tracking view changes so the remote photo reliably renders into
+      // the marker — turning it off leaves the image blank on Android.
+      tracksViewChanges
       anchor={{ x: 0.5, y: 1 }}
     >
       <View className="items-center">
@@ -54,9 +50,7 @@ function PostMarker({
             <Image
               source={{ uri: loc.imageUrl }}
               style={styles.markerImg}
-              // Wait a beat after load so the photo is actually painted into the
-              // marker's bitmap snapshot before we stop tracking changes.
-              onLoad={() => setTimeout(() => setTracks(false), 600)}
+              resizeMode="cover"
             />
           ) : (
             <View style={[styles.markerImg, styles.markerFallback]}>
