@@ -54,7 +54,9 @@ function PostMarker({
             <Image
               source={{ uri: loc.imageUrl }}
               style={styles.markerImg}
-              onLoad={() => setTracks(false)}
+              // Wait a beat after load so the photo is actually painted into the
+              // marker's bitmap snapshot before we stop tracking changes.
+              onLoad={() => setTimeout(() => setTracks(false), 600)}
             />
           ) : (
             <View style={[styles.markerImg, styles.markerFallback]}>
