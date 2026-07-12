@@ -109,6 +109,8 @@ export default function MapScreen() {
   // Whether the current scope's posts have finished loading (so we don't say
   // "no post here" before they're in).
   const [locationsLoaded, setLocationsLoaded] = useState(false);
+  // Whether the native map is ready to accept animate commands.
+  const [mapReady, setMapReady] = useState(false);
 
   const goToSearchResult = (r: LocationData) => {
     onLocationSearchChange(""); // clear the box + results
@@ -160,23 +162,23 @@ export default function MapScreen() {
   // `locationsLoaded` avoids a false "no post here" on the first open.
   useEffect(() => {
     if (!pendingFocus) return;
+    if (!mapReady) return; // wait until the map can accept animate commands
 
+    // Zoom in to the spot (once).
     if (!focusAnimated.current) {
       focusAnimated.current = true;
-      setTimeout(() => {
-        mapRef.current?.animateToRegion(
-          {
-            latitude: pendingFocus.latitude,
-            longitude: pendingFocus.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          },
-          500,
-        );
-      }, 300);
+      mapRef.current?.animateToRegion(
+        {
+          latitude: pendingFocus.latitude,
+          longitude: pendingFocus.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        500,
+      );
     }
 
-    if (!locationsLoaded) return;
+    if (!locationsLoaded) return; // wait for posts before card-vs-pin
 
     const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
     const target = norm(pendingFocus.name);
@@ -189,7 +191,7 @@ export default function MapScreen() {
       setSearchedPlace(pendingFocus);
     }
     setPendingFocus(null);
-  }, [pendingFocus, locationsLoaded, locations]);
+  }, [pendingFocus, mapReady, locationsLoaded, locations]);
 
   // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
@@ -454,6 +456,7 @@ export default function MapScreen() {
           zoomControlEnabled
           showsUserLocation={locationGranted}
           showsMyLocationButton={false}
+          onMapReady={() => setMapReady(true)}
           onPress={() => {
             setSelectedPosts([]);
             setSearchedPlace(null);
