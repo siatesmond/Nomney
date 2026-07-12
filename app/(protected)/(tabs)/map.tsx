@@ -96,7 +96,7 @@ type Size = { width: number; height: number };
 // map's pixel size. Returns null if we don't know the size yet or it's well off
 // screen. Linear projection — accurate enough at city zoom, no rotation/tilt.
 function project(
-  loc: PostLocation,
+  loc: { latitude: number; longitude: number },
   region: Region,
   size: Size,
 ): { x: number; y: number } | null {
@@ -308,6 +308,8 @@ export default function MapScreen() {
     onLocationSearchChange,
     searchLocation,
   } = useNewPostLocation();
+  // A searched place that has no post of yours — shown as a plain pin.
+  const [searchedPlace, setSearchedPlace] = useState<LocationData | null>(null);
 
   const goToSearchResult = (r: LocationData) => {
     onLocationSearchChange(""); // clear the box + results
@@ -321,6 +323,22 @@ export default function MapScreen() {
       },
       500,
     );
+
+    // If one of the shown posts is at this place, open its card. Posts made
+    // from the same place share coordinates, so match on closeness (~200m).
+    const match = locations.find(
+      (l) =>
+        Math.abs(l.latitude - r.latitude) < 0.002 &&
+        Math.abs(l.longitude - r.longitude) < 0.002,
+    );
+    if (match) {
+      setSearchedPlace(null); // the post's own pin already marks the spot
+      setPhotoIndex(0);
+      setSelected(match);
+    } else {
+      setSelected(null);
+      setSearchedPlace(r); // no post here — just drop a pin
+    }
   };
 
   // Reload pins whenever the tab is focused or the scope changes.
@@ -559,7 +577,10 @@ export default function MapScreen() {
           zoomControlEnabled
           showsUserLocation={locationGranted}
           showsMyLocationButton={false}
-          onPress={() => setSelected(null)}
+          onPress={() => {
+            setSelected(null);
+            setSearchedPlace(null);
+          }}
           onLayout={(e) => setMapSize(e.nativeEvent.layout)}
           onRegionChange={setRegion}
         />
@@ -610,6 +631,50 @@ export default function MapScreen() {
               </TouchableOpacity>
             );
           })}
+
+          {/* Pin for a searched place that has no post of yours. */}
+          {searchedPlace &&
+            (() => {
+              const p = project(searchedPlace, region, mapSize);
+              if (!p) return null;
+              return (
+                <View
+                  style={{
+                    position: "absolute",
+                    left: p.x,
+                    top: p.y,
+                    width: 140,
+                    alignItems: "center",
+                    transform: [{ translateX: -70 }, { translateY: -58 }],
+                  }}
+                >
+                  <View
+                    className="bg-white rounded-full px-2.5 py-1"
+                    style={{
+                      elevation: 3,
+                      shadowColor: "#000",
+                      shadowOpacity: 0.15,
+                      shadowRadius: 3,
+                      shadowOffset: { width: 0, height: 2 },
+                    }}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      className="text-[10px] font-semibold"
+                      style={{ color: COLORS.ink, maxWidth: 120 }}
+                    >
+                      {searchedPlace.name}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="location"
+                    size={34}
+                    color={COLORS.accent}
+                    style={{ marginTop: -1 }}
+                  />
+                </View>
+              );
+            })()}
         </View>
 
         {/* Recenter-to-me button */}
