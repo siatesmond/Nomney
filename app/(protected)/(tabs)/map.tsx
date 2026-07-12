@@ -65,7 +65,17 @@ function PhotoMarker({
       anchor={{ x: 0.5, y: 1 }}
       tracksViewChanges={tracks}
     >
-      <View className="items-center">
+      {/* Explicit width/height + a little top padding: on Android the marker
+          snapshot can be sized before layout settles and clip the top, so we
+          give it a fixed, roomy frame. */}
+      <View
+        style={{
+          width: 62,
+          height: 72,
+          alignItems: "center",
+          paddingTop: 6,
+        }}
+      >
         <View
           style={{
             width: 54,
