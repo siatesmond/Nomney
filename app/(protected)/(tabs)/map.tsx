@@ -73,8 +73,61 @@ function project(
   return { x, y };
 }
 
-// The photo card itself (thumbnail + pointer). No map logic here.
-function PhotoCard({ loc }: { loc: PostLocation }) {
+type Cluster = {
+  id: string;
+  x: number;
+  y: number;
+  members: PostLocation[];
+};
+
+// Cards whose on-screen points are within this many pixels get merged into a
+// cluster (roughly "they'd visually overlap").
+const CLUSTER_PX = 56;
+
+// Group the visible posts into clusters based on how close they are on screen.
+// Recomputed every region change, so clusters split apart as you zoom in.
+function buildClusters(
+  locations: PostLocation[],
+  region: Region,
+  size: Size,
+): Cluster[] {
+  const pts = locations
+    .map((loc) => ({ loc, p: project(loc, region, size) }))
+    .filter((e): e is { loc: PostLocation; p: { x: number; y: number } } => !!e.p);
+
+  const clusters: Cluster[] = [];
+  const used = new Set<string>();
+
+  for (let i = 0; i < pts.length; i++) {
+    if (used.has(pts[i].loc.id)) continue;
+    const group = [pts[i]];
+    used.add(pts[i].loc.id);
+
+    for (let j = i + 1; j < pts.length; j++) {
+      if (used.has(pts[j].loc.id)) continue;
+      const dx = pts[i].p.x - pts[j].p.x;
+      const dy = pts[i].p.y - pts[j].p.y;
+      if (Math.hypot(dx, dy) < CLUSTER_PX) {
+        group.push(pts[j]);
+        used.add(pts[j].loc.id);
+      }
+    }
+
+    const x = group.reduce((s, g) => s + g.p.x, 0) / group.length;
+    const y = group.reduce((s, g) => s + g.p.y, 0) / group.length;
+    clusters.push({
+      id: group[0].loc.id,
+      x,
+      y,
+      members: group.map((g) => g.loc),
+    });
+  }
+  return clusters;
+}
+
+// The photo card (thumbnail + pointer). If `count` > 1 it's a cluster and shows
+// a little badge with how many posts are stacked here. No map logic here.
+function PhotoCard({ loc, count = 1 }: { loc: PostLocation; count?: number }) {
   return (
     <View style={{ width: CARD_W, height: CARD_H, alignItems: "center", paddingTop: 6 }}>
       <View
@@ -117,6 +170,30 @@ function PhotoCard({ loc }: { loc: PostLocation }) {
           marginTop: -1,
         }}
       />
+
+      {/* Cluster count badge. */}
+      {count > 1 && (
+        <View
+          style={{
+            position: "absolute",
+            top: 2,
+            right: 4,
+            minWidth: 22,
+            height: 22,
+            borderRadius: 11,
+            paddingHorizontal: 5,
+            backgroundColor: COLORS.ink,
+            borderWidth: 2,
+            borderColor: "#fff",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>
+            {count}
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -164,6 +241,17 @@ export default function MapScreen() {
     );
   };
 
+  // Tap a cluster: zoom the map to fit its members so they spread apart.
+  const zoomToCluster = (members: PostLocation[]) => {
+    mapRef.current?.fitToCoordinates(
+      members.map((m) => ({ latitude: m.latitude, longitude: m.longitude })),
+      {
+        edgePadding: { top: 140, right: 100, bottom: 160, left: 100 },
+        animated: true,
+      },
+    );
+  };
+
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
     Linking.openURL(url).catch(() => {});
@@ -208,18 +296,21 @@ export default function MapScreen() {
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
           pointerEvents="box-none"
         >
-          {locations.map((loc) => {
-            const p = project(loc, region, mapSize);
-            if (!p) return null;
+          {buildClusters(locations, region, mapSize).map((c) => {
+            const isCluster = c.members.length > 1;
             return (
               <TouchableOpacity
-                key={loc.id}
+                key={c.id}
                 activeOpacity={0.85}
-                onPress={() => focusLocation(loc)}
+                onPress={() =>
+                  isCluster
+                    ? zoomToCluster(c.members)
+                    : focusLocation(c.members[0])
+                }
                 style={{
                   position: "absolute",
-                  left: p.x,
-                  top: p.y,
+                  left: c.x,
+                  top: c.y,
                   // Anchor the card's bottom-centre on the exact point.
                   transform: [
                     { translateX: -CARD_W / 2 },
@@ -227,7 +318,7 @@ export default function MapScreen() {
                   ],
                 }}
               >
-                <PhotoCard loc={loc} />
+                <PhotoCard loc={c.members[0]} count={c.members.length} />
               </TouchableOpacity>
             );
           })}
