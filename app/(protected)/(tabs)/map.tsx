@@ -10,16 +10,20 @@
 // the map live while you drag/zoom. (This flat projection assumes the map isn't
 // rotated or tilted, so those gestures are disabled.)
 import { PostDetailModal } from "@/components/post/PostDetailModal";
+import { LocationData } from "@/constants/new-post";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
+import { useNewPostLocation } from "@/hooks/useNewPostLocation";
 import { getPostLocations, MapScope, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
   Linking,
   Modal,
   ScrollView,
@@ -295,6 +299,29 @@ export default function MapScreen() {
   // When there are lots of countries we show a searchable picker instead of chips.
   const [countryModal, setCountryModal] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
+
+  // Google Places search (reused from the add-post flow) to jump anywhere.
+  const {
+    locationSearch,
+    searchResults,
+    searchLoading,
+    onLocationSearchChange,
+    searchLocation,
+  } = useNewPostLocation();
+
+  const goToSearchResult = (r: LocationData) => {
+    onLocationSearchChange(""); // clear the box + results
+    Keyboard.dismiss();
+    mapRef.current?.animateToRegion(
+      {
+        latitude: r.latitude,
+        longitude: r.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
+      500,
+    );
+  };
 
   // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
@@ -600,6 +627,92 @@ export default function MapScreen() {
         >
           <Ionicons name="locate" size={20} color={COLORS.accent} />
         </TouchableOpacity>
+
+        {/* Location search — jump the map to any place (Google Places). */}
+        <View className="absolute top-3 left-3" style={{ right: 60 }}>
+          <View
+            className="flex-row items-center bg-white rounded-full px-3"
+            style={{
+              height: 44,
+              elevation: 4,
+              shadowColor: "#000",
+              shadowOpacity: 0.15,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+            }}
+          >
+            <Ionicons name="search" size={16} color={COLORS.muted} />
+            <TextInput
+              className="flex-1 ml-2 text-sm"
+              placeholder="Search a place…"
+              placeholderTextColor={COLORS.muted}
+              value={locationSearch}
+              onChangeText={onLocationSearchChange}
+              returnKeyType="search"
+              onSubmitEditing={() => searchLocation(locationSearch)}
+              style={{ color: COLORS.ink }}
+            />
+            {searchLoading ? (
+              <ActivityIndicator size="small" color={COLORS.accent} />
+            ) : locationSearch.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => onLocationSearchChange("")}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close-circle" size={16} color={COLORS.muted} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          {searchResults.length > 0 && (
+            <View
+              className="bg-white rounded-2xl mt-2 overflow-hidden"
+              style={{
+                elevation: 4,
+                shadowColor: "#000",
+                shadowOpacity: 0.15,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 2 },
+              }}
+            >
+              {searchResults.map((r, i) => (
+                <TouchableOpacity
+                  key={`${r.latitude}-${r.longitude}-${i}`}
+                  className="px-3 py-3 flex-row items-center"
+                  style={{
+                    borderBottomWidth: i < searchResults.length - 1 ? 1 : 0,
+                    borderColor: COLORS.line,
+                  }}
+                  onPress={() => goToSearchResult(r)}
+                >
+                  <Ionicons
+                    name="location-outline"
+                    size={16}
+                    color={COLORS.accent}
+                  />
+                  <View className="ml-2 flex-1">
+                    <Text
+                      className="text-sm"
+                      style={{ color: COLORS.ink }}
+                      numberOfLines={1}
+                    >
+                      {r.name}
+                    </Text>
+                    {!!r.address && (
+                      <Text
+                        className="text-xs"
+                        style={{ color: COLORS.muted }}
+                        numberOfLines={1}
+                      >
+                        {r.address}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
 
         {locations.length === 0 && (
           <View className="absolute inset-0 items-center justify-center px-8">
