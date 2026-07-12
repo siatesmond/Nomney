@@ -324,15 +324,13 @@ export default function MapScreen() {
       500,
     );
 
-    // Only open a post if it's the SAME place. A post made from a place stores
-    // that place's exact coordinates (same Google Places result), so they match
-    // to within a few metres. Keep the tolerance tiny (~5m) so a neighbouring
-    // post never gets grabbed — otherwise we just drop a pin.
-    const match = locations.find(
-      (l) =>
-        Math.abs(l.latitude - r.latitude) < 0.00005 &&
-        Math.abs(l.longitude - r.longitude) < 0.00005,
-    );
+    // Match by place NAME, not coordinates. Shops in the same mall share almost
+    // identical coordinates, so distance can't tell "Ghost Bingsu" from
+    // "Ji De Chi" — but a post made from a place stored that place's exact name.
+    // If no post has that name, we just drop a pin.
+    const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
+    const target = norm(r.name);
+    const match = locations.find((l) => norm(l.locationName) === target && target);
     if (match) {
       setSearchedPlace(null); // the post's own pin already marks the spot
       setPhotoIndex(0);
