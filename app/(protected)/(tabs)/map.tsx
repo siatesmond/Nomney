@@ -183,12 +183,20 @@ export default function MapScreen() {
 
     if (!locationsLoaded) return; // wait for posts before card-vs-pin
 
+    // Gather EVERY post at this spot (same location name, or same coordinates
+    // like different shops in one mall) so they show as a swipeable card
+    // instead of a cluster you can't zoom apart.
     const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
     const target = norm(pendingFocus.name);
-    const match = locations.find((l) => norm(l.locationName) === target && target);
-    if (match) {
+    const atLocation = locations.filter(
+      (l) =>
+        (!!target && norm(l.locationName) === target) ||
+        (Math.abs(l.latitude - pendingFocus.latitude) < 0.0003 &&
+          Math.abs(l.longitude - pendingFocus.longitude) < 0.0003),
+    );
+    if (atLocation.length > 0) {
       setSearchedPlace(null);
-      setSelectedPosts([match]);
+      setSelectedPosts(atLocation);
     } else {
       setSelectedPosts([]);
       setSearchedPlace(pendingFocus);
