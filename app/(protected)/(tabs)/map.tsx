@@ -324,14 +324,14 @@ export default function MapScreen() {
       500,
     );
 
-    // If one of the shown posts is at this exact place, open its card. A post
-    // made from a place stores that place's coordinates, so they match almost
-    // exactly — keep the tolerance tight (~30m) so we don't grab an unrelated
-    // nearby post. Otherwise we just drop a pin.
+    // Only open a post if it's the SAME place. A post made from a place stores
+    // that place's exact coordinates (same Google Places result), so they match
+    // to within a few metres. Keep the tolerance tiny (~5m) so a neighbouring
+    // post never gets grabbed — otherwise we just drop a pin.
     const match = locations.find(
       (l) =>
-        Math.abs(l.latitude - r.latitude) < 0.0003 &&
-        Math.abs(l.longitude - r.longitude) < 0.0003,
+        Math.abs(l.latitude - r.latitude) < 0.00005 &&
+        Math.abs(l.longitude - r.longitude) < 0.00005,
     );
     if (match) {
       setSearchedPlace(null); // the post's own pin already marks the spot
