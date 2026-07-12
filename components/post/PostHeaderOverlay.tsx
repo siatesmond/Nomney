@@ -1,5 +1,5 @@
-// The bar floating over the post photo: avatar + name (tap to open profile),
-// optional location, and a close button.
+// The bar floating over the post photo: a back button, avatar + name (tap to
+// open profile) with optional location, and edit/delete for the post owner.
 import { Ionicons } from "@expo/vector-icons";
 import { Text, TouchableOpacity, View } from "react-native";
 
@@ -27,48 +27,55 @@ export function PostHeaderOverlay({
 }) {
     const displayName = username || "food_reviewer";
     return (
-        <View className="absolute top-12 left-3 right-3 flex-row items-center justify-between">
-            <TouchableOpacity
-                className="flex-row items-center px-2.5 py-1.5 rounded-full"
-                style={{ backgroundColor: SCRIM }}
-                activeOpacity={0.7}
-                disabled={!onPressProfile}
-                onPress={onPressProfile}
-            >
-                <Avatar
-                    avatarUrl={avatarUrl}
-                    displayName={displayName}
-                    size="xs"
-                    shadow={false}
-                />
-                <View style={{ marginLeft: 8 }}>
-                    <Text className="text-white text-xs font-bold" numberOfLines={1}>
-                        {displayName}
-                    </Text>
-                    {locationName && (
-                        <View className="flex-row items-center">
-                            <Ionicons name="location-sharp" size={10} color="#FFD9CC" />
-                            <Text
-                                className="text-[10px] text-white/85 font-medium"
-                                numberOfLines={1}
-                                style={{ maxWidth: 160, marginLeft: 3 }}
-                            >
-                                {locationName}
-                            </Text>
-                        </View>
+        <View
+            pointerEvents="box-none"
+            className="absolute top-12 left-3 right-3 flex-row items-center justify-between"
+        >
+            <View pointerEvents="box-none" className="flex-row items-center gap-2">
+                <ScrimIconButton icon="chevron-back" onPress={onClose} />
+                <TouchableOpacity
+                    className="flex-row items-center px-2.5 py-1.5 rounded-full"
+                    style={{ backgroundColor: SCRIM }}
+                    activeOpacity={0.7}
+                    disabled={!onPressProfile}
+                    onPress={onPressProfile}
+                >
+                    <Avatar
+                        avatarUrl={avatarUrl}
+                        displayName={displayName}
+                        size="xs"
+                        shadow={false}
+                    />
+                    <View style={{ marginLeft: 8 }}>
+                        <Text className="text-white text-xs font-bold" numberOfLines={1}>
+                            {displayName}
+                        </Text>
+                        {locationName && (
+                            <View className="flex-row items-center">
+                                <Ionicons name="location-sharp" size={10} color="#FFD9CC" />
+                                <Text
+                                    className="text-[10px] text-white/85 font-medium"
+                                    numberOfLines={1}
+                                    style={{ maxWidth: 140, marginLeft: 3 }}
+                                >
+                                    {locationName}
+                                </Text>
+                            </View>
+                        )}
+                    </View>
+                </TouchableOpacity>
+            </View>
+
+            {(onEdit || onDelete) && (
+                <View className="flex-row items-center gap-2">
+                    {onEdit && (
+                        <ScrimIconButton icon="create-outline" onPress={onEdit} />
+                    )}
+                    {onDelete && (
+                        <ScrimIconButton icon="trash-outline" onPress={onDelete} />
                     )}
                 </View>
-            </TouchableOpacity>
-
-            <View className="flex-row items-center gap-2">
-                {onEdit && (
-                    <ScrimIconButton icon="create-outline" onPress={onEdit} />
-                )}
-                {onDelete && (
-                    <ScrimIconButton icon="trash-outline" onPress={onDelete} />
-                )}
-                <ScrimIconButton icon="close" onPress={onClose} />
-            </View>
+            )}
         </View>
     );
 }

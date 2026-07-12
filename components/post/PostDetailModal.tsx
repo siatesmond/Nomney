@@ -142,18 +142,9 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
             bounces={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Image + header overlay */}
+            {/* Image */}
             <View className="relative">
               <DetailImageCarousel images={sortedImages} />
-              <PostHeaderOverlay
-                avatarUrl={postData.profiles?.avatar_url ?? null}
-                username={postData.profiles?.username ?? null}
-                locationName={postData.location_name ?? null}
-                onClose={onClose}
-                onPressProfile={authorId ? goToAuthorProfile : undefined}
-                onEdit={isOwner ? goToEdit : undefined}
-                onDelete={isOwner ? confirmDelete : undefined}
-              />
             </View>
 
             <View
@@ -385,6 +376,17 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
               </View>
             </View>
           </ScrollView>
+
+          {/* Fixed header — stays on top and pressable no matter how far you scroll */}
+          <PostHeaderOverlay
+            avatarUrl={postData.profiles?.avatar_url ?? null}
+            username={postData.profiles?.username ?? null}
+            locationName={postData.location_name ?? null}
+            onClose={onClose}
+            onPressProfile={authorId ? goToAuthorProfile : undefined}
+            onEdit={isOwner ? goToEdit : undefined}
+            onDelete={isOwner ? confirmDelete : undefined}
+          />
 
           <CommentSheet
             ref={commentSheetRef}
