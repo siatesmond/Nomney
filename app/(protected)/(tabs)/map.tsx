@@ -112,8 +112,8 @@ export default function MapScreen() {
       {
         latitude: r.latitude,
         longitude: r.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
+        latitudeDelta: Math.min(region.latitudeDelta, 0.02),
+        longitudeDelta: Math.min(region.longitudeDelta, 0.02),
       },
       500,
     );
@@ -249,12 +249,13 @@ export default function MapScreen() {
   // Tap a single card: show its info and fly/zoom the map to that spot.
   const focusLocation = (loc: PostLocation) => {
     setSelectedPosts([loc]);
+    // Keep the current zoom if already closer — recenter, never zoom out.
     mapRef.current?.animateToRegion(
       {
         latitude: loc.latitude,
         longitude: loc.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
+        latitudeDelta: Math.min(region.latitudeDelta, 0.02),
+        longitudeDelta: Math.min(region.longitudeDelta, 0.02),
       },
       500,
     );
@@ -280,8 +281,8 @@ export default function MapScreen() {
         {
           latitude: first.latitude,
           longitude: first.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
+          latitudeDelta: Math.min(region.latitudeDelta, 0.01),
+          longitudeDelta: Math.min(region.longitudeDelta, 0.01),
         },
         400,
       );
