@@ -235,19 +235,14 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   // Instagram-style portrait photo card. A real border defines the white frame
   // because marker shadows don't render into the pin bitmap on Android.
+  // No shadow/elevation here: on Android that clips the marker's corners.
+  // A thin border defines the white frame instead.
   markerCard: {
     backgroundColor: "#fff",
     borderRadius: 14,
     padding: 3,
-    // A thin dark hairline defines the white frame against a light map
-    // (marker shadows don't render on Android).
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.18)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
   },
   markerImg: {
     width: 52,
@@ -269,11 +264,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 3,
     borderColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 6,
   },
   clusterText: {
     color: "#fff",
