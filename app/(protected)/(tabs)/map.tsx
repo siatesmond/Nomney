@@ -1,13 +1,19 @@
-// Map tab: shows each of your located posts as a little photo marker
+// Map tab: shows each of your located posts as a little photo card
 // (Instagram/Snapchat style). Tapping one lets you view the post or open it in
 // Google Maps.
+//
+// The photo cards are drawn as normal views layered ON TOP of the map (not as
+// native map markers). react-native-maps custom markers render blank/clipped on
+// the New Architecture, so instead we ask the map where each coordinate sits on
+// screen (pointForCoordinate) and position an ordinary view there. Ordinary
+// views never clip. The trade-off: cards re-position after a pan/zoom settles.
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
   Linking,
@@ -16,7 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Falls back to Singapore when you have no pinned posts yet.
@@ -27,7 +33,7 @@ const DEFAULT_REGION = {
   longitudeDelta: 0.4,
 };
 
-// Hide Google's own business/POI/transit pins so only our post pins show —
+// Hide Google's own business/POI/transit pins so only our post cards show —
 // gives the clean look of the Instagram / Snapchat map.
 const MAP_STYLE = [
   { featureType: "poi", stylers: [{ visibility: "off" }] },
@@ -36,87 +42,66 @@ const MAP_STYLE = [
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];
 
-// A post shown as a photo marker: a small rounded thumbnail with a pointer.
-function PhotoMarker({
-  loc,
-  onPress,
-}: {
-  loc: PostLocation;
-  onPress: () => void;
-}) {
-  // Keep tracksViewChanges ON. Freezing the marker snapshot on this
-  // (New Architecture) setup captures a half-laid-out frame and clips the
-  // photo; continuous tracking re-renders the full view every frame so it
-  // shows correctly. Fine for a small number of markers.
+// Card size, used both for the visual and to anchor its bottom on the point.
+const CARD_W = 62;
+const CARD_H = 72;
+
+type ScreenPoint = { x: number; y: number };
+
+// The photo card itself (thumbnail + pointer). No map logic here.
+function PhotoCard({ loc }: { loc: PostLocation }) {
   return (
-    <Marker
-      coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-      onPress={onPress}
-      anchor={{ x: 0.5, y: 1 }}
-      tracksViewChanges={true}
-    >
-      {/* Explicit width/height + a little top padding: on Android the marker
-          snapshot can be sized before layout settles and clip the top, so we
-          give it a fixed, roomy frame. */}
+    <View style={{ width: CARD_W, height: CARD_H, alignItems: "center", paddingTop: 6 }}>
       <View
         style={{
-          width: 62,
-          height: 72,
-          alignItems: "center",
-          paddingTop: 6,
+          width: 54,
+          height: 54,
+          borderRadius: 14,
+          borderWidth: 3,
+          borderColor: COLORS.accent,
+          backgroundColor: "#fff",
+          overflow: "hidden",
         }}
       >
-        <View
-          style={{
-            width: 54,
-            height: 54,
-            borderRadius: 14,
-            borderWidth: 3,
-            borderColor: COLORS.accent,
-            backgroundColor: "#fff",
-            overflow: "hidden",
-          }}
-        >
-          {loc.imageUrl ? (
-            // Explicit pixel size (not "100%"): percentage sizing can resolve
-            // to 0 while the marker snapshot is taken, leaving a blank photo.
-            <Image
-              source={{ uri: loc.imageUrl }}
-              style={{ width: 48, height: 48 }}
-              resizeMode="cover"
-            />
-          ) : (
-            <View
-              style={{ width: 48, height: 48, backgroundColor: COLORS.accent }}
-              className="items-center justify-center"
-            >
-              <Ionicons name="restaurant" size={22} color="#fff" />
-            </View>
-          )}
-        </View>
-        {/* Little pointer so the photo reads as a pin. */}
-        <View
-          style={{
-            width: 0,
-            height: 0,
-            borderLeftWidth: 7,
-            borderRightWidth: 7,
-            borderTopWidth: 9,
-            borderLeftColor: "transparent",
-            borderRightColor: "transparent",
-            borderTopColor: COLORS.accent,
-            marginTop: -1,
-          }}
-        />
+        {loc.imageUrl ? (
+          <Image
+            source={{ uri: loc.imageUrl }}
+            style={{ width: 48, height: 48 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={{ width: 48, height: 48, backgroundColor: COLORS.accent }}
+            className="items-center justify-center"
+          >
+            <Ionicons name="restaurant" size={22} color="#fff" />
+          </View>
+        )}
       </View>
-    </Marker>
+      {/* Little pointer so the photo reads as a pin. */}
+      <View
+        style={{
+          width: 0,
+          height: 0,
+          borderLeftWidth: 7,
+          borderRightWidth: 7,
+          borderTopWidth: 9,
+          borderLeftColor: "transparent",
+          borderRightColor: "transparent",
+          borderTopColor: COLORS.accent,
+          marginTop: -1,
+        }}
+      />
+    </View>
   );
 }
 
 export default function MapScreen() {
   const { profile } = useAuthContext();
 
+  const mapRef = useRef<MapView>(null);
   const [locations, setLocations] = useState<PostLocation[]>([]);
+  const [points, setPoints] = useState<Record<string, ScreenPoint>>({});
   const [selected, setSelected] = useState<PostLocation | null>(null);
   const [openPostId, setOpenPostId] = useState<string | null>(null);
 
@@ -138,6 +123,33 @@ export default function MapScreen() {
       };
     }, [profile?.id]),
   );
+
+  // Work out where each post sits on screen. Re-run on map ready, after the
+  // map settles, and whenever the posts change.
+  const recomputePoints = useCallback(async () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const results = await Promise.all(
+      locations.map(async (loc) => {
+        try {
+          const pt = await map.pointForCoordinate({
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          });
+          return [loc.id, pt] as const;
+        } catch {
+          return [loc.id, null] as const;
+        }
+      }),
+    );
+    const next: Record<string, ScreenPoint> = {};
+    for (const [id, pt] of results) if (pt) next[id] = pt;
+    setPoints(next);
+  }, [locations]);
+
+  useEffect(() => {
+    recomputePoints();
+  }, [recomputePoints]);
 
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
@@ -163,6 +175,7 @@ export default function MapScreen() {
         style={{ borderWidth: 1, borderColor: COLORS.line }}
       >
         <MapView
+          ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={DEFAULT_REGION}
           customMapStyle={MAP_STYLE}
@@ -172,15 +185,40 @@ export default function MapScreen() {
           pitchEnabled
           zoomControlEnabled
           onPress={() => setSelected(null)}
+          onMapReady={recomputePoints}
+          onRegionChangeComplete={recomputePoints}
+        />
+
+        {/* Photo cards drawn on top of the map. box-none lets map gestures
+            through except when they land on a card. */}
+        <View
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+          pointerEvents="box-none"
         >
-          {locations.map((loc) => (
-            <PhotoMarker
-              key={loc.id}
-              loc={loc}
-              onPress={() => setSelected(loc)}
-            />
-          ))}
-        </MapView>
+          {locations.map((loc) => {
+            const p = points[loc.id];
+            if (!p) return null;
+            return (
+              <TouchableOpacity
+                key={loc.id}
+                activeOpacity={0.85}
+                onPress={() => setSelected(loc)}
+                style={{
+                  position: "absolute",
+                  left: p.x,
+                  top: p.y,
+                  // Anchor the card's bottom-centre on the exact point.
+                  transform: [
+                    { translateX: -CARD_W / 2 },
+                    { translateY: -CARD_H },
+                  ],
+                }}
+              >
+                <PhotoCard loc={loc} />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {locations.length === 0 && (
           <View className="absolute inset-0 items-center justify-center px-8">
@@ -192,7 +230,7 @@ export default function MapScreen() {
         )}
       </View>
 
-      {/* Selected pin card */}
+      {/* Selected card */}
       {selected && (
         <View
           className="absolute bottom-6 left-4 right-4 bg-white rounded-2xl p-4"
