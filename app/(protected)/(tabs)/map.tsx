@@ -44,10 +44,12 @@ function PhotoMarker({
   loc: PostLocation;
   onPress: () => void;
 }) {
-  // react-native-maps only renders a custom marker view while
-  // tracksViewChanges is true, but leaving it on hurts performance. So we keep
-  // it on until the photo has loaded, then switch it off.
+  // react-native-maps only paints a custom marker view while tracksViewChanges
+  // is true, but leaving it on hurts performance. Keep it on, then turn it off
+  // a short moment AFTER the photo loads — flipping it off on the load event
+  // itself snapshots the marker before the image has actually drawn (blank).
   const [tracks, setTracks] = useState(true);
+  const stopTrackingSoon = () => setTimeout(() => setTracks(false), 600);
 
   // No photo? Give the icon a moment to paint, then stop tracking.
   useEffect(() => {
@@ -76,17 +78,19 @@ function PhotoMarker({
           }}
         >
           {loc.imageUrl ? (
+            // Explicit pixel size (not "100%"): percentage sizing can resolve
+            // to 0 while the marker snapshot is taken, leaving a blank photo.
             <Image
               source={{ uri: loc.imageUrl }}
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: 48, height: 48 }}
               resizeMode="cover"
-              onLoad={() => setTracks(false)}
-              onError={() => setTracks(false)}
+              onLoad={stopTrackingSoon}
+              onError={stopTrackingSoon}
             />
           ) : (
             <View
-              className="flex-1 items-center justify-center"
-              style={{ backgroundColor: COLORS.accent }}
+              style={{ width: 48, height: 48, backgroundColor: COLORS.accent }}
+              className="items-center justify-center"
             >
               <Ionicons name="restaurant" size={22} color="#fff" />
             </View>
