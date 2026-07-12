@@ -10,19 +10,21 @@ import { Tag } from "@/components/ui/Tag";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { usePostDetail } from "@/hooks/usePostDetail";
+import { addComment } from "@/lib/comments";
 import { deletePost } from "@/lib/posts";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
 } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -37,6 +39,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
   const router = useRouter();
   const { profile: currentUser } = useAuthContext();
   const commentSheetRef = useRef<BottomSheetModal>(null);
+  const [commentText, setCommentText] = useState("");
   const {
     postData,
     loading,
@@ -99,6 +102,18 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
     router.push(`/edit-post/${postId}`);
   };
 
+  const submitComment = async () => {
+    const text = commentText.trim();
+    if (!text || !currentUser?.id) return;
+    try {
+      const newComment = await addComment(postId, currentUser.id, text);
+      handleNewComment(newComment);
+      setCommentText("");
+    } catch (err: any) {
+      Alert.alert("Comment failed", err.message || "Please try again.");
+    }
+  };
+
   const confirmDelete = () => {
     Alert.alert("Delete post?", "This can't be undone.", [
       { text: "Cancel", style: "cancel" },
@@ -125,6 +140,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
             className="flex-1"
             showsVerticalScrollIndicator={false}
             bounces={false}
+            keyboardShouldPersistTaps="handled"
           >
             {/* Image + header overlay */}
             <View className="relative">
@@ -261,36 +277,62 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
 
               {/* Comments */}
               <View className="px-5 pt-5 pb-10">
-                <View className="flex-row items-center justify-between mb-3">
-                  <Text
-                    style={{ color: COLORS.ink }}
-                    className="text-xs font-black uppercase tracking-wider"
+                <Text
+                  style={{ color: COLORS.ink }}
+                  className="text-xs font-black uppercase tracking-wider mb-3"
+                >
+                  Comments ({commentCount})
+                </Text>
+
+                {/* Inline comment box — type and send without opening a sheet */}
+                <View
+                  className="flex-row items-center mb-4"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: COLORS.line,
+                    borderRadius: 24,
+                    paddingLeft: 16,
+                    paddingRight: 8,
+                    paddingVertical: 6,
+                  }}
+                >
+                  <TextInput
+                    className="flex-1 text-sm"
+                    style={{ color: COLORS.ink, paddingVertical: 4 }}
+                    placeholder="Add a comment..."
+                    placeholderTextColor={COLORS.muted}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                    onSubmitEditing={submitComment}
+                    returnKeyType="send"
+                    multiline
+                  />
+                  <TouchableOpacity
+                    onPress={submitComment}
+                    disabled={!commentText.trim()}
+                    activeOpacity={0.7}
+                    className="px-2 py-1"
                   >
-                    Comments ({commentCount})
-                  </Text>
-                  <TouchableOpacity onPress={openComments} activeOpacity={0.7}>
                     <Text
-                      style={{ color: COLORS.accent }}
-                      className="text-xs font-bold"
+                      className="text-sm font-bold"
+                      style={{
+                        color: commentText.trim() ? COLORS.accent : COLORS.muted,
+                      }}
                     >
-                      Add comment
+                      Send
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 {commentsArray.length === 0 ? (
-                  <TouchableOpacity
-                    className="py-6 items-center"
-                    onPress={openComments}
-                    activeOpacity={0.7}
-                  >
+                  <View className="py-6 items-center">
                     <Text
                       style={{ color: COLORS.muted }}
                       className="text-xs font-medium"
                     >
-                      No comments yet. Start the conversation!
+                      No comments yet. Be the first!
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 ) : (
                   commentsArray.map((comment: any, idx: number) => {
                     const commentDate = comment.created_at

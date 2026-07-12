@@ -82,7 +82,26 @@ export function usePostDetail(
     // Guard against toggling while logged out (matches previous behavior).
     const toggleLike = () => {
         if (!profile?.id) return;
+        const wasLiked = likes.active;
         likes.toggle();
+        // Keep the "Liked by …" preview in sync by adding/removing yourself.
+        setPostData((prev: any) => {
+            if (!prev) return prev;
+            const rows = prev.likes || [];
+            const nextLikes = wasLiked
+                ? rows.filter((l: any) => l.user_id !== profile.id)
+                : [
+                    ...rows,
+                    {
+                        user_id: profile.id,
+                        profiles: {
+                            username: profile.username,
+                            avatar_url: profile.avatar_url,
+                        },
+                    },
+                ];
+            return { ...prev, likes: nextLikes };
+        });
     };
 
     const toggleSave = () => {
