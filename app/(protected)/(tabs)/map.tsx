@@ -125,9 +125,10 @@ function buildClusters(
   return clusters;
 }
 
-// The photo card (thumbnail + pointer). If `count` > 1 it's a cluster and shows
-// a little badge with how many posts are stacked here. No map logic here.
-function PhotoCard({ loc, count = 1 }: { loc: PostLocation; count?: number }) {
+const CLUSTER_SIZE = 44;
+
+// A single post: photo thumbnail + pointer. No map logic here.
+function PhotoCard({ loc }: { loc: PostLocation }) {
   return (
     <View style={{ width: CARD_W, height: CARD_H, alignItems: "center", paddingTop: 6 }}>
       <View
@@ -170,30 +171,34 @@ function PhotoCard({ loc, count = 1 }: { loc: PostLocation; count?: number }) {
           marginTop: -1,
         }}
       />
+    </View>
+  );
+}
 
-      {/* Cluster count badge. */}
-      {count > 1 && (
-        <View
-          style={{
-            position: "absolute",
-            top: 2,
-            right: 4,
-            minWidth: 22,
-            height: 22,
-            borderRadius: 11,
-            paddingHorizontal: 5,
-            backgroundColor: COLORS.ink,
-            borderWidth: 2,
-            borderColor: "#fff",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>
-            {count}
-          </Text>
-        </View>
-      )}
+// A group of overlapping posts: a plain circle with the count. Tapping it zooms
+// in until the posts separate into individual photo cards.
+function ClusterBubble({ count }: { count: number }) {
+  return (
+    <View
+      style={{
+        width: CLUSTER_SIZE,
+        height: CLUSTER_SIZE,
+        borderRadius: CLUSTER_SIZE / 2,
+        backgroundColor: COLORS.accent,
+        borderWidth: 3,
+        borderColor: "#fff",
+        alignItems: "center",
+        justifyContent: "center",
+        elevation: 4,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+      }}
+    >
+      <Text style={{ color: "#fff", fontWeight: "800", fontSize: 16 }}>
+        {count}
+      </Text>
     </View>
   );
 }
@@ -311,14 +316,21 @@ export default function MapScreen() {
                   position: "absolute",
                   left: c.x,
                   top: c.y,
-                  // Anchor the card's bottom-centre on the exact point.
-                  transform: [
-                    { translateX: -CARD_W / 2 },
-                    { translateY: -CARD_H },
-                  ],
+                  // Clusters: centre the circle on the point. Single cards:
+                  // anchor the pointer (bottom-centre) on the point.
+                  transform: isCluster
+                    ? [
+                        { translateX: -CLUSTER_SIZE / 2 },
+                        { translateY: -CLUSTER_SIZE / 2 },
+                      ]
+                    : [{ translateX: -CARD_W / 2 }, { translateY: -CARD_H }],
                 }}
               >
-                <PhotoCard loc={c.members[0]} count={c.members.length} />
+                {isCluster ? (
+                  <ClusterBubble count={c.members.length} />
+                ) : (
+                  <PhotoCard loc={c.members[0]} />
+                )}
               </TouchableOpacity>
             );
           })}
