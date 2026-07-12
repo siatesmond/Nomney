@@ -126,6 +126,7 @@ export type PostLocation = {
   imageUrl?: string; // first photo, used for the map pin
   imageUrls: string[]; // all photos, used for the tapped-card gallery
   username?: string; // who posted it (shown for Following / Everyone)
+  avatarUrl?: string; // poster's avatar (shown on the pin for Following / Everyone)
 };
 
 // Which posts the Map tab shows.
@@ -147,6 +148,7 @@ function mapPostLocation(p: any): PostLocation {
     imageUrl: imageUrls[0],
     imageUrls,
     username: profile?.username ?? undefined,
+    avatarUrl: profile?.avatar_url ?? undefined,
   };
 }
 
@@ -160,7 +162,7 @@ export async function getPostLocations(
   let query = supabase
     .from("posts")
     .select(
-      "id, title, location_name, latitude, longitude, post_image ( image_url, display_order ), profiles:profiles!posts_user_id_fkey ( username )",
+      "id, title, location_name, latitude, longitude, post_image ( image_url, display_order ), profiles:profiles!posts_user_id_fkey ( username, avatar_url )",
     )
     .not("latitude", "is", null)
     .not("longitude", "is", null);

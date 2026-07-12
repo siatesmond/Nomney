@@ -143,8 +143,16 @@ function buildClusters(
 
 const CLUSTER_SIZE = 44;
 
-// A single post: photo thumbnail + pointer. No map logic here.
-function PhotoCard({ loc }: { loc: PostLocation }) {
+// A single post: photo thumbnail + pointer. When `authorAvatar` is provided
+// (Following / Everyone), a small avatar shows in the corner so you can tell
+// whose post it is. `null` avatar = show the fallback person icon.
+function PhotoCard({
+  loc,
+  authorAvatar,
+}: {
+  loc: PostLocation;
+  authorAvatar?: string | null;
+}) {
   return (
     <View style={{ width: CARD_W, height: CARD_H, alignItems: "center", paddingTop: 6 }}>
       <View
@@ -187,6 +195,32 @@ function PhotoCard({ loc }: { loc: PostLocation }) {
           marginTop: -1,
         }}
       />
+
+      {/* Poster's avatar (only for Following / Everyone). */}
+      {authorAvatar !== undefined && (
+        <View
+          style={{
+            position: "absolute",
+            top: 2,
+            left: 2,
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: "#fff",
+            backgroundColor: COLORS.accent,
+            overflow: "hidden",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {authorAvatar ? (
+            <Image source={{ uri: authorAvatar }} style={{ width: 20, height: 20 }} />
+          ) : (
+            <Ionicons name="person" size={12} color="#fff" />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -325,9 +359,16 @@ export default function MapScreen() {
       style={{ backgroundColor: COLORS.paper }}
     >
       <View className="px-5 pt-2 pb-3">
-        <Text className="text-2xl font-bold mb-2" style={{ color: COLORS.ink }}>
-          Map
-        </Text>
+        <View className="flex-row items-center gap-1 mb-2">
+          <Image
+            source={require("@/assets/images/icon/mascotWithMap.png")}
+            style={{ width: 56, height: 56 }}
+            resizeMode="contain"
+          />
+          <Text className="text-3xl font-bold" style={{ color: COLORS.ink }}>
+            Foodprints
+          </Text>
+        </View>
 
         {/* Scope toggle: Mine / Following / Everyone */}
         <View
@@ -412,7 +453,14 @@ export default function MapScreen() {
                 {isCluster ? (
                   <ClusterBubble count={c.members.length} />
                 ) : (
-                  <PhotoCard loc={c.members[0]} />
+                  <PhotoCard
+                    loc={c.members[0]}
+                    authorAvatar={
+                      scope !== "mine"
+                        ? (c.members[0].avatarUrl ?? null)
+                        : undefined
+                    }
+                  />
                 )}
               </TouchableOpacity>
             );
