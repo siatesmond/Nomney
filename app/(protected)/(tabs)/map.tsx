@@ -6,7 +6,7 @@ import { useAuthContext } from "@/hooks/use-auth-context";
 import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Image,
   Linking,
@@ -16,7 +16,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView from "react-native-map-clustering";
+import { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Falls back to Singapore when you have no pinned posts yet.
@@ -63,7 +64,6 @@ function PostMarker({
 
 export default function MapScreen() {
   const { profile } = useAuthContext();
-  const mapRef = useRef<MapView>(null);
 
   const [locations, setLocations] = useState<PostLocation[]>([]);
   const [selected, setSelected] = useState<PostLocation | null>(null);
@@ -87,19 +87,6 @@ export default function MapScreen() {
       };
     }, [profile?.id]),
   );
-
-  // Zoom the map to fit all the pins once they're loaded.
-  useEffect(() => {
-    if (locations.length && mapRef.current) {
-      mapRef.current.fitToCoordinates(
-        locations.map((l) => ({ latitude: l.latitude, longitude: l.longitude })),
-        {
-          edgePadding: { top: 80, right: 60, bottom: 80, left: 60 },
-          animated: true,
-        },
-      );
-    }
-  }, [locations]);
 
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
@@ -125,7 +112,6 @@ export default function MapScreen() {
         style={{ borderWidth: 1, borderColor: COLORS.line }}
       >
         <MapView
-          ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={DEFAULT_REGION}
           zoomEnabled
@@ -133,6 +119,9 @@ export default function MapScreen() {
           rotateEnabled
           pitchEnabled
           zoomControlEnabled
+          clusterColor={COLORS.accent}
+          clusterTextColor="#fff"
+          radius={60}
           onPress={() => setSelected(null)}
         >
           {locations.map((loc) => (
