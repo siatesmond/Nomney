@@ -104,6 +104,11 @@ export default function MapScreen() {
     focusTs?: string;
   }>();
   const handledFocus = useRef<string | null>(null);
+  const [pendingFocus, setPendingFocus] = useState<LocationData | null>(null);
+  const focusAnimated = useRef(false);
+  // Whether the current scope's posts have finished loading (so we don't say
+  // "no post here" before they're in).
+  const [locationsLoaded, setLocationsLoaded] = useState(false);
 
   const goToSearchResult = (r: LocationData) => {
     onLocationSearchChange(""); // clear the box + results
@@ -134,8 +139,7 @@ export default function MapScreen() {
     }
   };
 
-  // Handle "show on map" from a post's location. Wait a beat so the freshly
-  // focused map is ready, then fly there (and show the post if we have it).
+  // "Show on map" from a post's location: remember the place to focus.
   useEffect(() => {
     const { focusLat, focusLng, focusName, focusTs } = focusParams;
     if (!focusLat || !focusLng) return;
@@ -147,16 +151,45 @@ export default function MapScreen() {
     const lng = Number(focusLng);
     if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
-    const t = setTimeout(() => {
-      goToSearchResult({
-        name: focusName || "Location",
-        latitude: lat,
-        longitude: lng,
-      });
-    }, 350);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    focusAnimated.current = false;
+    setPendingFocus({ name: focusName || "Location", latitude: lat, longitude: lng });
   }, [focusParams.focusLat, focusParams.focusLng, focusParams.focusTs]);
+
+  // Fly to the pending place once, then — only after the posts have loaded —
+  // show its post if there is one, otherwise drop a pin. Gating on
+  // `locationsLoaded` avoids a false "no post here" on the first open.
+  useEffect(() => {
+    if (!pendingFocus) return;
+
+    if (!focusAnimated.current) {
+      focusAnimated.current = true;
+      setTimeout(() => {
+        mapRef.current?.animateToRegion(
+          {
+            latitude: pendingFocus.latitude,
+            longitude: pendingFocus.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          500,
+        );
+      }, 300);
+    }
+
+    if (!locationsLoaded) return;
+
+    const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
+    const target = norm(pendingFocus.name);
+    const match = locations.find((l) => norm(l.locationName) === target && target);
+    if (match) {
+      setSearchedPlace(null);
+      setSelectedPosts([match]);
+    } else {
+      setSelectedPosts([]);
+      setSearchedPlace(pendingFocus);
+    }
+    setPendingFocus(null);
+  }, [pendingFocus, locationsLoaded, locations]);
 
   // Reload pins whenever the tab is focused or the scope changes.
   useFocusEffect(
@@ -169,6 +202,8 @@ export default function MapScreen() {
           if (!cancelled) setLocations(data);
         } catch (err) {
           console.log("Failed to load post locations:", err);
+        } finally {
+          if (!cancelled) setLocationsLoaded(true);
         }
       })();
       return () => {
