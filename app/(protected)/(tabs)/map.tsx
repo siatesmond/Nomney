@@ -1,5 +1,5 @@
-// Map tab: drops a pin for every one of your posts that has a location.
-// Tapping a pin lets you view the post or open the spot in Google Maps.
+// Map tab: drops a small photo-card pin for every post of yours that has a
+// location. Tapping a pin lets you view the post or open it in Google Maps.
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
@@ -7,7 +7,15 @@ import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Linking, Modal, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Linking,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,6 +26,47 @@ const DEFAULT_REGION = {
   latitudeDelta: 0.4,
   longitudeDelta: 0.4,
 };
+
+// A small photo-card marker representing one post.
+function PostMarker({
+  loc,
+  onPress,
+}: {
+  loc: PostLocation;
+  onPress: () => void;
+}) {
+  // Redraw the marker until the image loads, then stop for performance.
+  const [tracks, setTracks] = useState(true);
+  useEffect(() => {
+    if (!loc.imageUrl) setTracks(false);
+  }, [loc.imageUrl]);
+
+  return (
+    <Marker
+      coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+      onPress={onPress}
+      tracksViewChanges={tracks}
+      anchor={{ x: 0.5, y: 1 }}
+    >
+      <View className="items-center">
+        <View style={styles.markerCard}>
+          {loc.imageUrl ? (
+            <Image
+              source={{ uri: loc.imageUrl }}
+              style={styles.markerImg}
+              onLoad={() => setTracks(false)}
+            />
+          ) : (
+            <View style={[styles.markerImg, styles.markerFallback]}>
+              <Ionicons name="restaurant" size={18} color={COLORS.accent} />
+            </View>
+          )}
+        </View>
+        <View style={styles.markerPointer} />
+      </View>
+    </Marker>
+  );
+}
 
 export default function MapScreen() {
   const { profile } = useAuthContext();
@@ -52,7 +101,7 @@ export default function MapScreen() {
       mapRef.current.fitToCoordinates(
         locations.map((l) => ({ latitude: l.latitude, longitude: l.longitude })),
         {
-          edgePadding: { top: 120, right: 60, bottom: 160, left: 60 },
+          edgePadding: { top: 80, right: 60, bottom: 80, left: 60 },
           animated: true,
         },
       );
@@ -66,41 +115,51 @@ export default function MapScreen() {
   };
 
   return (
-    <View className="flex-1">
-      <MapView
-        ref={mapRef}
-        style={{ flex: 1 }}
-        initialRegion={DEFAULT_REGION}
-        onPress={() => setSelected(null)}
+    <SafeAreaView
+      edges={["top"]}
+      className="flex-1"
+      style={{ backgroundColor: COLORS.paper }}
+    >
+      <View className="px-5 pt-2 pb-3">
+        <Text className="text-2xl font-bold" style={{ color: COLORS.ink }}>
+          My Map
+        </Text>
+      </View>
+
+      {/* Map card */}
+      <View
+        className="flex-1 mx-4 mb-4 rounded-3xl overflow-hidden"
+        style={{ borderWidth: 1, borderColor: COLORS.line }}
       >
-        {locations.map((loc) => (
-          <Marker
-            key={loc.id}
-            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-            pinColor={COLORS.accent}
-            onPress={() => setSelected(loc)}
-          />
-        ))}
-      </MapView>
+        <MapView
+          ref={mapRef}
+          style={{ flex: 1 }}
+          initialRegion={DEFAULT_REGION}
+          zoomEnabled
+          scrollEnabled
+          rotateEnabled
+          pitchEnabled
+          zoomControlEnabled
+          onPress={() => setSelected(null)}
+        >
+          {locations.map((loc) => (
+            <PostMarker
+              key={loc.id}
+              loc={loc}
+              onPress={() => setSelected(loc)}
+            />
+          ))}
+        </MapView>
 
-      {/* Floating title */}
-      <SafeAreaView edges={["top"]} className="absolute top-0 left-0 right-0" pointerEvents="none">
-        <View className="px-5 pt-2">
-          <Text className="text-2xl font-bold" style={{ color: COLORS.ink }}>
-            My Map
-          </Text>
-        </View>
-      </SafeAreaView>
-
-      {/* Empty state */}
-      {locations.length === 0 && (
-        <View className="absolute bottom-12 left-6 right-6 items-center">
-          <Text style={{ color: COLORS.muted }} className="text-sm text-center">
-            No pinned posts yet. Add a location to a post and it&apos;ll show up
-            here.
-          </Text>
-        </View>
-      )}
+        {locations.length === 0 && (
+          <View className="absolute inset-0 items-center justify-center px-8">
+            <Text style={{ color: COLORS.muted }} className="text-sm text-center">
+              No pinned posts yet. Add a location to a post and it&apos;ll show
+              up here.
+            </Text>
+          </View>
+        )}
+      </View>
 
       {/* Selected pin card */}
       {selected && (
@@ -173,6 +232,43 @@ export default function MapScreen() {
           />
         )}
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  markerCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 3,
+    borderWidth: 2,
+    borderColor: COLORS.accent,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  markerImg: {
+    width: 46,
+    height: 46,
+    borderRadius: 9,
+    backgroundColor: "#eee",
+  },
+  markerFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.accentSoft,
+  },
+  markerPointer: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: COLORS.accent,
+    marginTop: -1,
+  },
+});
