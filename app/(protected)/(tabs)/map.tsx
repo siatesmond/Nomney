@@ -4,16 +4,18 @@
 //
 // The photo cards are drawn as normal views layered ON TOP of the map (not as
 // native map markers). react-native-maps custom markers render blank/clipped on
-// the New Architecture, so instead we ask the map where each coordinate sits on
-// screen (pointForCoordinate) and position an ordinary view there. Ordinary
-// views never clip. The trade-off: cards re-position after a pan/zoom settles.
+// the New Architecture, so instead we project each coordinate to a screen
+// position ourselves and drop an ordinary view there — ordinary views never
+// clip. We recompute those positions on every region change so the cards track
+// the map live while you drag/zoom. (This flat projection assumes the map isn't
+// rotated or tilted, so those gestures are disabled.)
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getUserPostLocations, PostLocation } from "@/lib/posts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Image,
   Linking,
@@ -22,11 +24,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView from "react-native-maps";
+import MapView, { Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Falls back to Singapore when you have no pinned posts yet.
-const DEFAULT_REGION = {
+const DEFAULT_REGION: Region = {
   latitude: 1.3521,
   longitude: 103.8198,
   latitudeDelta: 0.4,
@@ -46,7 +48,30 @@ const MAP_STYLE = [
 const CARD_W = 62;
 const CARD_H = 72;
 
-type ScreenPoint = { x: number; y: number };
+type Size = { width: number; height: number };
+
+// Turn a lat/long into an x/y on the map view, using the visible region and the
+// map's pixel size. Returns null if we don't know the size yet or it's well off
+// screen. Linear projection — accurate enough at city zoom, no rotation/tilt.
+function project(
+  loc: PostLocation,
+  region: Region,
+  size: Size,
+): { x: number; y: number } | null {
+  const { width, height } = size;
+  if (!width || !height) return null;
+
+  const leftLng = region.longitude - region.longitudeDelta / 2;
+  const topLat = region.latitude + region.latitudeDelta / 2;
+  const x = ((loc.longitude - leftLng) / region.longitudeDelta) * width;
+  const y = ((topLat - loc.latitude) / region.latitudeDelta) * height;
+
+  // Skip cards that are far outside the visible area.
+  if (x < -CARD_W || x > width + CARD_W || y < -CARD_H || y > height + CARD_H) {
+    return null;
+  }
+  return { x, y };
+}
 
 // The photo card itself (thumbnail + pointer). No map logic here.
 function PhotoCard({ loc }: { loc: PostLocation }) {
@@ -99,9 +124,9 @@ function PhotoCard({ loc }: { loc: PostLocation }) {
 export default function MapScreen() {
   const { profile } = useAuthContext();
 
-  const mapRef = useRef<MapView>(null);
   const [locations, setLocations] = useState<PostLocation[]>([]);
-  const [points, setPoints] = useState<Record<string, ScreenPoint>>({});
+  const [region, setRegion] = useState<Region>(DEFAULT_REGION);
+  const [mapSize, setMapSize] = useState<Size>({ width: 0, height: 0 });
   const [selected, setSelected] = useState<PostLocation | null>(null);
   const [openPostId, setOpenPostId] = useState<string | null>(null);
 
@@ -123,33 +148,6 @@ export default function MapScreen() {
       };
     }, [profile?.id]),
   );
-
-  // Work out where each post sits on screen. Re-run on map ready, after the
-  // map settles, and whenever the posts change.
-  const recomputePoints = useCallback(async () => {
-    const map = mapRef.current;
-    if (!map) return;
-    const results = await Promise.all(
-      locations.map(async (loc) => {
-        try {
-          const pt = await map.pointForCoordinate({
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-          });
-          return [loc.id, pt] as const;
-        } catch {
-          return [loc.id, null] as const;
-        }
-      }),
-    );
-    const next: Record<string, ScreenPoint> = {};
-    for (const [id, pt] of results) if (pt) next[id] = pt;
-    setPoints(next);
-  }, [locations]);
-
-  useEffect(() => {
-    recomputePoints();
-  }, [recomputePoints]);
 
   const openInGoogleMaps = (loc: PostLocation) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${loc.latitude},${loc.longitude}`;
@@ -175,18 +173,17 @@ export default function MapScreen() {
         style={{ borderWidth: 1, borderColor: COLORS.line }}
       >
         <MapView
-          ref={mapRef}
           style={{ flex: 1 }}
           initialRegion={DEFAULT_REGION}
           customMapStyle={MAP_STYLE}
           zoomEnabled
           scrollEnabled
-          rotateEnabled
-          pitchEnabled
+          rotateEnabled={false}
+          pitchEnabled={false}
           zoomControlEnabled
           onPress={() => setSelected(null)}
-          onMapReady={recomputePoints}
-          onRegionChangeComplete={recomputePoints}
+          onLayout={(e) => setMapSize(e.nativeEvent.layout)}
+          onRegionChange={setRegion}
         />
 
         {/* Photo cards drawn on top of the map. box-none lets map gestures
@@ -196,7 +193,7 @@ export default function MapScreen() {
           pointerEvents="box-none"
         >
           {locations.map((loc) => {
-            const p = points[loc.id];
+            const p = project(loc, region, mapSize);
             if (!p) return null;
             return (
               <TouchableOpacity
