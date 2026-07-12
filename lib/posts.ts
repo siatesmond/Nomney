@@ -123,7 +123,8 @@ export type PostLocation = {
   locationName: string;
   latitude: number;
   longitude: number;
-  imageUrl?: string;
+  imageUrl?: string; // first photo, used for the map pin
+  imageUrls: string[]; // all photos, used for the tapped-card gallery
 };
 
 // Every post by `userId` that has a saved location — used by the Map tab.
@@ -144,13 +145,17 @@ export async function getUserPostLocations(
   return (data ?? []).map((p: any) => {
     const images = Array.isArray(p.post_image) ? p.post_image.slice() : [];
     images.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
+    const imageUrls = images
+      .map((img: any) => img.image_url)
+      .filter(Boolean) as string[];
     return {
       id: p.id,
       title: p.title ?? "Untitled",
       locationName: p.location_name ?? "",
       latitude: Number(p.latitude),
       longitude: Number(p.longitude),
-      imageUrl: images[0]?.image_url,
+      imageUrl: imageUrls[0],
+      imageUrls,
     };
   });
 }

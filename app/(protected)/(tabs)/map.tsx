@@ -20,6 +20,7 @@ import {
   Image,
   Linking,
   Modal,
+  ScrollView,
   Text,
   TouchableOpacity,
   View,
@@ -212,6 +213,9 @@ export default function MapScreen() {
   const [mapSize, setMapSize] = useState<Size>({ width: 0, height: 0 });
   const [selected, setSelected] = useState<PostLocation | null>(null);
   const [openPostId, setOpenPostId] = useState<string | null>(null);
+  // Gallery state for the tapped-card photo swiper.
+  const [mediaW, setMediaW] = useState(0);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   // Reload pins whenever the tab is focused, so new posts show up.
   useFocusEffect(
@@ -235,6 +239,7 @@ export default function MapScreen() {
   // Tap a card: show its info and fly/zoom the map to that spot.
   const focusLocation = (loc: PostLocation) => {
     setSelected(loc);
+    setPhotoIndex(0);
     mapRef.current?.animateToRegion(
       {
         latitude: loc.latitude,
@@ -358,18 +363,54 @@ export default function MapScreen() {
             shadowOffset: { width: 0, height: 4 },
           }}
         >
-          {!!selected.imageUrl && (
-            <Image
-              source={{ uri: selected.imageUrl }}
-              style={{
-                width: "100%",
-                height: 150,
-                borderRadius: 12,
-                marginBottom: 10,
-                backgroundColor: "#eee",
-              }}
-              resizeMode="cover"
-            />
+          {selected.imageUrls.length > 0 && (
+            <View
+              onLayout={(e) => setMediaW(e.nativeEvent.layout.width)}
+              style={{ marginBottom: 10 }}
+            >
+              {mediaW > 0 && (
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={(e) =>
+                    setPhotoIndex(
+                      Math.round(e.nativeEvent.contentOffset.x / mediaW),
+                    )
+                  }
+                  style={{ borderRadius: 12, backgroundColor: "#000" }}
+                >
+                  {/* contain (not cover) so the whole photo shows, uncropped. */}
+                  {selected.imageUrls.map((url, i) => (
+                    <Image
+                      key={i}
+                      source={{ uri: url }}
+                      style={{ width: mediaW, height: 240 }}
+                      resizeMode="contain"
+                    />
+                  ))}
+                </ScrollView>
+              )}
+
+              {/* Page dots when there's more than one photo. */}
+              {selected.imageUrls.length > 1 && (
+                <View className="flex-row justify-center mt-2">
+                  {selected.imageUrls.map((_, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        width: i === photoIndex ? 16 : 6,
+                        height: 6,
+                        borderRadius: 3,
+                        marginHorizontal: 3,
+                        backgroundColor:
+                          i === photoIndex ? COLORS.accent : COLORS.line,
+                      }}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
           )}
           <Text
             style={{ color: COLORS.ink }}
