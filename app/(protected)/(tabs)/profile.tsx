@@ -7,6 +7,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Modal } from "react-native";
 
+import { WidgetPreview } from 'react-native-android-widget';
+import { HelloWidget } from "@/widget/HelloWidget";
+
 // Your own profile tab. Loads your posts + saved posts and shows them.
 export default function ProfileScreen() {
   const router = useRouter();
@@ -63,6 +66,13 @@ export default function ProfileScreen() {
         savedImages={savedPosts}
         isLoadingPosts={loadingPosts}
         onPostClick={(postId) => setSelectedPostId(postId)}
+      />
+
+
+      <WidgetPreview
+        renderWidget={() => <HelloWidget />}
+        width={320}
+        height={200}
       />
 
       <Modal

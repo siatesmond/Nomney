@@ -47,6 +47,25 @@
         }
       ],
       [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Hello", 
+              "label": "My Hello Widget", 
+              "minWidth": "320dp",
+              "minHeight": "120dp",
+              "targetCellWidth": 5,
+              "targetCellHeight": 2,
+              "description": "This is my first widget", 
+              "previewImage": "./assets/images/icon/icon_v1.png",
+
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow $(BUNDLE_DISPLAY_NAME) to access your photos.",
