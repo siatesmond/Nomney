@@ -58,7 +58,7 @@
               "targetCellWidth": 2,
               "targetCellHeight": 2,
               "description": "Compact view of your meal-logging streak",
-              "previewImage": "./assets/images/icon/icon_v1.png",
+              "previewImage": "./assets/images/StreakWidgetSmall.png",
               "updatePeriodMillis": 1800000
             },
             {
@@ -69,7 +69,7 @@
               "targetCellWidth": 5,
               "targetCellHeight": 2,
               "description": "Full view with your streak, best, and mascot",
-              "previewImage": "./assets/images/icon/icon_v1.png",
+              "previewImage": "./assets/images/StreakWidgetLarge.png",
               "updatePeriodMillis": 1800000
             }
           ]
