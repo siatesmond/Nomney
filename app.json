@@ -51,15 +51,25 @@
         {
           "widgets": [
             {
-              "name": "Hello", 
-              "label": "My Hello Widget", 
+              "name": "StreakSmall",
+              "label": "Nomney Streak (Small)",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "description": "Compact view of your meal-logging streak",
+              "previewImage": "./assets/images/icon/icon_v1.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "StreakLarge",
+              "label": "Nomney Streak (Large)",
               "minWidth": "320dp",
               "minHeight": "120dp",
               "targetCellWidth": 5,
               "targetCellHeight": 2,
-              "description": "This is my first widget", 
+              "description": "Full view with your streak, best, and mascot",
               "previewImage": "./assets/images/icon/icon_v1.png",
-
               "updatePeriodMillis": 1800000
             }
           ]

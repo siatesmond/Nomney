@@ -7,8 +7,9 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Modal } from "react-native";
 
-import { WidgetPreview } from 'react-native-android-widget';
-import { HelloWidget } from "@/widget/HelloWidget";
+// import { StreakWidgetSmall } from "@/widget/StreakWidgetSmall";
+// import { StreakWidgetLarge } from "@/widget/StreakWidgetLarge";
+// import { WidgetPreview } from 'react-native-android-widget';
 
 // Your own profile tab. Loads your posts + saved posts and shows them.
 export default function ProfileScreen() {
@@ -68,12 +69,18 @@ export default function ProfileScreen() {
         onPostClick={(postId) => setSelectedPostId(postId)}
       />
 
-
-      <WidgetPreview
-        renderWidget={() => <HelloWidget />}
+      {/* Preview widget */}
+      {/* <WidgetPreview
+        renderWidget={() => <StreakWidgetSmall streakCount={5} />}
         width={320}
         height={200}
       />
+
+      <WidgetPreview
+        renderWidget={() => <StreakWidgetLarge streakCount={5} longestStreak={10}/>}
+        width={320}
+        height={200}
+      /> */}
 
       <Modal
         visible={!!selectedPostId}
