@@ -74,10 +74,10 @@ export function StreakWidgetLarge({ streakCount, longestStreak }: StreakWidgetPr
           />
         </FlexWidget>
 
-
+        {/* Best Streak display */}
         {longestStreak !== undefined && longestStreak > streakCount && (
           <TextWidget
-            text={`beat your best: ${longestStreak}!`}
+            text={`beat your best: ${longestStreak} days!`}
             style={{ fontSize: 13, color: '#000000', marginTop: 2 }}
           />
         )}

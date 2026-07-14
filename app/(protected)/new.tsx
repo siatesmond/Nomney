@@ -17,6 +17,12 @@ import { incrementCategoryUsage, resolveTagsToCategoryIds } from "@/lib/categori
 import { createNewPost } from "@/lib/posts";
 import { supabase } from "@/lib/supabase";
 
+// Widget imports
+import { requestWidgetUpdate } from "react-native-android-widget";
+import { getStreakData } from "@/lib/streak";
+import { StreakWidgetLarge } from "@/widget/StreakWidgetLarge";
+import { StreakWidgetSmall } from "@/widget/StreakWidgetSmall";
+
 // New post screen. Holds all the form state and saves the post when you tap Post.
 export default function NewPostScreen() {
   const router = useRouter();
@@ -91,6 +97,31 @@ export default function NewPostScreen() {
         throw new Error(result.error || "Database transmission failed.");
 
       await incrementCategoryUsage(resolvedCategoryIds);
+
+      // Update Streak widgets with the latest post data
+      try {
+        const { current, longest } = await getStreakData(user.id);
+
+        // StreakLarge
+        await requestWidgetUpdate({
+          widgetName: "StreakLarge",
+          renderWidget: () => (
+            <StreakWidgetLarge streakCount={current} longestStreak={longest} />
+          ),
+          widgetNotFound: () => { }, // if user hasn't added this widget, ignore
+        });
+
+        // StreakSmall
+        await requestWidgetUpdate({
+          widgetName: "StreakSmall",
+          renderWidget: () => (
+            <StreakWidgetSmall streakCount={current} longestStreak={longest} />
+          ),
+          widgetNotFound: () => { },  // if user hasn't added this widget, ignore
+        });
+      } catch (widgetError) {
+        console.error("Failed to refresh widget:", widgetError);
+      }
 
       Alert.alert("Post Created!!!", "Your memory has been created!!!!", [
         { text: "Awesome", onPress: () => router.replace("/home") },
