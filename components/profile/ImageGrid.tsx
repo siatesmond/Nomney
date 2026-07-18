@@ -2,11 +2,12 @@
 // loading / empty state.
 import { COLORS } from "@/constants/theme";
 import { ImageGridItem } from "@/constants/types";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Pressable,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -33,6 +34,7 @@ export function ImageGrid({
   // evaluation, which would make the tiles zero/negative-sized and invisible.
   const { width } = useWindowDimensions();
   const imageSize = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
+  const [imgErr, setImgErr] = useState<string>(""); // TEMP diagnostic
 
   if (loading) {
     return (
@@ -60,32 +62,31 @@ export function ImageGrid({
       {/* TEMP DIAGNOSTIC: show the first image URL + any load error. */}
       <Text selectable style={{ fontSize: 9, color: "red", width: "100%", padding: 4 }}>
         URL: {items[0]?.imageUrl ?? "(none)"}
+        {"\n"}ERR: {imgErr || "(no error yet)"}
       </Text>
       {items.map((item) => (
-        <Pressable
+        <TouchableOpacity
           key={item.id}
-          style={({ pressed }) => [
-            {
-              width: imageSize,
-              height: imageSize,
-              borderRadius: 10,
-              overflow: "hidden",
-              backgroundColor: "#E8E8E8",
-            },
-            // Subtle press feedback: shrink and dim a touch while held.
-            pressed && { transform: [{ scale: 0.96 }], opacity: 0.85 },
-          ]}
+          activeOpacity={0.8}
+          style={{
+            width: imageSize,
+            height: imageSize,
+            borderRadius: 10,
+            overflow: "hidden",
+            backgroundColor: "#E8E8E8",
+          }}
           onPress={() => onPressItem?.(item.id)}
         >
           <Image
             source={{ uri: item.imageUrl }}
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: imageSize, height: imageSize }}
             resizeMode="cover"
-            onError={(e) =>
-              console.log("IMG ERROR", item.imageUrl, e.nativeEvent)
-            }
+            onError={(e) => {
+              console.log("IMG ERROR", item.imageUrl, e.nativeEvent);
+              setImgErr(e.nativeEvent?.error ?? "unknown");
+            }}
           />
-        </Pressable>
+        </TouchableOpacity>
       ))}
     </View>
   );
