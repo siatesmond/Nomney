@@ -14,15 +14,28 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Same policy as register / reset-password: min 8 chars with an uppercase,
+// lowercase, digit and a symbol (matches Supabase's allowed symbols).
+const isValidPassword = (password: string) =>
+  password.length >= 8 &&
+  /[a-z]/.test(password) &&
+  /[A-Z]/.test(password) &&
+  /[0-9]/.test(password) &&
+  /[!@#$%^&*()_+\-=\[\]{};':"\\|<>?,.\/`~]/.test(password);
+
 export default function ChangePasswordScreen() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    if (password.length < 6) {
-      return Alert.alert("Too short", "Password must be at least 6 characters.");
+    if (!isValidPassword(password)) {
+      return Alert.alert(
+        "Weak password",
+        "Password must have at least 8 characters with uppercase, lowercase, digits and a symbol.",
+      );
     }
     if (password !== confirm) {
       return Alert.alert("Mismatch", "The passwords don't match.");
@@ -64,16 +77,28 @@ export default function ChangePasswordScreen() {
         >
           New password
         </Text>
-        <TextInput
-          className="py-2 text-base"
-          style={{ borderBottomWidth: 1, borderColor: "#E5E5E5", color: COLORS.ink }}
-          placeholder="At least 6 characters"
-          placeholderTextColor={COLORS.muted}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          autoCapitalize="none"
-        />
+        <View className="flex-row items-center" style={{ borderBottomWidth: 1, borderColor: "#E5E5E5" }}>
+          <TextInput
+            className="flex-1 py-2 text-base"
+            style={{ color: COLORS.ink }}
+            placeholder="At least 8 characters"
+            placeholderTextColor={COLORS.muted}
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword((s) => !s)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={showPassword ? "eye-outline" : "eye-off-outline"}
+              size={20}
+              color={COLORS.muted}
+            />
+          </TouchableOpacity>
+        </View>
 
         <Text
           className="text-xs font-semibold uppercase mb-1 mt-5"
@@ -86,7 +111,7 @@ export default function ChangePasswordScreen() {
           style={{ borderBottomWidth: 1, borderColor: "#E5E5E5", color: COLORS.ink }}
           placeholder="Re-enter password"
           placeholderTextColor={COLORS.muted}
-          secureTextEntry
+          secureTextEntry={!showPassword}
           value={confirm}
           onChangeText={setConfirm}
           autoCapitalize="none"
