@@ -6,16 +6,14 @@ import { ImageGridItem } from "@/constants/types";
 import { Image } from "expo-image";
 import {
   ActivityIndicator,
-  Dimensions,
   Pressable,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 
-const { width } = Dimensions.get("window");
 const GRID_COLUMNS = 3;
 const GAP = 3;
-const IMAGE_SIZE = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
 
 type ImageGridProps = {
   items: ImageGridItem[];
@@ -31,6 +29,12 @@ export function ImageGrid({
   emptyText = "No posts yet",
   loading = false,
 }: ImageGridProps) {
+  // Measure the width at runtime rather than at module load: on the New
+  // Architecture, Dimensions.get("window") can be 0 during early module
+  // evaluation, which would make the tiles zero/negative-sized and invisible.
+  const { width } = useWindowDimensions();
+  const imageSize = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
+
   if (loading) {
     return (
       <View className="items-center py-16">
@@ -59,8 +63,8 @@ export function ImageGrid({
           key={item.id}
           style={({ pressed }) => [
             {
-              width: IMAGE_SIZE,
-              height: IMAGE_SIZE,
+              width: imageSize,
+              height: imageSize,
               borderRadius: 10,
               overflow: "hidden",
               backgroundColor: "#E8E8E8",

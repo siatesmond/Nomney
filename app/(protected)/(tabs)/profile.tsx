@@ -95,7 +95,10 @@ export default function ProfileScreen() {
         }}
         pointerEvents="none"
       >
-        <Text style={{ color: "#fff", fontSize: 11 }}>{debug}</Text>
+        <Text style={{ color: "#fff", fontSize: 11 }}>
+          {debug} | grid={userPosts.length}/{savedPosts.length} loading=
+          {String(loadingPosts)}
+        </Text>
       </View>
 
       <UserProfile
