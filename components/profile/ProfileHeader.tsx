@@ -1,5 +1,4 @@
 // Top of a profile: avatar, name, bio, follower counts, and the follow or edit button.
-import SignOutButton from "@/components/social-auth-buttons/sign-out-button";
 import { Text, TouchableOpacity, View } from "react-native";
 import { Avatar } from "../UserAvatar";
 
@@ -106,11 +105,6 @@ export function ProfileHeader({
         </Text>
       </TouchableOpacity>
 
-      {isOwnProfile && (
-        <View className="mt-3 w-full items-center">
-          <SignOutButton />
-        </View>
-      )}
     </View>
   );
 }

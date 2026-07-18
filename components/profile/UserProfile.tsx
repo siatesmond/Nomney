@@ -5,9 +5,15 @@ import { COLORS } from "@/constants/theme";
 import { Profile, useAuthContext } from "@/hooks/use-auth-context";
 import { followUser, unfollowUser } from "@/lib/followers";
 import { getProfileWithStats, resolveAvatarUrl } from "@/lib/profile";
+import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, Text } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ImageGrid } from "./ImageGrid";
 import { ProfileHeader } from "./ProfileHeader";
@@ -141,6 +147,15 @@ export function UserProfile({
       className="flex-1 bg-[#F9F9F9]"
       edges={["top", "left", "right"]}
     >
+      {isOwnProfile && (
+        <TouchableOpacity
+          className="absolute top-2 right-4 z-10 p-1"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={() => router.push("/settings")}
+        >
+          <Ionicons name="settings-outline" size={24} color={COLORS.ink} />
+        </TouchableOpacity>
+      )}
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
