@@ -1,5 +1,5 @@
 // Change password for the signed-in user via Supabase auth.
-import { useThemeColors } from "@/constants/theme";
+import { COLORS } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
@@ -16,7 +16,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
-  const c = useThemeColors();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
@@ -51,7 +50,7 @@ export default function ChangePasswordScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={24} color={c.ink} />
+          <Ionicons name="chevron-back" size={24} color={COLORS.ink} />
         </TouchableOpacity>
         <Text className="ml-2 text-lg font-bold text-ink">Change Password</Text>
       </View>
@@ -63,7 +62,7 @@ export default function ChangePasswordScreen() {
         <TextInput
           className="border-b border-line py-2 text-base text-ink"
           placeholder="At least 6 characters"
-          placeholderTextColor={c.muted}
+          placeholderTextColor={COLORS.muted}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -76,7 +75,7 @@ export default function ChangePasswordScreen() {
         <TextInput
           className="border-b border-line py-2 text-base text-ink"
           placeholder="Re-enter password"
-          placeholderTextColor={c.muted}
+          placeholderTextColor={COLORS.muted}
           secureTextEntry
           value={confirm}
           onChangeText={setConfirm}

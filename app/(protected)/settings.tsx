@@ -1,27 +1,17 @@
-// Settings: edit profile, theme, change password, feedback, log out, delete.
-import { useThemeColors } from "@/constants/theme";
+// Settings: edit profile, change password, feedback, log out, delete.
+import { COLORS } from "@/constants/theme";
 import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { ThemePref, useThemePref } from "@/providers/theme-provider";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const FEEDBACK_EMAIL = "support@nomney.app"; // TODO: change to your real address
-
-const THEME_OPTIONS: { key: ThemePref; label: string }[] = [
-  { key: "light", label: "Light" },
-  { key: "dark", label: "Dark" },
-  { key: "system", label: "System" },
-];
-
 const DANGER = "#E5484D";
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const c = useThemeColors();
-  const { theme, setTheme } = useThemePref();
 
   const sendFeedback = () => {
     Linking.openURL(
@@ -65,16 +55,16 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-paper">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F7F7]">
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View className="flex-row items-center px-4 pt-2 pb-3 bg-card">
+      <View className="flex-row items-center px-4 pt-2 pb-3 bg-white">
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={24} color={c.ink} />
+          <Ionicons name="chevron-back" size={24} color={COLORS.ink} />
         </TouchableOpacity>
         <Text className="ml-2 text-lg font-bold text-ink">Settings</Text>
       </View>
@@ -95,32 +85,6 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Appearance */}
-        <Section title="Appearance">
-          <View className="px-4 py-3">
-            <Text className="text-sm mb-2 text-ink">Theme</Text>
-            <View className="flex-row rounded-full p-1 bg-line">
-              {THEME_OPTIONS.map(({ key, label }) => {
-                const active = theme === key;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    className={`flex-1 py-2 rounded-full items-center ${active ? "bg-accent" : ""}`}
-                    onPress={() => setTheme(key)}
-                    activeOpacity={0.8}
-                  >
-                    <Text
-                      className={`text-xs font-semibold ${active ? "text-white" : "text-muted"}`}
-                    >
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </Section>
-
         {/* Support */}
         <Section title="Support">
           <Row
@@ -133,11 +97,7 @@ export default function SettingsScreen() {
 
         {/* Actions */}
         <Section title=" ">
-          <Row
-            icon="log-out-outline"
-            label="Log Out"
-            onPress={confirmLogout}
-          />
+          <Row icon="log-out-outline" label="Log Out" onPress={confirmLogout} />
           <Row
             icon="trash-outline"
             label="Delete Account"
@@ -163,7 +123,7 @@ function Section({
       <Text className="text-xs font-semibold uppercase px-4 mb-1.5 text-muted">
         {title}
       </Text>
-      <View className="bg-card">{children}</View>
+      <View className="bg-white">{children}</View>
     </View>
   );
 }
@@ -181,21 +141,17 @@ function Row({
   color?: string;
   last?: boolean;
 }) {
-  const c = useThemeColors();
   return (
     <TouchableOpacity
       className={`flex-row items-center px-4 py-3.5 ${last ? "" : "border-b border-line"}`}
       activeOpacity={0.7}
       onPress={onPress}
     >
-      <Ionicons name={icon} size={20} color={color ?? c.ink} />
-      <Text
-        className="flex-1 ml-3 text-sm"
-        style={{ color: color ?? c.ink }}
-      >
+      <Ionicons name={icon} size={20} color={color ?? COLORS.ink} />
+      <Text className="flex-1 ml-3 text-sm" style={{ color: color ?? COLORS.ink }}>
         {label}
       </Text>
-      <Ionicons name="chevron-forward" size={16} color={c.muted} />
+      <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
     </TouchableOpacity>
   );
 }

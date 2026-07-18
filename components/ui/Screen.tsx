@@ -10,7 +10,7 @@ type ScreenProps = {
 export function Screen({ children, noPadding = false }: ScreenProps) {
   return (
     <View
-      className={`flex-1 bg-paper justify-center pt-10 ${
+      className={`flex-1 bg-[#FDFCF9] justify-center pt-10 ${
         noPadding ? "" : "px-2"
       }`}
     >
