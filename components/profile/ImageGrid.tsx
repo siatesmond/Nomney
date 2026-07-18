@@ -1,6 +1,6 @@
 // 3-column grid of post thumbnails. Tap one to open it.
 import { ImageGridItem } from '@/constants/types';
-import { Dimensions, Image, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, Pressable, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_COLUMNS = 3;
@@ -19,15 +19,18 @@ export function ImageGrid({ items, onPressItem }: ImageGridProps) {
       style={{ gap: GAP, paddingHorizontal: GAP }}
     >
       {items.map((item) => (
-        <TouchableOpacity
+        <Pressable
           key={item.id}
-          activeOpacity={0.9}
           className="rounded-[10px] overflow-hidden bg-[#E8E8E8]"
-          style={{ width: IMAGE_SIZE, height: IMAGE_SIZE }}
+          // Subtle press feedback: shrink and dim a touch while held.
+          style={({ pressed }) => [
+            { width: IMAGE_SIZE, height: IMAGE_SIZE },
+            pressed && { transform: [{ scale: 0.96 }], opacity: 0.85 },
+          ]}
           onPress={() => onPressItem?.(item.id)}
         >
           <Image source={{ uri: item.imageUrl }} className="w-full h-full" />
-        </TouchableOpacity>
+        </Pressable>
       ))}
     </View>
   );

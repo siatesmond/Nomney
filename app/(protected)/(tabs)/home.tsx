@@ -217,8 +217,20 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={<HomeHeader />}
           renderItem={({ item: post }) => (
-            <View className="pb-6">
-              <View className="bg-white rounded-lg overflow-hidden">
+            <View className="px-3 pb-4">
+              {/* Shadow lives on this outer view — the PostCard itself uses
+                  overflow-hidden to round its corners, which would clip a
+                  shadow on iOS if it were on the same view. */}
+              <View
+                className="bg-white rounded-xl"
+                style={{
+                  shadowColor: "#000",
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 3 },
+                  elevation: 3,
+                }}
+              >
                 <PostCard
                   {...post}
                   liked={!!likedPosts[post.id]}

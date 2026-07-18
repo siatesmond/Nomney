@@ -535,25 +535,42 @@ export default function MapScreen() {
                     position: "absolute",
                     left: p.x,
                     top: p.y,
-                    width: 160,
+                    width: 200,
                     alignItems: "center",
-                    transform: [{ translateX: -80 }, { translateY: -70 }],
+                    transform: [{ translateX: -100 }, { translateY: -86 }],
                   }}
                 >
                   <View
-                    className="bg-white rounded-xl px-2.5 py-1.5"
+                    className="rounded-2xl px-3 py-2"
                     style={{
-                      elevation: 3,
+                      backgroundColor: COLORS.accentSoft,
+                      borderWidth: 1.5,
+                      borderColor: COLORS.accent,
+                      elevation: 4,
                       shadowColor: "#000",
-                      shadowOpacity: 0.15,
-                      shadowRadius: 3,
+                      shadowOpacity: 0.2,
+                      shadowRadius: 4,
                       shadowOffset: { width: 0, height: 2 },
                     }}
                   >
+                    <View className="flex-row items-center justify-center">
+                      <Ionicons
+                        name="camera-outline"
+                        size={14}
+                        color={COLORS.accent}
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text
+                        className="text-[12px] font-bold text-center"
+                        style={{ color: COLORS.accent }}
+                      >
+                        No posts here yet
+                      </Text>
+                    </View>
                     <Text
                       numberOfLines={1}
-                      className="text-[11px] font-semibold text-center"
-                      style={{ color: COLORS.ink, maxWidth: 140 }}
+                      className="text-[11px] text-center mt-0.5"
+                      style={{ color: COLORS.ink, maxWidth: 176 }}
                     >
                       {searchedPlace.name}
                     </Text>
@@ -561,14 +578,14 @@ export default function MapScreen() {
                       className="text-[9px] text-center"
                       style={{ color: COLORS.muted }}
                     >
-                      Currently no post here
+                      Be the first to post!
                     </Text>
                   </View>
                   <Ionicons
                     name="location"
-                    size={34}
+                    size={36}
                     color={COLORS.accent}
-                    style={{ marginTop: -1 }}
+                    style={{ marginTop: -2 }}
                   />
                 </View>
               );
