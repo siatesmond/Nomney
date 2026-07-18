@@ -1,6 +1,6 @@
 // 3-column grid of post thumbnails. Tap one to open it.
 import { ImageGridItem } from '@/constants/types';
-import { Dimensions, Image, Pressable, View } from 'react-native';
+import { Dimensions, Image, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 const GRID_COLUMNS = 3;
@@ -13,32 +13,27 @@ type ImageGridProps = {
 };
 
 export function ImageGrid({ items, onPressItem }: ImageGridProps) {
+  // TEMP DIAGNOSTIC — remove once the missing-posts issue is resolved.
+  console.log(
+    "[ImageGrid] items:",
+    items.length,
+    items.slice(0, 2).map((i) => i.imageUrl),
+  );
   return (
     <View
       className="flex-row flex-wrap pb-4"
       style={{ gap: GAP, paddingHorizontal: GAP }}
     >
       {items.map((item) => (
-        <Pressable
+        <TouchableOpacity
           key={item.id}
-          // All styling is inline (no className) so the fixed width/height are
-          // always applied — a NativeWind className + function-style mix can
-          // drop the size and make tiles disappear.
-          style={({ pressed }) => [
-            {
-              width: IMAGE_SIZE,
-              height: IMAGE_SIZE,
-              borderRadius: 10,
-              overflow: "hidden",
-              backgroundColor: "#E8E8E8",
-            },
-            // Subtle press feedback: shrink and dim a touch while held.
-            pressed && { transform: [{ scale: 0.96 }], opacity: 0.85 },
-          ]}
+          activeOpacity={0.9}
+          className="rounded-[10px] overflow-hidden bg-[#E8E8E8]"
+          style={{ width: IMAGE_SIZE, height: IMAGE_SIZE }}
           onPress={() => onPressItem?.(item.id)}
         >
-          <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} />
-        </Pressable>
+          <Image source={{ uri: item.imageUrl }} className="w-full h-full" />
+        </TouchableOpacity>
       ))}
     </View>
   );
