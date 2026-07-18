@@ -14,7 +14,10 @@ import {
   Text,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { ImageGrid } from "./ImageGrid";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileTabs } from "./ProfileTabs";
@@ -44,6 +47,7 @@ export function UserProfile({
 }: UserProfileProps) {
   const { profile: currentUser } = useAuthContext();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -149,7 +153,8 @@ export function UserProfile({
     >
       {isOwnProfile && (
         <TouchableOpacity
-          className="absolute top-2 right-4 z-10 p-1"
+          className="absolute right-4 z-10 p-1"
+          style={{ top: insets.top + 8 }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           onPress={() => router.push("/settings")}
         >
