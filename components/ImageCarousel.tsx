@@ -1,8 +1,7 @@
 import { COLORS } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useRef, useState } from "react";
-import { FlatList, View } from "react-native";
+import { FlatList, Image, View } from "react-native";
 
 type ImageCarouselProps = {
   imageUrls: string[];
@@ -81,9 +80,7 @@ export function ImageCarousel({ imageUrls, cardWidth }: ImageCarouselProps) {
               <Image
                 source={{ uri: item }}
                 style={{ width: "100%", height: "100%" }}
-                contentFit="cover"
-                cachePolicy="memory-disk"
-                transition={150}
+                resizeMode="cover"
               />
             </View>
           )}

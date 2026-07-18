@@ -1,8 +1,7 @@
 import { COLORS } from "@/constants/theme";
 import { PostLocation } from "@/lib/posts";
-import { Image } from "expo-image";
 import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 import { PostInfo } from "./PostInfo";
 
 const CARD_SHADOW = {
@@ -82,8 +81,7 @@ export function SelectedPostsCard({
                     key={i}
                     source={{ uri: url }}
                     style={{ width: mediaW, height: 240 }}
-                    contentFit="contain"
-                    cachePolicy="memory-disk"
+                    resizeMode="contain"
                   />
                 ))}
               </ScrollView>
@@ -134,8 +132,7 @@ export function SelectedPostsCard({
                   marginBottom: 10,
                   backgroundColor: "#fff",
                 }}
-                contentFit="contain"
-                cachePolicy="memory-disk"
+                resizeMode="contain"
               />
               <PostInfo
                 post={p}

@@ -1,11 +1,10 @@
-// 3-column grid of post thumbnails. Tap one to open it.
-// Uses expo-image so thumbnails are cached instead of re-downloaded on scroll,
-// and shows its own loading / empty state.
+// 3-column grid of post thumbnails. Tap one to open it. Shows its own
+// loading / empty state.
 import { COLORS } from "@/constants/theme";
 import { ImageGridItem } from "@/constants/types";
-import { Image } from "expo-image";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   Text,
   useWindowDimensions,
@@ -54,33 +53,33 @@ export function ImageGrid({
   }
 
   return (
-    <View className="pb-4">
-      {/* TEMP DIAGNOSTIC */}
-      <Text style={{ color: "red", fontSize: 12, padding: 4 }}>
-        DIAG imageSize={Math.round(imageSize)} items={items.length}
-      </Text>
-      <View
-        className="flex-row flex-wrap"
-        style={{ gap: GAP, paddingHorizontal: GAP }}
-      >
-        {items.map((item, index) => (
-          <Pressable
-            key={item.id}
-            style={{
-              width: imageSize > 0 ? imageSize : 100,
-              height: imageSize > 0 ? imageSize : 100,
+    <View
+      className="flex-row flex-wrap pb-4"
+      style={{ gap: GAP, paddingHorizontal: GAP }}
+    >
+      {items.map((item) => (
+        <Pressable
+          key={item.id}
+          style={({ pressed }) => [
+            {
+              width: imageSize,
+              height: imageSize,
               borderRadius: 10,
               overflow: "hidden",
-              backgroundColor: index % 2 === 0 ? "#F4522A" : "#2A7FF4",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onPress={() => onPressItem?.(item.id)}
-          >
-            <Text style={{ color: "#fff", fontWeight: "700" }}>{index + 1}</Text>
-          </Pressable>
-        ))}
-      </View>
+              backgroundColor: "#E8E8E8",
+            },
+            // Subtle press feedback: shrink and dim a touch while held.
+            pressed && { transform: [{ scale: 0.96 }], opacity: 0.85 },
+          ]}
+          onPress={() => onPressItem?.(item.id)}
+        >
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{ width: "100%", height: "100%" }}
+            resizeMode="cover"
+          />
+        </Pressable>
+      ))}
     </View>
   );
 }
