@@ -57,6 +57,10 @@ export function ImageGrid({
       className="flex-row flex-wrap pb-4"
       style={{ gap: GAP, paddingHorizontal: GAP }}
     >
+      {/* TEMP DIAGNOSTIC: show the first image URL + any load error. */}
+      <Text selectable style={{ fontSize: 9, color: "red", width: "100%", padding: 4 }}>
+        URL: {items[0]?.imageUrl ?? "(none)"}
+      </Text>
       {items.map((item) => (
         <Pressable
           key={item.id}
@@ -77,6 +81,9 @@ export function ImageGrid({
             source={{ uri: item.imageUrl }}
             style={{ width: "100%", height: "100%" }}
             resizeMode="cover"
+            onError={(e) =>
+              console.log("IMG ERROR", item.imageUrl, e.nativeEvent)
+            }
           />
         </Pressable>
       ))}
