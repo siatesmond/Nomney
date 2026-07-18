@@ -2,7 +2,6 @@
 // loading / empty state.
 import { COLORS } from "@/constants/theme";
 import { ImageGridItem } from "@/constants/types";
-import { useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -31,10 +30,9 @@ export function ImageGrid({
 }: ImageGridProps) {
   // Measure the width at runtime rather than at module load: on the New
   // Architecture, Dimensions.get("window") can be 0 during early module
-  // evaluation, which would make the tiles zero/negative-sized and invisible.
+  // evaluation, which would make the tiles zero/negative-sized.
   const { width } = useWindowDimensions();
   const imageSize = (width - (GRID_COLUMNS + 1) * GAP) / GRID_COLUMNS;
-  const [imgErr, setImgErr] = useState<string>(""); // TEMP diagnostic
 
   if (loading) {
     return (
@@ -59,11 +57,6 @@ export function ImageGrid({
       className="flex-row flex-wrap pb-4"
       style={{ gap: GAP, paddingHorizontal: GAP }}
     >
-      {/* TEMP DIAGNOSTIC: show the first image URL + any load error. */}
-      <Text selectable style={{ fontSize: 9, color: "red", width: "100%", padding: 4 }}>
-        URL: {items[0]?.imageUrl ?? "(none)"}
-        {"\n"}ERR: {imgErr || "(no error yet)"}
-      </Text>
       {items.map((item) => (
         <TouchableOpacity
           key={item.id}
@@ -77,14 +70,12 @@ export function ImageGrid({
           }}
           onPress={() => onPressItem?.(item.id)}
         >
+          {/* Explicit pixel dimensions (not "100%") — percentage sizing on the
+              Image wasn't resolving reliably here and left the tiles blank. */}
           <Image
             source={{ uri: item.imageUrl }}
             style={{ width: imageSize, height: imageSize }}
             resizeMode="cover"
-            onError={(e) => {
-              console.log("IMG ERROR", item.imageUrl, e.nativeEvent);
-              setImgErr(e.nativeEvent?.error ?? "unknown");
-            }}
           />
         </TouchableOpacity>
       ))}
