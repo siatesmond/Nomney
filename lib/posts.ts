@@ -46,7 +46,8 @@ export async function getPosts() {
 }
 
 // Home feed: the user's own posts plus posts from people they follow, newest
-// first.
+// first. If they don't follow anyone yet (new account), fall back to a
+// discovery feed so the home page isn't empty.
 export async function getFeedPosts(userId: string) {
   const { data: follows, error: followErr } = await supabase
     .from("followers")
@@ -54,10 +55,13 @@ export async function getFeedPosts(userId: string) {
     .eq("follower_id", userId);
   if (followErr) throw followErr;
 
-  const authorIds = [
-    userId,
-    ...(follows ?? []).map((f: any) => f.following_id),
-  ];
+  const followingIds = (follows ?? []).map((f: any) => f.following_id);
+
+  if (followingIds.length === 0) {
+    return getDiscoverPosts();
+  }
+
+  const authorIds = [userId, ...followingIds];
 
   const { data, error } = await supabase
     .from("posts")
@@ -68,6 +72,22 @@ export async function getFeedPosts(userId: string) {
   if (error) throw error;
 
   return data.map(mapPost);
+}
+
+// Discovery feed for new users: recent posts from everyone, ranked by a simple
+// popularity score (likes/saves/comments) so the best content shows first.
+export async function getDiscoverPosts(limit = 100) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  const posts = data.map(mapPost);
+  const score = (p: Post) => p.likes * 2 + p.saves + p.comments;
+  return posts.sort((a, b) => score(b) - score(a));
 }
 
 function mapPost(post: any): Post {
