@@ -1,7 +1,7 @@
-// Stores the user's theme choice (Light / Dark / System) and persists it.
-// NOTE: for now this only SAVES the preference — applying dark colors across
-// the app is a separate step. Read `theme` here when you're ready to theme.
+// Stores the user's theme choice (Light / Dark / System), persists it, and
+// drives NativeWind's color scheme so the app's colors flip.
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { colorScheme } from "nativewind";
 import {
   createContext,
   PropsWithChildren,
@@ -29,12 +29,16 @@ export function ThemeProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((v) => {
-      if (v === "light" || v === "dark" || v === "system") setThemeState(v);
+      const t =
+        v === "light" || v === "dark" || v === "system" ? v : "system";
+      setThemeState(t);
+      colorScheme.set(t);
     });
   }, []);
 
   const setTheme = (t: ThemePref) => {
     setThemeState(t);
+    colorScheme.set(t);
     AsyncStorage.setItem(STORAGE_KEY, t).catch(() => {});
   };
 

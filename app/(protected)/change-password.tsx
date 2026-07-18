@@ -1,5 +1,5 @@
 // Change password for the signed-in user via Supabase auth.
-import { COLORS } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
+  const c = useThemeColors();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
@@ -42,7 +43,7 @@ export default function ChangePasswordScreen() {
   };
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-paper">
       <Stack.Screen options={{ headerShown: false }} />
 
       <View className="flex-row items-center px-4 pt-2 pb-3">
@@ -50,34 +51,32 @@ export default function ChangePasswordScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.ink} />
+          <Ionicons name="chevron-back" size={24} color={c.ink} />
         </TouchableOpacity>
-        <Text className="ml-2 text-lg font-bold" style={{ color: COLORS.ink }}>
-          Change Password
-        </Text>
+        <Text className="ml-2 text-lg font-bold text-ink">Change Password</Text>
       </View>
 
       <View className="px-5 pt-4">
-        <Text className="text-xs font-semibold uppercase mb-1" style={{ color: COLORS.muted }}>
+        <Text className="text-xs font-semibold uppercase mb-1 text-muted">
           New password
         </Text>
         <TextInput
-          className="border-b border-neutral-200 py-2 text-base text-neutral-900"
+          className="border-b border-line py-2 text-base text-ink"
           placeholder="At least 6 characters"
-          placeholderTextColor="#999"
+          placeholderTextColor={c.muted}
           secureTextEntry
           value={password}
           onChangeText={setPassword}
           autoCapitalize="none"
         />
 
-        <Text className="text-xs font-semibold uppercase mb-1 mt-5" style={{ color: COLORS.muted }}>
+        <Text className="text-xs font-semibold uppercase mb-1 mt-5 text-muted">
           Confirm password
         </Text>
         <TextInput
-          className="border-b border-neutral-200 py-2 text-base text-neutral-900"
+          className="border-b border-line py-2 text-base text-ink"
           placeholder="Re-enter password"
-          placeholderTextColor="#999"
+          placeholderTextColor={c.muted}
           secureTextEntry
           value={confirm}
           onChangeText={setConfirm}
@@ -85,8 +84,8 @@ export default function ChangePasswordScreen() {
         />
 
         <TouchableOpacity
-          className="mt-8 rounded-xl py-4 items-center"
-          style={{ backgroundColor: COLORS.accent, opacity: saving ? 0.7 : 1 }}
+          className="mt-8 rounded-xl py-4 items-center bg-accent"
+          style={{ opacity: saving ? 0.7 : 1 }}
           activeOpacity={0.85}
           disabled={saving}
           onPress={save}

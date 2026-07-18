@@ -1,5 +1,5 @@
 // Settings: edit profile, theme, change password, feedback, log out, delete.
-import { COLORS } from "@/constants/theme";
+import { useThemeColors } from "@/constants/theme";
 import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { ThemePref, useThemePref } from "@/providers/theme-provider";
@@ -16,8 +16,11 @@ const THEME_OPTIONS: { key: ThemePref; label: string }[] = [
   { key: "system", label: "System" },
 ];
 
+const DANGER = "#E5484D";
+
 export default function SettingsScreen() {
   const router = useRouter();
+  const c = useThemeColors();
   const { theme, setTheme } = useThemePref();
 
   const sendFeedback = () => {
@@ -62,20 +65,18 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-[#F7F7F7]">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-paper">
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
-      <View className="flex-row items-center px-4 pt-2 pb-3 bg-white">
+      <View className="flex-row items-center px-4 pt-2 pb-3 bg-card">
         <TouchableOpacity
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.ink} />
+          <Ionicons name="chevron-back" size={24} color={c.ink} />
         </TouchableOpacity>
-        <Text className="ml-2 text-lg font-bold" style={{ color: COLORS.ink }}>
-          Settings
-        </Text>
+        <Text className="ml-2 text-lg font-bold text-ink">Settings</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -97,26 +98,19 @@ export default function SettingsScreen() {
         {/* Appearance */}
         <Section title="Appearance">
           <View className="px-4 py-3">
-            <Text className="text-sm mb-2" style={{ color: COLORS.ink }}>
-              Theme
-            </Text>
-            <View
-              className="flex-row rounded-full p-1"
-              style={{ backgroundColor: "#EEE" }}
-            >
+            <Text className="text-sm mb-2 text-ink">Theme</Text>
+            <View className="flex-row rounded-full p-1 bg-line">
               {THEME_OPTIONS.map(({ key, label }) => {
                 const active = theme === key;
                 return (
                   <TouchableOpacity
                     key={key}
-                    className="flex-1 py-2 rounded-full items-center"
-                    style={active ? { backgroundColor: COLORS.accent } : undefined}
+                    className={`flex-1 py-2 rounded-full items-center ${active ? "bg-accent" : ""}`}
                     onPress={() => setTheme(key)}
                     activeOpacity={0.8}
                   >
                     <Text
-                      className="text-xs font-semibold"
-                      style={{ color: active ? "#fff" : COLORS.muted }}
+                      className={`text-xs font-semibold ${active ? "text-white" : "text-muted"}`}
                     >
                       {label}
                     </Text>
@@ -124,9 +118,6 @@ export default function SettingsScreen() {
                 );
               })}
             </View>
-            <Text className="text-[11px] mt-2" style={{ color: COLORS.muted }}>
-              Saved as your preference. (Dark colors are coming soon.)
-            </Text>
           </View>
         </Section>
 
@@ -145,13 +136,12 @@ export default function SettingsScreen() {
           <Row
             icon="log-out-outline"
             label="Log Out"
-            color={COLORS.ink}
             onPress={confirmLogout}
           />
           <Row
             icon="trash-outline"
             label="Delete Account"
-            color="#E5484D"
+            color={DANGER}
             onPress={confirmDelete}
             last
           />
@@ -170,13 +160,10 @@ function Section({
 }) {
   return (
     <View className="mt-5">
-      <Text
-        className="text-xs font-semibold uppercase px-4 mb-1.5"
-        style={{ color: COLORS.muted }}
-      >
+      <Text className="text-xs font-semibold uppercase px-4 mb-1.5 text-muted">
         {title}
       </Text>
-      <View className="bg-white">{children}</View>
+      <View className="bg-card">{children}</View>
     </View>
   );
 }
@@ -194,23 +181,21 @@ function Row({
   color?: string;
   last?: boolean;
 }) {
+  const c = useThemeColors();
   return (
     <TouchableOpacity
-      className="flex-row items-center px-4 py-3.5"
-      style={
-        last ? undefined : { borderBottomWidth: 1, borderColor: "#F0F0F0" }
-      }
+      className={`flex-row items-center px-4 py-3.5 ${last ? "" : "border-b border-line"}`}
       activeOpacity={0.7}
       onPress={onPress}
     >
-      <Ionicons name={icon} size={20} color={color ?? COLORS.ink} />
+      <Ionicons name={icon} size={20} color={color ?? c.ink} />
       <Text
         className="flex-1 ml-3 text-sm"
-        style={{ color: color ?? COLORS.ink }}
+        style={{ color: color ?? c.ink }}
       >
         {label}
       </Text>
-      <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
+      <Ionicons name="chevron-forward" size={16} color={c.muted} />
     </TouchableOpacity>
   );
 }

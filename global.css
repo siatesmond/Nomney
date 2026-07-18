@@ -1,3 +1,29 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Theme colors as RGB triplets so tailwind's <alpha-value> works.
+   Light values in :root, dark overrides in .dark (toggled by NativeWind). */
+:root {
+  --accent: 244 82 42;
+  --accent-soft: 255 233 232;
+  --accent-tint: 255 243 240;
+  --accent-border: 253 203 192;
+  --ink: 28 25 23;
+  --paper: 250 247 242;
+  --card: 255 255 255;
+  --line: 233 226 214;
+  --muted: 138 131 120;
+  --gold: 232 162 61;
+}
+
+.dark {
+  --ink: 237 237 237;
+  --paper: 18 18 18;
+  --card: 30 30 30;
+  --line: 58 58 58;
+  --muted: 150 145 138;
+  --accent-soft: 60 30 26;
+  --accent-tint: 48 26 22;
+  --accent-border: 90 45 38;
+}

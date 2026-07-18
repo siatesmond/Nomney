@@ -1,4 +1,4 @@
-import { COLORS } from "@/constants/theme";
+import { COLORS, useThemeColors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router, Tabs } from "expo-router";
 import { ComponentProps } from "react";
@@ -39,12 +39,17 @@ function AddPostButton() {
 }
 
 export default function TabsLayout() {
+  const c = useThemeColors();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: COLORS.accent,
-        tabBarInactiveTintColor: "#999",
+        tabBarActiveTintColor: c.accent,
+        tabBarInactiveTintColor: c.muted,
+        tabBarStyle: {
+          backgroundColor: c.card,
+          borderTopColor: c.line,
+        },
       }}
     >
       <Tabs.Screen
