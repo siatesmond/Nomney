@@ -4,40 +4,65 @@ import { readAsStringAsync } from "expo-file-system/legacy";
 import { supabase } from "./supabase";
 import { timeAgo } from "./utils/timeAgo";
 
+const POST_SELECT = `
+  id,
+  title,
+  caption,
+  created_at,
+  profiles!user_id (
+      id,
+      username,
+      avatar_url
+  ),
+  post_categories!id (
+      categories (
+          name
+      )
+  ),
+  post_image (
+      image_url
+  ),
+  location_name,
+  latitude,
+  longitude,
+  likes (count),
+  comments (count),
+  saves (count),
+  rating_food,
+  rating_service,
+  rating_environment,
+  rating_cleanliness
+`;
+
 export async function getPosts() {
   const { data, error } = await supabase
     .from("posts")
-    .select(
-      `
-        id, 
-        title,
-        caption, 
-        created_at,
-        profiles!user_id (
-            id,
-            username,
-            avatar_url
-        ), 
-        post_categories!id (
-            categories (
-                name
-            )
-        )  ,
-        post_image (
-            image_url
-        ),
-        location_name,
-        latitude,
-        longitude,
-        likes (count),
-        comments (count),
-        saves (count),
-        rating_food,
-        rating_service,
-        rating_environment,
-        rating_cleanliness
-        `,
-    )
+    .select(POST_SELECT)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return data.map(mapPost);
+}
+
+// Home feed: the user's own posts plus posts from people they follow, newest
+// first.
+export async function getFeedPosts(userId: string) {
+  const { data: follows, error: followErr } = await supabase
+    .from("followers")
+    .select("following_id")
+    .eq("follower_id", userId);
+  if (followErr) throw followErr;
+
+  const authorIds = [
+    userId,
+    ...(follows ?? []).map((f: any) => f.following_id),
+  ];
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .in("user_id", authorIds)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

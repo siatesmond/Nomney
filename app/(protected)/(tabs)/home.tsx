@@ -9,7 +9,7 @@ import { FlatList, Image, Text, View } from "react-native";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getComments } from "@/lib/comments";
 import { getUserLikedPostIds, likePost, unlikePost } from "@/lib/likes";
-import { getPosts } from "@/lib/posts";
+import { getFeedPosts } from "@/lib/posts";
 import { getUserSavedPostIds, savePost, unsavePost } from "@/lib/save";
 
 type Post = {
@@ -53,20 +53,21 @@ export default function HomeScreen() {
 
   const { profile } = useAuthContext();
 
-  // Fetch posts when screen loads
+  // Feed = your own posts + posts from people you follow, newest first.
   useEffect(() => {
-    async function fetchPosts() {
+    const uid = profile?.id;
+    if (!uid) return;
+    (async () => {
       try {
-        const data = await getPosts();
+        const data = await getFeedPosts(uid);
         setPosts(data);
       } catch (error) {
         console.log(error);
       } finally {
         setLoading(false);
       }
-    }
-    fetchPosts();
-  }, []);
+    })();
+  }, [profile?.id]);
 
   // Refresh which posts you've liked/saved every time Home is focused, so the
   // icons stay in sync with the DB (e.g. after saving/unsaving on another screen).
