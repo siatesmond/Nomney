@@ -51,7 +51,7 @@ export default function UserProfileScreen() {
   if (!id) return null;
 
   return (
-    <View className="flex-1 bg-[#F9F9F9]">
+    <View className="flex-1 bg-[#FDFCF9]">
       <Stack.Screen options={{ headerShown: false }} />
 
       <UserProfile

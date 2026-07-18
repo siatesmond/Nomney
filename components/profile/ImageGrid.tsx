@@ -13,12 +13,6 @@ type ImageGridProps = {
 };
 
 export function ImageGrid({ items, onPressItem }: ImageGridProps) {
-  // TEMP DIAGNOSTIC — remove once the missing-posts issue is resolved.
-  console.log(
-    "[ImageGrid] items:",
-    items.length,
-    items.slice(0, 2).map((i) => i.imageUrl),
-  );
   return (
     <View
       className="flex-row flex-wrap pb-4"

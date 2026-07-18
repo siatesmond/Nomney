@@ -115,7 +115,7 @@ export default function EditPostScreen() {
 
   if (loadError) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-[#FDFCF9]">
         <Stack.Screen options={{ headerShown: false }} />
         <Text className="text-[#999] text-sm">{loadError}</Text>
       </View>
@@ -124,7 +124,7 @@ export default function EditPostScreen() {
 
   if (!initial) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View className="flex-1 items-center justify-center bg-[#FDFCF9]">
         <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" color={COLORS.accent} />
       </View>
@@ -227,7 +227,7 @@ function EditPostForm({
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#FDFCF9]">
       <Stack.Screen options={{ headerShown: false }} />
 
       <NewPostForm

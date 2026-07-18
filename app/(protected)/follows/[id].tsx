@@ -69,7 +69,7 @@ export default function FollowsScreen() {
   ];
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-white">
+    <SafeAreaView edges={["top"]} className="flex-1 bg-[#FDFCF9]">
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}

@@ -124,7 +124,7 @@ export function UserProfile({
 
   if (loadingProfile || isLoadingPosts) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-[#F9F9F9]">
+      <SafeAreaView className="flex-1 items-center justify-center bg-[#FDFCF9]">
         <ActivityIndicator size="large" color={ACCENT} />
       </SafeAreaView>
     );
@@ -132,7 +132,7 @@ export function UserProfile({
 
   if (error || !profile) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-[#F9F9F9]">
+      <SafeAreaView className="flex-1 items-center justify-center bg-[#FDFCF9]">
         <Text className="text-[#999] text-sm">
           {error || "Profile not found"}
         </Text>
@@ -148,7 +148,7 @@ export function UserProfile({
 
   return (
     <SafeAreaView
-      className="flex-1 bg-[#F9F9F9]"
+      className="flex-1 bg-[#FDFCF9]"
       edges={["top", "left", "right"]}
     >
       {isOwnProfile && (

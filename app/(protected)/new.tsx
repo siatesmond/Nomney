@@ -174,7 +174,7 @@ export default function NewPostScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-[#FDFCF9]">
       <Stack.Screen options={{ headerShown: false }} />
 
       <NewPostForm

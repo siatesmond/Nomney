@@ -96,7 +96,7 @@ export default function EditProfileScreen() {
         [firstName, lastName].filter(Boolean).join(" ") || username || "You";
 
     return (
-        <View className="flex-1 bg-white">
+        <View className="flex-1 bg-[#FDFCF9]">
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
