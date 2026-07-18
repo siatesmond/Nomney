@@ -34,11 +34,16 @@ const POST_SELECT = `
   rating_cleanliness
 `;
 
+// Cap on how many posts a single feed query pulls. Keeps memory/query cost
+// bounded; a "load more" (keyset pagination on created_at) can extend this later.
+const FEED_LIMIT = 100;
+
 export async function getPosts() {
   const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(FEED_LIMIT);
 
   if (error) throw error;
 
@@ -67,7 +72,8 @@ export async function getFeedPosts(userId: string) {
     .from("posts")
     .select(POST_SELECT)
     .in("user_id", authorIds)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(FEED_LIMIT);
 
   if (error) throw error;
 
@@ -312,8 +318,10 @@ export async function createNewPost(payload: SubmitPostPayload) {
         title: payload.title || null,
         caption: payload.caption || null,
         location_name: payload.location?.name || null,
-        latitude: payload.location?.latitude || null,
-        longitude: payload.location?.longitude || null,
+        // Use ?? so a real coordinate of 0 (equator / prime meridian) isn't
+        // treated as missing and dropped to null.
+        latitude: payload.location?.latitude ?? null,
+        longitude: payload.location?.longitude ?? null,
         rating_food: payload.ratings.food,
         rating_service: payload.ratings.service,
         rating_environment: payload.ratings.environment,
@@ -431,8 +439,8 @@ export async function updatePost(payload: UpdatePostPayload) {
         title: payload.title || null,
         caption: payload.caption || null,
         location_name: location?.name || null,
-        latitude: location?.latitude || null,
-        longitude: location?.longitude || null,
+        latitude: location?.latitude ?? null,
+        longitude: location?.longitude ?? null,
         rating_food: ratings.food,
         rating_service: ratings.service,
         rating_environment: ratings.environment,

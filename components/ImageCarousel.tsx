@@ -1,6 +1,8 @@
+import { COLORS } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { useRef, useState } from "react";
-import { FlatList, Image, View } from "react-native";
+import { FlatList, View } from "react-native";
 
 type ImageCarouselProps = {
   imageUrls: string[];
@@ -32,7 +34,7 @@ function Paginator({
             width: i === currentIndex ? 16 : 6,
             height: 6,
             borderRadius: 3,
-            backgroundColor: i === currentIndex ? "#FA5A40" : "#D1D5DB",
+            backgroundColor: i === currentIndex ? COLORS.accent : "#D1D5DB",
           }}
         />
       ))}
@@ -43,9 +45,10 @@ function Paginator({
 export function ImageCarousel({ imageUrls, cardWidth }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const viewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index); // updates index during scroll
+  const viewableItemsChanged = useRef(({ viewableItems }: any) => {
+    const first = viewableItems[0];
+    if (first && first.index != null) {
+      setCurrentIndex(first.index); // updates index during scroll
     }
   }).current;
 
@@ -63,6 +66,11 @@ export function ImageCarousel({ imageUrls, cardWidth }: ImageCarouselProps) {
           style={{ width: cardWidth }} // constraints img to card width
           onViewableItemsChanged={viewableItemsChanged} // for scroll position
           viewabilityConfig={viewConfig} // viewable when 50% visible
+          getItemLayout={(_, index) => ({
+            length: cardWidth,
+            offset: cardWidth * index,
+            index,
+          })}
           renderItem={({ item }) => (
             <View
               style={{
@@ -72,10 +80,10 @@ export function ImageCarousel({ imageUrls, cardWidth }: ImageCarouselProps) {
             >
               <Image
                 source={{ uri: item }}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                }}
+                style={{ width: "100%", height: "100%" }}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={150}
               />
             </View>
           )}

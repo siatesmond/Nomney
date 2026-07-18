@@ -4,27 +4,23 @@ import { Screen } from "@/components/ui/Screen";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, Image, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
+import { COLORS } from "@/constants/theme";
+import { Comment, Post } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getComments } from "@/lib/comments";
 import { getUserLikedPostIds, likePost, unlikePost } from "@/lib/likes";
 import { getFeedPosts } from "@/lib/posts";
 import { getUserSavedPostIds, savePost, unsavePost } from "@/lib/save";
-
-type Post = {
-  id: string;
-  title: string;
-  caption: string;
-  imageUrls: string[];
-  categories: string[];
-  likes: number;
-  comments: number;
-  saves: number;
-  username: string;
-  avatarUrl: string | null;
-  timeAgo: string;
-};
 
 const HomeHeader = () => (
   <View className="flex-row items-center justify-between px-4 pt-10 pb-4">
@@ -42,32 +38,42 @@ const HomeHeader = () => (
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [likedPosts, setLikedPosts] = useState({});
-  const [savedPosts, setSavedPosts] = useState({});
+  const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
+  const [savedPosts, setSavedPosts] = useState<Record<string, boolean>>({});
 
   const sheetRef = useRef<BottomSheetModal>(null);
-
-  const [selectedComments, setSelectedComments] = useState([]);
+  const [selectedComments, setSelectedComments] = useState<Comment[]>([]);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const { profile } = useAuthContext();
 
   // Feed = your own posts + posts from people you follow, newest first.
-  useEffect(() => {
-    const uid = profile?.id;
-    if (!uid) return;
-    (async () => {
-      try {
-        const data = await getFeedPosts(uid);
-        setPosts(data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    })();
+  const loadFeed = useCallback(async () => {
+    if (!profile?.id) return;
+    setError(null);
+    try {
+      const data = await getFeedPosts(profile.id);
+      setPosts(data);
+    } catch (err) {
+      console.log(err);
+      setError("Couldn't load your feed.");
+    }
   }, [profile?.id]);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    setLoading(true);
+    loadFeed().finally(() => setLoading(false));
+  }, [profile?.id, loadFeed]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadFeed();
+    setRefreshing(false);
+  }, [loadFeed]);
 
   // Refresh which posts you've liked/saved every time Home is focused, so the
   // icons stay in sync with the DB (e.g. after saving/unsaving on another screen).
@@ -84,8 +90,8 @@ export default function HomeScreen() {
           if (cancelled) return;
           setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
           setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
-        } catch (error) {
-          console.log(error);
+        } catch (err) {
+          console.log(err);
         }
       })();
       return () => {
@@ -94,60 +100,39 @@ export default function HomeScreen() {
     }, [profile?.id]),
   );
 
-  // Fetch comments when user clicks on comments
+  // Fetch comments, then open the comment sheet.
   const openComments = async (postId: string) => {
     try {
       setSelectedPostId(postId);
-
-      // Fetch comments and set state before opening comments sheet
       const comments = await getComments(postId);
       setSelectedComments(comments);
-
       sheetRef.current?.present();
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  // Like/Unlike post
+  // Like/Unlike a post (optimistic, rolls back on failure).
   const toggleLike = async (postId: string) => {
-    // To check if post is currently liked
+    if (!profile?.id) return;
     const isLiked = !!likedPosts[postId];
 
-    //toggle liked/unlike state
-    setLikedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-
-    // Update like count
+    setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
     setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-        const updatedLikes = isLiked ? post.likes - 1 : post.likes + 1;
-        return { ...post, likes: updatedLikes };
-      }),
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, likes: isLiked ? post.likes - 1 : post.likes + 1 }
+          : post,
+      ),
     );
-    // Update db
-    try {
-      if (isLiked) {
-        await unlikePost(postId, profile.id);
-        console.log("Unliked post:", postId);
-      } else {
-        await likePost(postId, profile.id);
-        console.log("Liked post:", postId);
-      }
-    } catch (error) {
-      console.log(error);
-      console.log("Failed to update liked count");
 
+    try {
+      if (isLiked) await unlikePost(postId, profile.id);
+      else await likePost(postId, profile.id);
+    } catch (err) {
+      console.log(err);
       // Revert both the icon and the count if the db update failed.
-      setLikedPosts((prev) => ({
-        ...prev,
-        [postId]: !prev[postId],
-      }));
+      setLikedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
@@ -158,45 +143,26 @@ export default function HomeScreen() {
     }
   };
 
-  // Save/Unsave post
+  // Save/Unsave a post (optimistic, rolls back on failure).
   const toggleSave = async (postId: string) => {
+    if (!profile?.id) return;
     const isSaved = !!savedPosts[postId];
 
-    //toggle saved/unsaved state
-    setSavedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-
-    // Update saved count
+    setSavedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
     setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-        const updatedSaves = isSaved ? post.saves - 1 : post.saves + 1;
-        return { ...post, saves: updatedSaves };
-      }),
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, saves: isSaved ? post.saves - 1 : post.saves + 1 }
+          : post,
+      ),
     );
 
-    // Update db
     try {
-      if (isSaved) {
-        await unsavePost(postId, profile.id);
-        console.log("Unsaved post:", postId);
-      } else {
-        await savePost(postId, profile.id);
-        console.log("Saved post:", postId);
-      }
-    } catch (error) {
-      console.log(error);
-      console.log("Failed to update saved count");
-
-      // Revert both the icon and the count if the db update failed.
-      setSavedPosts((prev) => ({
-        ...prev,
-        [postId]: !prev[postId],
-      }));
+      if (isSaved) await unsavePost(postId, profile.id);
+      else await savePost(postId, profile.id);
+    } catch (err) {
+      console.log(err);
+      setSavedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
@@ -207,15 +173,57 @@ export default function HomeScreen() {
     }
   };
 
+  const renderEmpty = () => {
+    if (loading) {
+      return (
+        <View className="items-center py-20">
+          <ActivityIndicator size="large" color={COLORS.accent} />
+        </View>
+      );
+    }
+    if (error) {
+      return (
+        <View className="items-center py-20 px-8">
+          <Text className="text-sm text-center mb-3" style={{ color: COLORS.muted }}>
+            {error}
+          </Text>
+          <TouchableOpacity
+            className="px-5 py-2.5 rounded-full bg-accent"
+            onPress={() => {
+              setLoading(true);
+              loadFeed().finally(() => setLoading(false));
+            }}
+          >
+            <Text className="text-white font-semibold text-sm">Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return (
+      <View className="items-center py-20 px-8">
+        <Text className="text-base font-semibold text-center mb-1" style={{ color: COLORS.ink }}>
+          Your feed is empty
+        </Text>
+        <Text className="text-sm text-center" style={{ color: COLORS.muted }}>
+          Follow people or make your first post to see it here.
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <Screen>
       <View className="flex-1">
         <FlatList
           data={posts}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={<HomeHeader />}
+          ListEmptyComponent={renderEmpty()}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           renderItem={({ item: post }) => (
             <View className="px-3 pb-4">
               {/* Shadow lives on this outer view — the PostCard itself uses
@@ -243,16 +251,14 @@ export default function HomeScreen() {
             </View>
           )}
         />
+
         {/* Comment Bottom Sheet */}
         <CommentSheet
           ref={sheetRef}
           postId={selectedPostId}
           comments={selectedComments}
           onNewCommentAdded={(newComment) => {
-            // append new comment with existing comments
             setSelectedComments((prev) => [...prev, newComment]);
-
-            // Increment comment count on the post
             setPosts((prev) =>
               prev.map((post) =>
                 post.id === selectedPostId

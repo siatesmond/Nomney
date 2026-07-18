@@ -231,12 +231,19 @@ export default function MapScreen() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const entries: [string, string][] = [];
-      for (const loc of locations) {
-        const country = await countryForCoord(loc.latitude, loc.longitude);
-        if (country) entries.push([loc.id, country]);
+      // Look all pins up in parallel (results are cached) instead of one at a
+      // time, so the country chips don't wait on N serial network round-trips.
+      const results = await Promise.all(
+        locations.map(async (loc) => {
+          const country = await countryForCoord(loc.latitude, loc.longitude);
+          return country ? ([loc.id, country] as [string, string]) : null;
+        }),
+      );
+      if (!cancelled) {
+        setPostCountries(
+          Object.fromEntries(results.filter((e): e is [string, string] => !!e)),
+        );
       }
-      if (!cancelled) setPostCountries(Object.fromEntries(entries));
     })();
     return () => {
       cancelled = true;

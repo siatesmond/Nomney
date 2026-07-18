@@ -6,7 +6,7 @@ import {
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/UserAvatar";
@@ -35,11 +35,10 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
     try {
       const newComment = await addComment(postId, profile.id, inputValue);
       onNewCommentAdded(newComment);
-
-      console.log("New comment:", JSON.stringify(newComment, null, 2));
-      setInputValue("");
+      setInputValue(""); // only clear on success, so a failed send keeps the text
     } catch (error) {
       console.log(error);
+      Alert.alert("Couldn't post comment", "Please try again.");
     }
   };
 
@@ -134,12 +133,15 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
               paddingVertical: 10,
             }}
           />
-          <Text
+          <TouchableOpacity
             onPress={handleAddComment}
-            style={{ fontWeight: "700", color: COLORS.accent }}
+            accessibilityRole="button"
+            accessibilityLabel="Send comment"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={{ paddingHorizontal: 6, paddingVertical: 4 }}
           >
-            Send
-          </Text>
+            <Text style={{ fontWeight: "700", color: COLORS.accent }}>Send</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </BottomSheetModal>

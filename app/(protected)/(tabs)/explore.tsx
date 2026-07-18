@@ -1,14 +1,12 @@
-import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostDetailModal } from "@/components/post/PostDetailModal";
 import { ImageGrid } from "@/components/profile/ImageGrid";
 import { Screen } from "@/components/ui/Screen";
 import { Ionicons } from "@expo/vector-icons";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Modal,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
@@ -16,28 +14,18 @@ import {
   View,
 } from "react-native";
 
-import { useAuthContext } from "@/hooks/use-auth-context";
-import { getPosts } from "@/lib/posts";
-import { getComments } from "@/lib/comments";
+import { Category, Post } from "@/constants/types";
 import { getCategories } from "@/lib/categories";
-import { likePost, unlikePost, getUserLikedPostIds } from "@/lib/likes";
-import { savePost, unsavePost, getUserSavedPostIds } from "@/lib/save";
+import { getPosts } from "@/lib/posts";
 
 import Fuse from "fuse.js";
 
-type Post = {
-  id: string;
-  title: string;
-  caption: string;
-  imageUrls: string[];
-  categories: string[];
-  location: string;
-  likes: number;
-  comments: number;
-  saves: number;
-  username: string;
-  avatarUrl: string | null;
-  timeAgo: string;
+type ListHeaderProps = {
+  searchText: string;
+  setSearchText: (text: string) => void;
+  allCategories: Category[];
+  selectedCategories: string[];
+  toggleCategory: (name: string) => void;
 };
 
 const ListHeader = ({
@@ -46,19 +34,15 @@ const ListHeader = ({
   allCategories,
   selectedCategories,
   toggleCategory,
-
-}) => (
-  // Page Header
+}: ListHeaderProps) => (
   <View className="px-4 pt-10 pb-4">
     <View className="flex-row items-center justify-between">
-      {/* Text */}
       <View className="w-2/3">
         <Text className="text-3xl font-bold text-gray-900">
           What tempts you today?
         </Text>
       </View>
 
-      {/* Illustration */}
       <View className="w-1/3 items-end">
         <Image
           source={require("@/assets/images/icon/mascotWithLogo.png")}
@@ -84,20 +68,18 @@ const ListHeader = ({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 8, paddingRight: 16 }}>
-      
+      contentContainerStyle={{ gap: 8, paddingRight: 16 }}
+    >
       {allCategories.map((category) => {
         const selected = selectedCategories.includes(category.name);
         return (
           <TouchableOpacity
             key={category.id}
             onPress={() => toggleCategory(category.name)}
-            className={`px-4 py-2 rounded-full ${selected ? "bg-accent" : "bg-white"
-              }`}
+            className={`px-4 py-2 rounded-full ${selected ? "bg-accent" : "bg-white"}`}
           >
             <Text
-              className={`text-sm font-semibold ${selected ? "text-white" : "text-gray-600"
-                }`}
+              className={`text-sm font-semibold ${selected ? "text-white" : "text-gray-600"}`}
             >
               {category.name}
             </Text>
@@ -106,97 +88,83 @@ const ListHeader = ({
       })}
     </ScrollView>
   </View>
-
-  //End of Page header
 );
 
 export default function ExploreScreen() {
-  const [allCategories, setAllCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searchText, setSearchText] = useState("");
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [likedPosts, setLikedPosts] = useState({});
-  const [savedPosts, setSavedPosts] = useState({});
-
-  const sheetRef = useRef<BottomSheetModal>(null);
-
-  const [selectedComments, setSelectedComments] = useState([]);
-  const [selectedPostId, setSelectedPostId] = useState([]);
-
-  // Store post in grid that is clicked on
+  // The post whose detail modal is open.
   const [activePost, setActivePost] = useState<Post | null>(null);
 
-  const { profile } = useAuthContext();
-
-
-  // Fetch categories
+  // Fetch categories once.
   useEffect(() => {
-    async function fetchCategories() {
+    (async () => {
       try {
         const data = await getCategories(10);
         setAllCategories(data);
       } catch (error) {
         console.log(error);
       }
-    }
-    fetchCategories();
+    })();
   }, []);
 
   const toggleCategory = (categoryName: string) => {
     setSelectedCategories((prev) =>
       prev.includes(categoryName)
-        ? prev.filter((c) => c !== categoryName) // unselect
-        : [...prev, categoryName], // select
+        ? prev.filter((c) => c !== categoryName)
+        : [...prev, categoryName],
     );
   };
 
-
-  // Fetch posts when screen loads
-  useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const data = await getPosts();
-        setPosts(data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
+  const loadPosts = useCallback(async () => {
+    try {
+      const data = await getPosts();
+      setPosts(data);
+    } catch (error) {
+      console.log(error);
     }
-    fetchPosts();
   }, []);
 
-  // Fuse Search
-  const fuse = useMemo(() => {
-    return new Fuse(posts, {
-      keys: [
-        { name: 'title', weight: 2 },
-        { name: 'caption', weight: 1 },
-        { name: 'categories', weight: 2 },
-        { name: 'location', weight: 2 },
-        { name: 'username', weight: 1.5 },
-      ],
-      threshold: 0.3, // lower -> tighter matching
-      includeScore: true,
-      useTokenSearch: true, // for multi-word search
+  useEffect(() => {
+    loadPosts().finally(() => setLoading(false));
+  }, [loadPosts]);
 
-    })
-  }, [posts])
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadPosts();
+    setRefreshing(false);
+  }, [loadPosts]);
 
-  // Search Filter
+  // Fuzzy search index, rebuilt when the post list changes.
+  const fuse = useMemo(
+    () =>
+      new Fuse(posts, {
+        keys: [
+          { name: "title", weight: 2 },
+          { name: "caption", weight: 1 },
+          { name: "categories", weight: 2 },
+          { name: "location", weight: 2 },
+          { name: "username", weight: 1.5 },
+        ],
+        threshold: 0.3, // lower -> tighter matching
+        includeScore: true,
+      }),
+    [posts],
+  );
+
   const searchedPosts = useMemo(() => {
     const query = searchText.trim();
-
-    console.log(query);
-
     if (!query) return posts;
-    return fuse.search(query).map((results) => results.item);
-  }, [fuse, searchText, posts])
+    return fuse.search(query).map((result) => result.item);
+  }, [fuse, searchText, posts]);
 
-  // Category Filter buttons (narrows down search results)
+  // Category chips narrow the search results further.
   const filteredPosts = useMemo(() => {
     if (selectedCategories.length === 0) return searchedPosts;
     return searchedPosts.filter((post) =>
@@ -204,150 +172,7 @@ export default function ExploreScreen() {
     );
   }, [searchedPosts, selectedCategories]);
 
-  // Fetch user's liked and saved posts 
-  // ensures accurate update on load (icons state)
-  useEffect(() => {
-    async function fetchUserLikesAndSaves() {
-      if (!profile || !profile.id) return; // for if auth is still loading
-
-      try {
-        const [likedIds, savedIds] = await Promise.all([
-          getUserLikedPostIds(profile.id),
-          getUserSavedPostIds(profile.id),
-        ]);
-
-        setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
-        setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
-      } catch (error) {
-        console.log(error);
-      }
-    }
-    fetchUserLikesAndSaves();
-  }, [profile?.id]);
-
-  // Fetch comments when user clicks on comments
-  const openComments = async (postId: string) => {
-    try {
-      setSelectedPostId(postId);
-
-      // Fetch comments and set state before opening comments sheet
-      const comments = await getComments(postId);
-      setSelectedComments(comments);
-
-      sheetRef.current?.present();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  // Like/Unlike post
-  const toggleLike = async (postId: string) => {
-    // To check if post is currently liked
-    const isLiked = !!likedPosts[postId];
-
-    //toggle liked/unlike state
-    setLikedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-
-    // Update like count
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-        const updatedLikes = isLiked ? post.likes - 1 : post.likes + 1;
-        return { ...post, likes: updatedLikes };
-      }),
-    );
-
-    // Update db
-    try {
-      if (isLiked) {
-        await unlikePost(postId, profile.id);
-
-        console.log("Unliked post:", postId);
-      } else {
-        await likePost(postId, profile.id);
-
-        console.log("Liked post:", postId);
-      }
-    } catch (error) {
-      console.log(error);
-      console.log("Failed to update liked count");
-
-      // Revert action if db is unable to update (icon state and count)
-      setLikedPosts((prev) => ({
-        ...prev,
-        [postId]: !prev[postId],
-      }));
-      setPosts((prev) =>
-        prev.map((post) => {
-          if (post.id !== postId) {
-            return post;
-          }
-          const revertedLikes = isLiked ? post.likes + 1 : post.likes - 1;
-          return { ...post, likes: revertedLikes };
-        }),
-      );
-    }
-  };
-
-  // Save/Unsave post
-  const toggleSave = async (postId: string) => {
-    const isSaved = !!savedPosts[postId];
-
-    //toggle saved/unsaved state
-    setSavedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-
-    // Update saved count
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-        const updatedSaves = isSaved ? post.saves - 1 : post.saves + 1;
-        return { ...post, saves: updatedSaves };
-      }),
-    );
-
-    // Update db
-    try {
-      if (isSaved) {
-        await unsavePost(postId, profile.id);
-
-        console.log("Unsaved post:", postId);
-      } else {
-        await savePost(postId, profile.id);
-
-        console.log("Saved post:", postId);
-      }
-    } catch (error) {
-      console.log(error);
-      console.log("Failed to update saved count");
-
-      // Revert action if db is unable to update (icon state and count)
-      setSavedPosts((prev) => ({
-        ...prev,
-        [postId]: !prev[postId],
-      }));
-      setPosts((prev) =>
-        prev.map((post) => {
-          if (post.id !== postId) {
-            return post;
-          }
-          const revertedSaves = isSaved ? post.saves + 1 : post.saves - 1;
-          return { ...post, saves: revertedSaves };
-        }),
-      );
-    }
-  };
-
-  // Map post to Image Grid (first image per post)
+  // One thumbnail per post (its first image).
   const gridItems = useMemo(
     () =>
       filteredPosts
@@ -358,34 +183,34 @@ export default function ExploreScreen() {
 
   const handleClickedGridItem = (postId: string) => {
     const post = filteredPosts.find((p) => p.id === postId);
-    if (post) {
-      setActivePost(post); // store clicked post in arr
-    }
+    if (post) setActivePost(post);
   };
 
-  // Finds post by id in 'posts' on every render so latest counts are always reflected
-  const activePostLatest = activePost
-    ? (posts.find((p) => p.id === activePost.id) ?? activePost)
-    : null;
+  const emptyText = searchText.trim()
+    ? `No results for "${searchText.trim()}"`
+    : "No posts yet";
 
   return (
     <Screen noPadding>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <ListHeader
           searchText={searchText}
           setSearchText={setSearchText}
           allCategories={allCategories}
           toggleCategory={toggleCategory}
           selectedCategories={selectedCategories}
-
         />
-        {loading ? (
-          <View className="items-center py-12">
-            <ActivityIndicator size="large" color="#FA5A40" />
-          </View>
-        ) : (
-          <ImageGrid items={gridItems} onPressItem={handleClickedGridItem} />
-        )}
+        <ImageGrid
+          items={gridItems}
+          onPressItem={handleClickedGridItem}
+          loading={loading}
+          emptyText={emptyText}
+        />
       </ScrollView>
 
       {/* Full post detail view */}
@@ -402,24 +227,6 @@ export default function ExploreScreen() {
           />
         )}
       </Modal>
-
-      {/* Comment Bottom Sheet */}
-      <CommentSheet
-        ref={sheetRef}
-        postId={selectedPostId}
-        comments={selectedComments}
-        onNewCommentAdded={(newComment) => {
-          setSelectedComments((prev) => [...prev, newComment]);
-
-          setPosts((prev) =>
-            prev.map((post) =>
-              post.id === selectedPostId
-                ? { ...post, comments: post.comments + 1 }
-                : post,
-            ),
-          );
-        }}
-      />
     </Screen>
   );
 }

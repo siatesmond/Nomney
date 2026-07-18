@@ -1,11 +1,13 @@
+import { COLORS } from "@/constants/theme";
 import { useOpenLocationOnMap } from "@/hooks/useOpenLocationOnMap";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { ImageCarousel } from "./ImageCarousel";
-import { Avatar } from "./UserAvatar";
-import { RatingsGrid } from "./post/RatingsGrid";
+import { ImageCarousel } from "../ImageCarousel";
+import { Avatar } from "../UserAvatar";
+import { PostActions } from "./PostActions";
+import { RatingsGrid } from "./RatingsGrid";
 
 type PostCardProps = {
   userId: string;
@@ -36,7 +38,7 @@ type PostCardProps = {
   onSave?: () => void;
 };
 
-export function PostCard({
+function PostCardComponent({
   userId,
   username,
   avatarUrl,
@@ -75,6 +77,8 @@ export function PostCard({
           className="flex-row items-center gap-3"
           activeOpacity={0.7}
           disabled={!userId}
+          accessibilityRole="button"
+          accessibilityLabel={`View ${username}'s profile`}
           onPress={() => router.push(`/user/${userId}`)}
         >
           <Avatar
@@ -98,14 +102,18 @@ export function PostCard({
         <Text className="text-sm text-black leading-[18px]">{caption}</Text>
       </View>
 
-      {/* Image Horizontal FlatList */}
+      {/* Images */}
       <ImageCarousel imageUrls={imageUrls} cardWidth={cardWidth} />
 
       {/* Tags */}
       <View className="flex-row flex-wrap px-4 py-2.5 gap-2">
         {categories.map((category, index) => (
-          <View key={index} className="bg-[#FFE9E8] px-3 py-1.5 rounded-full">
-            <Text className="text-xs text-[#FA5A40] font-semibold">
+          <View
+            key={index}
+            className="px-3 py-1.5 rounded-full"
+            style={{ backgroundColor: COLORS.accentSoft }}
+          >
+            <Text className="text-xs font-semibold" style={{ color: COLORS.accent }}>
               {category}
             </Text>
           </View>
@@ -118,6 +126,8 @@ export function PostCard({
           className="flex-row items-center pt-2 px-4 pb-3 gap-1.5"
           activeOpacity={0.7}
           disabled={!hasCoords}
+          accessibilityRole="button"
+          accessibilityLabel={`Show ${location} on the map`}
           onPress={() =>
             openLocationOnMap({
               latitude: latitude!,
@@ -126,7 +136,7 @@ export function PostCard({
             })
           }
         >
-          <Ionicons name="location-outline" size={20} color="#FA5A40" />
+          <Ionicons name="location-outline" size={20} color={COLORS.accent} />
           <Text className="text-xs text-black">
             {location}
             {distance && `, ${distance} away`}
@@ -138,47 +148,21 @@ export function PostCard({
       {ratings && <RatingsGrid {...ratings} />}
 
       {/* Actions */}
-      <View className="flex-row justify-end py-2 px-4">
-        {/* Like */}
-        <TouchableOpacity
-          className="flex-row items-center gap-1.5 py-2 px-3 mr-2"
-          onPress={onLike}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={liked ? "heart" : "heart-outline"}
-            size={20}
-            color={liked ? "#F4522A" : "#999"}
-          />
-          <Text className="text-xs text-gray-500 font-semibold">{likes}</Text>
-        </TouchableOpacity>
-
-        {/* Comment */}
-        <TouchableOpacity
-          className="flex-row items-center gap-1.5 py-2 px-3 mr-2"
-          onPress={onComment}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chatbubble-outline" size={20} color="#999" />
-          <Text className="text-xs text-gray-500 font-semibold">
-            {comments}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Save */}
-        <TouchableOpacity
-          className="flex-row items-center gap-1.5 py-2 px-3"
-          onPress={onSave}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={saved ? "bookmark" : "bookmark-outline"}
-            size={20}
-            color={saved ? "#F4522A" : "#999"}
-          />
-          <Text className="text-xs text-gray-500 font-semibold">{saves}</Text>
-        </TouchableOpacity>
+      <View className="py-2 px-4">
+        <PostActions
+          liked={liked}
+          saved={saved}
+          likes={likes}
+          comments={comments}
+          saves={saves}
+          onLike={onLike}
+          onComment={onComment}
+          onSave={onSave}
+        />
       </View>
     </View>
   );
 }
+
+// Memoized so a like/save on one card doesn't re-render the whole feed.
+export const PostCard = memo(PostCardComponent);

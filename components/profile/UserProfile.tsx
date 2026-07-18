@@ -156,6 +156,8 @@ export function UserProfile({
           className="absolute right-4 z-10 p-1"
           style={{ top: insets.top + 8 }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Open settings"
           onPress={() => router.push("/settings")}
         >
           <Ionicons name="settings-outline" size={24} color={COLORS.ink} />
@@ -195,6 +197,13 @@ export function UserProfile({
         <ImageGrid
           items={activeTab === "Posts" ? postImages : savedImages}
           onPressItem={onPostClick}
+          emptyText={
+            activeTab === "Posts"
+              ? isOwnProfile
+                ? "You haven't posted yet"
+                : "No posts yet"
+              : "Nothing saved yet"
+          }
         />
       </ScrollView>
     </SafeAreaView>
