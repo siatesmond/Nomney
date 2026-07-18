@@ -54,35 +54,33 @@ export function ImageGrid({
   }
 
   return (
-    <View
-      className="flex-row flex-wrap pb-4"
-      style={{ gap: GAP, paddingHorizontal: GAP }}
-    >
-      {items.map((item) => (
-        <Pressable
-          key={item.id}
-          style={({ pressed }) => [
-            {
-              width: imageSize,
-              height: imageSize,
+    <View className="pb-4">
+      {/* TEMP DIAGNOSTIC */}
+      <Text style={{ color: "red", fontSize: 12, padding: 4 }}>
+        DIAG imageSize={Math.round(imageSize)} items={items.length}
+      </Text>
+      <View
+        className="flex-row flex-wrap"
+        style={{ gap: GAP, paddingHorizontal: GAP }}
+      >
+        {items.map((item, index) => (
+          <Pressable
+            key={item.id}
+            style={{
+              width: imageSize > 0 ? imageSize : 100,
+              height: imageSize > 0 ? imageSize : 100,
               borderRadius: 10,
               overflow: "hidden",
-              backgroundColor: "#E8E8E8",
-            },
-            // Subtle press feedback: shrink and dim a touch while held.
-            pressed && { transform: [{ scale: 0.96 }], opacity: 0.85 },
-          ]}
-          onPress={() => onPressItem?.(item.id)}
-        >
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={{ width: "100%", height: "100%" }}
-            contentFit="cover"
-            cachePolicy="memory-disk"
-            transition={150}
-          />
-        </Pressable>
-      ))}
+              backgroundColor: index % 2 === 0 ? "#F4522A" : "#2A7FF4",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onPress={() => onPressItem?.(item.id)}
+          >
+            <Text style={{ color: "#fff", fontWeight: "700" }}>{index + 1}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
