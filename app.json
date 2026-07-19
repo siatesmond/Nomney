@@ -4,7 +4,7 @@
     "slug": "Nomney",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon/icon_v1.png",
+    "icon": "./assets/images/icon/icon_v1_square.png",
     "scheme": "nomney",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -22,7 +22,7 @@
         }
       },
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon/icon_v1.png",
+        "foregroundImage": "./assets/images/icon/icon_v1_square.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
