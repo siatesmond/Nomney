@@ -231,18 +231,19 @@ export default function MapScreen() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Look all pins up in parallel (results are cached) instead of one at a
-      // time, so the country chips don't wait on N serial network round-trips.
-      const results = await Promise.all(
-        locations.map(async (loc) => {
-          const country = await countryForCoord(loc.latitude, loc.longitude);
-          return country ? ([loc.id, country] as [string, string]) : null;
-        }),
-      );
-      if (!cancelled) {
-        setPostCountries(
-          Object.fromEntries(results.filter((e): e is [string, string] => !!e)),
-        );
+      // Look pins up one at a time. The native Android geocoder is unreliable
+      // under concurrent load (it drops requests / returns "Service not
+      // Available"), so serial is more dependable than Promise.all here — and
+      // the cache keeps repeat loads cheap. We update as each resolves so chips
+      // appear progressively instead of all at the end.
+      const found: Record<string, string> = {};
+      for (const loc of locations) {
+        if (cancelled) return;
+        const country = await countryForCoord(loc.latitude, loc.longitude);
+        if (country) {
+          found[loc.id] = country;
+          if (!cancelled) setPostCountries({ ...found });
+        }
       }
     })();
     return () => {
