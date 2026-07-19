@@ -1,7 +1,12 @@
-import * as Location from "expo-location";
-
-// Only successful lookups are cached. Failures are NOT cached so a transient
-// geocoder hiccup doesn't hide a country for the rest of the session.
+// Reverse-geocode a coordinate to a country name.
+//
+// We use BigDataCloud's free client-side reverse-geocode endpoint (no API key)
+// instead of expo-location's reverseGeocodeAsync, because the native Android
+// geocoder is unreliable — it drops requests and often returns no country at
+// all (e.g. for posts in Japan), which left country chips missing.
+//
+// Only successful lookups are cached; failures are not, so a transient network
+// hiccup doesn't hide a country for the rest of the session.
 const countryCache = new Map<string, string>();
 
 export async function countryForCoord(
@@ -12,16 +17,19 @@ export async function countryForCoord(
   const cached = countryCache.get(key);
   if (cached) return cached;
 
-  // The Android geocoder can transiently return "Service not Available" or an
-  // empty result (especially under load), so retry a few times before giving up.
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      // country can be null even when isoCountryCode is present — fall back to it.
-      const country = place?.country ?? place?.isoCountryCode ?? null;
-      if (country) {
-        countryCache.set(key, country);
-        return country;
+      const res = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const country: string | null =
+          data?.countryName || data?.countryCode || null;
+        if (country) {
+          countryCache.set(key, country);
+          return country;
+        }
       }
     } catch {
       // ignore and retry
