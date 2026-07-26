@@ -75,7 +75,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [loadFeed]);
 
-  // Refresh which posts you've liked/saved every time Home is focused, so the
+  // Refresh which posts liked/saved every time Home is focused, so the
   // icons stay in sync with the DB (e.g. after saving/unsaving on another screen).
   useFocusEffect(
     useCallback(() => {
