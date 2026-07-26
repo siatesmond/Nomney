@@ -139,8 +139,12 @@ export default function NewPostForm(props: Props) {
         </View>
       </ScrollView>
 
-      {/* Footer */}
-      <View className="p-5 border-t border-neutral-200">
+      {/* Footer — paddingBottom accounts for gesture-nav bar so the button
+          never sits behind the system navigation pill. */}
+      <View
+        className="px-5 pt-5 border-t border-neutral-200"
+        style={{ paddingBottom: Math.max(insets.bottom + 16, 20) }}
+      >
         <TouchableOpacity
           className="bg-accent rounded-xl py-4 items-center"
           onPress={props.onPostPress}

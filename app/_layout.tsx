@@ -1,6 +1,7 @@
 import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import AuthProvider from "@/providers/auth-provider";
+import { ToastProvider } from "@/providers/toast-provider";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, useSegments } from "expo-router"; // Added useSegments
 import * as SplashScreen from "expo-splash-screen";
@@ -56,11 +57,13 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
-      </BottomSheetModalProvider>
+      <ToastProvider>
+        <BottomSheetModalProvider>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </BottomSheetModalProvider>
+      </ToastProvider>
     </GestureHandlerRootView>
   );
 }

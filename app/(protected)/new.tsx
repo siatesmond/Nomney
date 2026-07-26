@@ -1,8 +1,9 @@
 import BottomSheet from "@gorhom/bottom-sheet";
 import { Stack, useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import { ActivityIndicator, Alert, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import LocationSheet from "@/components/new-post/LocationSheet";
 import NewPostForm from "@/components/new-post/NewPostForm";
 import RatingsSheet from "@/components/new-post/RatingsSheet";
@@ -10,6 +11,7 @@ import TagsSheet from "@/components/new-post/TagsSheet";
 
 import { DEFAULT_RATINGS, RatingKey } from "@/constants/new-post";
 import { COLORS } from "@/constants/theme";
+import { useToast } from "@/providers/toast-provider";
 import { useCategories } from "@/hooks/useCategories";
 import { useNewPostImages } from "@/hooks/useNewPostImages";
 import { useNewPostLocation } from "@/hooks/useNewPostLocation";
@@ -26,11 +28,16 @@ import { StreakWidgetSmall } from "@/widget/StreakWidgetSmall";
 // New post screen. Holds all the form state and saves the post when you tap Post.
 export default function NewPostScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Custom confirmation modal state (replaces the system Alert for the
+  // "you're missing some fields, post anyway?" prompt).
+  const [confirm, setConfirm] = useState<{ message: string } | null>(null);
 
   const [customTagTypes, setCustomTagTypes] = useState<Record<string, "food_type" | "meal_type">>({});
 
@@ -123,13 +130,12 @@ export default function NewPostScreen() {
         console.error("Failed to refresh widget:", widgetError);
       }
 
-      Alert.alert("Post Created!!!", "Your memory has been created!!!!", [
-        { text: "Awesome", onPress: () => router.replace("/home") },
-      ]);
+      router.replace("/home");
+      showToast("Post uploaded — your memory is live!", "success");
     } catch (error: any) {
-      Alert.alert(
-        "Upload Error",
+      showToast(
         error.message || "An unexpected problem occurred.",
+        "error",
       );
     } finally {
       setLoading(false);
@@ -139,9 +145,9 @@ export default function NewPostScreen() {
   const handlePostSubmission = () => {
     // Required
     if (!images.length) {
-      return Alert.alert(
-        "Missing Photos",
-        "Please select or snap at least one photo for your post.",
+      return showToast(
+        "Please add at least one photo for your post.",
+        "error",
       );
     }
 
@@ -160,14 +166,9 @@ export default function NewPostScreen() {
           " and " +
           missing[missing.length - 1];
 
-      return Alert.alert(
-        "Almost there!!",
-        `You haven't added ${list}. Post anyway?`,
-        [
-          { text: "Go back", style: "cancel" },
-          { text: "Post anyway", onPress: submitPost },
-        ],
-      );
+      return setConfirm({
+        message: `You haven't added ${list}. Post anyway?`,
+      });
     }
 
     submitPost();
@@ -225,6 +226,19 @@ export default function NewPostScreen() {
         sheetRef={locationSheetRef}
         location={location}
         {...locationProps}
+      />
+
+      <ConfirmModal
+        visible={!!confirm}
+        title="Almost there!"
+        message={confirm?.message ?? ""}
+        confirmLabel="Post anyway"
+        cancelLabel="Go back"
+        onConfirm={() => {
+          setConfirm(null);
+          submitPost();
+        }}
+        onCancel={() => setConfirm(null)}
       />
     </View>
   );

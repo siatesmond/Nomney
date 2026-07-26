@@ -200,7 +200,7 @@ export function UserProfile({
           emptyText={
             activeTab === "Posts"
               ? isOwnProfile
-                ? "You haven't posted yet"
+                ? "No posts yet. Share something to make your profile more interesting!"
                 : "No posts yet"
               : "Nothing saved yet"
           }

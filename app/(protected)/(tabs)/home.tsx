@@ -205,7 +205,8 @@ export default function HomeScreen() {
           Your feed is empty
         </Text>
         <Text className="text-sm text-center" style={{ color: COLORS.muted }}>
-          Follow people or make your first post to see it here.
+          You haven&apos;t followed anyone yet. Open a post in Explore, tap the
+          author to visit their profile, then hit Follow.
         </Text>
       </View>
     );
