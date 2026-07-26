@@ -1,6 +1,7 @@
 import { CommentSheet } from "@/components/comments/CommentSheet";
 import { PostCard } from "@/components/post";
 import { Screen } from "@/components/ui/Screen";
+import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -18,6 +19,7 @@ import { COLORS } from "@/constants/theme";
 import { Comment, Post } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getComments } from "@/lib/comments";
+import { getFollowingCount } from "@/lib/followers";
 import { getUserLikedPostIds, likePost, unlikePost } from "@/lib/likes";
 import { getFeedPosts } from "@/lib/posts";
 import { getUserSavedPostIds, savePost, unsavePost } from "@/lib/save";
@@ -35,6 +37,26 @@ const HomeHeader = () => (
   </View>
 );
 
+// Shown when the signed-in user follows no one — the feed below is popular
+// posts, so we nudge them to build a personalised feed.
+const FollowNudge = () => (
+  <View
+    className="mx-3 mb-4 p-4 rounded-xl flex-row items-start gap-3"
+    style={{ backgroundColor: COLORS.accentSoft }}
+  >
+    <Ionicons name="compass-outline" size={20} color={COLORS.accent} />
+    <View className="flex-1">
+      <Text className="text-sm font-semibold mb-0.5" style={{ color: COLORS.ink }}>
+        Showing popular posts
+      </Text>
+      <Text className="text-xs leading-5" style={{ color: COLORS.muted }}>
+        You&apos;re not following anyone yet. Open a post, tap the author to visit
+        their profile, then hit Follow to personalise your feed.
+      </Text>
+    </View>
+  </View>
+);
+
 export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +65,11 @@ export default function HomeScreen() {
 
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [savedPosts, setSavedPosts] = useState<Record<string, boolean>>({});
+
+  // When you follow no one, the feed shows popular posts as a fallback. Track
+  // this so we can nudge new users to follow people (the feed isn't empty, so
+  // the empty-state message alone would never appear).
+  const [followsNoOne, setFollowsNoOne] = useState(false);
 
   const sheetRef = useRef<BottomSheetModal>(null);
   const [selectedComments, setSelectedComments] = useState<Comment[]>([]);
@@ -83,13 +110,15 @@ export default function HomeScreen() {
       let cancelled = false;
       (async () => {
         try {
-          const [likedIds, savedIds] = await Promise.all([
+          const [likedIds, savedIds, followingCount] = await Promise.all([
             getUserLikedPostIds(profile.id),
             getUserSavedPostIds(profile.id),
+            getFollowingCount(profile.id),
           ]);
           if (cancelled) return;
           setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
           setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
+          setFollowsNoOne(followingCount === 0);
         } catch (err) {
           console.log(err);
         }
@@ -220,7 +249,12 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={<HomeHeader />}
+          ListHeaderComponent={
+            <>
+              <HomeHeader />
+              {followsNoOne && posts.length > 0 && <FollowNudge />}
+            </>
+          }
           ListEmptyComponent={renderEmpty()}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

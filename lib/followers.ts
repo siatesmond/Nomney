@@ -36,6 +36,16 @@ export async function getFollowers(userId: string): Promise<FollowUser[]> {
         .filter((u): u is FollowUser => !!u);
 }
 
+// How many people `userId` follows. Lightweight head+count query (no rows fetched).
+export async function getFollowingCount(userId: string): Promise<number> {
+    const { count, error } = await supabase
+        .from("followers")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", userId);
+    if (error) throw error;
+    return count ?? 0;
+}
+
 // People `userId` follows.
 export async function getFollowing(userId: string): Promise<FollowUser[]> {
     const { data, error } = await supabase
