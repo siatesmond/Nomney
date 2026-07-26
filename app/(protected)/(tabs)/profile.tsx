@@ -92,6 +92,7 @@ export default function ProfileScreen() {
           <PostDetailModal
             postId={selectedPostId}
             onClose={() => setSelectedPostId(null)}
+            onDeleted={() => loadContent({ cancelled: false })}
           />
         )}
       </Modal>

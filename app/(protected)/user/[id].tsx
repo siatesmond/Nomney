@@ -5,7 +5,7 @@ import { ImageGridItem } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { getSavedPostImages, getUserPostImages } from "@/lib/profile";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Modal, View } from "react-native";
 
 // Someone else's profile. Opens when you tap a name or avatar on a post.
@@ -22,31 +22,35 @@ export default function UserProfileScreen() {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!id) return;
-
-    let cancelled = false;
-    (async () => {
+  const loadContent = useCallback(
+    async (signal: { cancelled: boolean }) => {
+      if (!id) return;
       try {
-        setLoadingPosts(true);
         const [posts, saved] = await Promise.all([
           getUserPostImages(id),
           getSavedPostImages(id),
         ]);
-        if (cancelled) return;
+        if (signal.cancelled) return;
         setUserPosts(posts);
         setSavedPosts(saved);
       } catch (error: any) {
         console.error("Error loading profile content:", error.message);
       } finally {
-        if (!cancelled) setLoadingPosts(false);
+        if (!signal.cancelled) setLoadingPosts(false);
       }
-    })();
+    },
+    [id],
+  );
 
+  useEffect(() => {
+    if (!id) return;
+    const signal = { cancelled: false };
+    setLoadingPosts(true);
+    loadContent(signal);
     return () => {
-      cancelled = true;
+      signal.cancelled = true;
     };
-  }, [id]);
+  }, [id, loadContent]);
 
   if (!id) return null;
 
@@ -82,6 +86,7 @@ export default function UserProfileScreen() {
           <PostDetailModal
             postId={selectedPostId}
             onClose={() => setSelectedPostId(null)}
+            onDeleted={() => loadContent({ cancelled: false })}
           />
         )}
       </Modal>

@@ -34,9 +34,13 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 interface PostDetailModalProps {
   postId: string;
   onClose: () => void;
+  // Called after the post is successfully deleted, so the screen underneath
+  // (e.g. a profile grid) can refresh itself — closing this modal doesn't fire
+  // a navigation focus event, so the parent won't otherwise know to reload.
+  onDeleted?: () => void;
 }
 
-export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
+export function PostDetailModal({ postId, onClose, onDeleted }: PostDetailModalProps) {
   const router = useRouter();
   const { profile: currentUser } = useAuthContext();
   const openLocationOnMap = useOpenLocationOnMap();
@@ -138,6 +142,7 @@ export function PostDetailModal({ postId, onClose }: PostDetailModalProps) {
         onPress: async () => {
           try {
             await deletePost(postId);
+            onDeleted?.();
             onClose();
           } catch (err: any) {
             Alert.alert("Delete failed", err.message || "Please try again.");
