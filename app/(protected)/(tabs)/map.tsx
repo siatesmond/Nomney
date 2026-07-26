@@ -45,9 +45,9 @@ const SCOPES: { key: MapScope; label: string }[] = [
 ];
 
 const EMPTY_TEXT: Record<MapScope, string> = {
-  mine: "No pinned posts yet. Add a location to a post and it'll show up here.",
-  following: "No located posts from people you follow yet.",
-  everyone: "No located posts yet.",
+  mine: "Add a location to a post and it'll show up here on your map.",
+  following: "People you follow haven't pinned any posts yet.",
+  everyone: "No located posts yet — be the first to pin one!",
 };
 
 // Falls back to Singapore when have no pinned posts yet.
@@ -230,6 +230,10 @@ export default function MapScreen() {
   // change. Runs in the background; cached so it's cheap on repeat.
   useEffect(() => {
     let cancelled = false;
+    // Clear the previous scope's countries up front. Without this, switching to
+    // a scope with no posts leaves the old chips on screen — the loop below only
+    // ever *adds* countries, so an empty `locations` would never reset them.
+    setPostCountries({});
     (async () => {
       // Look pins up one at a time. The native Android geocoder is unreliable
       // under concurrent load (it drops requests / returns "Service not
@@ -702,11 +706,45 @@ export default function MapScreen() {
           )}
         </View>
 
-        {locations.length === 0 && (
-          <View className="absolute inset-0 items-center justify-center px-8">
-            <Text style={{ color: COLORS.muted }} className="text-sm text-center">
-              {EMPTY_TEXT[scope]}
-            </Text>
+        {/* Obvious empty state — only once loading has finished (so it doesn't
+            flash before pins arrive) and no searched-place pin is showing.
+            pointerEvents none keeps the map pannable/searchable underneath. */}
+        {locationsLoaded && locations.length === 0 && !searchedPlace && (
+          <View
+            className="absolute inset-0 items-center justify-center px-8"
+            pointerEvents="none"
+          >
+            <View
+              className="items-center rounded-3xl px-7 py-6"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.96)",
+                maxWidth: 300,
+                elevation: 4,
+                shadowColor: "#000",
+                shadowOpacity: 0.12,
+                shadowRadius: 10,
+                shadowOffset: { width: 0, height: 4 },
+              }}
+            >
+              <View
+                className="items-center justify-center rounded-full mb-3"
+                style={{ width: 64, height: 64, backgroundColor: COLORS.accentSoft }}
+              >
+                <Ionicons name="location-outline" size={32} color={COLORS.accent} />
+              </View>
+              <Text
+                className="text-lg font-bold text-center mb-1"
+                style={{ color: COLORS.ink }}
+              >
+                No pinned posts yet
+              </Text>
+              <Text
+                className="text-sm text-center leading-5"
+                style={{ color: COLORS.muted }}
+              >
+                {EMPTY_TEXT[scope]}
+              </Text>
+            </View>
           </View>
         )}
       </View>
