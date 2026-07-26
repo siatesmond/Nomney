@@ -27,7 +27,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.Nomney"
+      "package": "com.anonymous.Nomney",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -91,7 +96,9 @@
       "expo-web-browser",
       [
         "@react-native-google-signin/google-signin",
-        { "iosUrlScheme": "com.googleusercontent.apps.placeholder" }
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.placeholder"
+        }
       ]
     ],
     "experiments": {
@@ -100,9 +107,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "5e5e1b4a-4400-4b50-8a8f-7e8c07dd2cf2"
+        "projectId": "f66243a7-8ac9-4c28-957e-7bf12ca40e67"
       }
     },
-    "owner": "tesmondsia"
+    "owner": "tesmondsiajiajin"
   }
 }
