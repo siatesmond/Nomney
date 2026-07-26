@@ -1,6 +1,5 @@
 import * as Location from "expo-location";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
 import { GOOGLE_PLACES_API_KEY, LocationData } from "../constants/new-post";
 
 const formatLocationName = (p: Location.LocationGeocodedAddress) =>
@@ -9,7 +8,11 @@ const formatLocationName = (p: Location.LocationGeocodedAddress) =>
     .join(", ");
 
 // `initial` lets the edit screen start with the post's existing location.
-export function useNewPostLocation(initial: LocationData | null = null) {
+// `onNotify` surfaces error messages through the app's own UI instead of Alert.
+export function useNewPostLocation(
+  initial: LocationData | null = null,
+  onNotify?: (message: string) => void,
+) {
   const [location, setLocation] = useState<LocationData | null>(initial);
   const [locationSearch, setLocationSearch] = useState("");
   const [searchResults, setSearchResults] = useState<LocationData[]>([]);
@@ -60,10 +63,7 @@ export function useNewPostLocation(initial: LocationData | null = null) {
       resetSearch();
     } catch (err: any) {
       if (!isMounted.current) return;
-      Alert.alert(
-        "Location Error",
-        err.message || "Could not fetch current location.",
-      );
+      onNotify?.(err.message || "Could not fetch current location.");
     } finally {
       if (isMounted.current) setGpsLoading(false);
     }
@@ -103,7 +103,7 @@ export function useNewPostLocation(initial: LocationData | null = null) {
       );
     } catch {
       if (!isMounted.current) return;
-      Alert.alert("Search Error", "Could not reach Google Places API.");
+      onNotify?.("Could not reach the location search service.");
     } finally {
       if (isMounted.current) setSearchLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, Alert } from "react-native";
+import { Text } from "react-native";
 import { Screen } from "../../components/ui/Screen";
 import { router, useLocalSearchParams } from "expo-router";
 import { InputWithIcon } from "../../components/ui/InputWithIcon";

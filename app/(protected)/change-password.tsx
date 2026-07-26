@@ -1,12 +1,13 @@
 // Change password for the signed-in user via Supabase auth.
+import { useConfirm } from "@/components/ui/useConfirm";
 import { COLORS } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/providers/toast-provider";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Text,
   TextInput,
   TouchableOpacity,
@@ -25,6 +26,8 @@ const isValidPassword = (password: string) =>
 
 export default function ChangePasswordScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
+  const { alert, confirmHost } = useConfirm();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,23 +35,22 @@ export default function ChangePasswordScreen() {
 
   const save = async () => {
     if (!isValidPassword(password)) {
-      return Alert.alert(
+      return alert(
         "Weak password",
         "Password must have at least 8 characters with uppercase, lowercase, digits and a symbol.",
       );
     }
     if (password !== confirm) {
-      return Alert.alert("Mismatch", "The passwords don't match.");
+      return alert("Passwords don't match", "Please re-enter the same password in both fields.");
     }
     setSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      Alert.alert("Done", "Your password has been changed.", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      router.back();
+      showToast("Password changed", "success");
     } catch (err: any) {
-      Alert.alert("Couldn't change password", err.message || "Please try again.");
+      alert("Couldn't change password", err.message || "Please try again.");
     } finally {
       setSaving(false);
     }
@@ -131,6 +133,8 @@ export default function ChangePasswordScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {confirmHost}
     </SafeAreaView>
   );
 }

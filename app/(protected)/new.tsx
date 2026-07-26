@@ -3,7 +3,8 @@ import { Stack, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { ActionSheet } from "@/components/ui/ActionSheet";
+import { useConfirm } from "@/components/ui/useConfirm";
 import LocationSheet from "@/components/new-post/LocationSheet";
 import NewPostForm from "@/components/new-post/NewPostForm";
 import RatingsSheet from "@/components/new-post/RatingsSheet";
@@ -30,14 +31,15 @@ export default function NewPostScreen() {
   const router = useRouter();
   const { showToast } = useToast();
 
+  const { alert, confirm, confirmHost } = useConfirm();
+
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Custom confirmation modal state (replaces the system Alert for the
-  // "you're missing some fields, post anyway?" prompt).
-  const [confirm, setConfirm] = useState<{ message: string } | null>(null);
+  // Controls the "Add photo" (Camera / Gallery) action sheet.
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [customTagTypes, setCustomTagTypes] = useState<Record<string, "food_type" | "meal_type">>({});
 
@@ -45,8 +47,12 @@ export default function NewPostScreen() {
     useState<Record<RatingKey, number>>(DEFAULT_RATINGS);
 
   const { foodTypes, mealTypes } = useCategories();
-  const { images, showOptions, removeImage } = useNewPostImages();
-  const { location, ...locationProps } = useNewPostLocation();
+  const { images, pickImages, removeImage } = useNewPostImages([], (m) =>
+    alert("Heads up", m),
+  );
+  const { location, ...locationProps } = useNewPostLocation(null, (m) =>
+    alert("Location", m),
+  );
 
   const tagsSheetRef = useRef<BottomSheet>(null!);
   const ratingsSheetRef = useRef<BottomSheet>(null!);
@@ -145,10 +151,7 @@ export default function NewPostScreen() {
   const handlePostSubmission = () => {
     // Required
     if (!images.length) {
-      return showToast(
-        "Please add at least one photo for your post.",
-        "error",
-      );
+      return alert("Missing photo", "Please add at least one photo for your post.");
     }
 
     // Optional-but-nudged
@@ -166,8 +169,12 @@ export default function NewPostScreen() {
           " and " +
           missing[missing.length - 1];
 
-      return setConfirm({
+      return confirm({
+        title: "Almost there!",
         message: `You haven't added ${list}. Post anyway?`,
+        confirmLabel: "Post anyway",
+        cancelLabel: "Go back",
+        onConfirm: submitPost,
       });
     }
 
@@ -185,7 +192,7 @@ export default function NewPostScreen() {
         setCaption={setCaption}
         images={images}
         removeImage={removeImage}
-        showOptions={showOptions}
+        showOptions={() => setPickerOpen(true)}
         selectedTags={selectedTags}
         onTagsPress={() => tagsSheetRef.current?.expand()}
         hasRating={hasRating}
@@ -228,18 +235,25 @@ export default function NewPostScreen() {
         {...locationProps}
       />
 
-      <ConfirmModal
-        visible={!!confirm}
-        title="Almost there!"
-        message={confirm?.message ?? ""}
-        confirmLabel="Post anyway"
-        cancelLabel="Go back"
-        onConfirm={() => {
-          setConfirm(null);
-          submitPost();
-        }}
-        onCancel={() => setConfirm(null)}
+      <ActionSheet
+        visible={pickerOpen}
+        title="Add photo"
+        onCancel={() => setPickerOpen(false)}
+        options={[
+          {
+            label: "Take a photo",
+            icon: "camera-outline",
+            onPress: () => pickImages("camera"),
+          },
+          {
+            label: "Choose from gallery",
+            icon: "images-outline",
+            onPress: () => pickImages("gallery"),
+          },
+        ]}
       />
+
+      {confirmHost}
     </View>
   );
 }

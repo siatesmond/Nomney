@@ -1,10 +1,16 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Alert } from "react-native";
+
+export type ImageSource = "camera" | "gallery";
 
 // `initial` lets the edit screen start with the post's existing photos.
-export function useNewPostImages(initial: string[] = []) {
+// `onNotify` surfaces limit/permission messages through the app's own UI (the
+// screen decides how — toast or dialog) instead of a system Alert.
+export function useNewPostImages(
+  initial: string[] = [],
+  onNotify?: (message: string) => void,
+) {
   const [images, setImages] = useState<string[]>(initial);
   const MAX_IMAGES = 6;
 
@@ -16,20 +22,18 @@ export function useNewPostImages(initial: string[] = []) {
     return manipResult.uri;
   };
 
-  const handlePicker = async (isCamera: boolean) => {
+  const pickImages = async (source: ImageSource) => {
+    const isCamera = source === "camera";
     const remainingSlots = MAX_IMAGES - images.length;
     if (remainingSlots <= 0)
-      return Alert.alert("Limit Reached", "Max 6 photos allowed.");
+      return onNotify?.("You can add up to 6 photos.");
 
     const permission = isCamera
       ? await ImagePicker.requestCameraPermissionsAsync()
       : await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted)
-      return Alert.alert(
-        "Permission denied",
-        "We need access to your photos to proceed.",
-      );
+      return onNotify?.("We need access to your photos to continue.");
 
     const pickerMethod = isCamera
       ? ImagePicker.launchCameraAsync
@@ -51,12 +55,7 @@ export function useNewPostImages(initial: string[] = []) {
 
   return {
     images,
-    showOptions: () =>
-      Alert.alert("Add Photo", "Choose an option", [
-        { text: "Camera", onPress: () => handlePicker(true) },
-        { text: "Gallery", onPress: () => handlePicker(false) },
-        { text: "Cancel", style: "cancel" },
-      ]),
+    pickImages,
     removeImage: (uri: string) =>
       setImages((prev) => prev.filter((i) => i !== uri)),
   };

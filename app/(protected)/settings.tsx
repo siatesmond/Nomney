@@ -1,10 +1,12 @@
 // Settings: edit profile, change password, feedback, log out, delete.
+import { useConfirm } from "@/components/ui/useConfirm";
 import { COLORS } from "@/constants/theme";
 import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/providers/toast-provider";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const FEEDBACK_EMAIL = "support@nomney.app"; // TODO: change to your real address
@@ -12,46 +14,44 @@ const DANGER = "#E5484D";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { showToast } = useToast();
+  const { alert, confirm, confirmHost } = useConfirm();
 
   const sendFeedback = () => {
     Linking.openURL(
       `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("Nomney feedback")}`,
     ).catch(() =>
-      Alert.alert("Couldn't open email", `Reach us at ${FEEDBACK_EMAIL}`),
+      showToast(`Couldn't open email. Reach us at ${FEEDBACK_EMAIL}`, "error"),
     );
   };
 
   const confirmLogout = () => {
-    Alert.alert("Log out?", "You'll need to sign in again.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Log out", style: "destructive", onPress: () => signOut() },
-    ]);
+    confirm({
+      title: "Log out?",
+      message: "You'll need to sign in again.",
+      confirmLabel: "Log out",
+      cancelLabel: "Cancel",
+      onConfirm: () => signOut(),
+    });
   };
 
   const confirmDelete = () => {
-    Alert.alert(
-      "Delete account?",
-      "This permanently deletes your account and all your posts. This can't be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const { error } = await supabase.rpc("delete_account");
-              if (error) throw error;
-              await signOut();
-            } catch (err: any) {
-              Alert.alert(
-                "Delete failed",
-                err.message || "Please try again later.",
-              );
-            }
-          },
-        },
-      ],
-    );
+    confirm({
+      title: "Delete account?",
+      message:
+        "This permanently deletes your account and all your posts. This can't be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase.rpc("delete_account");
+          if (error) throw error;
+          await signOut();
+        } catch (err: any) {
+          alert("Delete failed", err.message || "Please try again later.");
+        }
+      },
+    });
   };
 
   return (
@@ -109,6 +109,8 @@ export default function SettingsScreen() {
           />
         </Section>
       </ScrollView>
+
+      {confirmHost}
     </SafeAreaView>
   );
 }

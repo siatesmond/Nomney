@@ -10,11 +10,12 @@ import { EditableProfile, updateProfile, uploadAvatar } from "@/lib/profile";
 import { Ionicons } from "@expo/vector-icons";
 import { decode } from "base64-arraybuffer";
 import { readAsStringAsync } from "expo-file-system/legacy";
+import { useConfirm } from "@/components/ui/useConfirm";
+import { useToast } from "@/providers/toast-provider";
 import { Stack, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
     ActivityIndicator,
-    Alert,
     ScrollView,
     Text,
     TextInput,
@@ -27,6 +28,8 @@ export default function EditProfileScreen() {
     const router = useRouter();
     const { profile, claims, refreshProfile } = useAuthContext();
     const userId = profile?.id ?? claims?.sub;
+    const { showToast } = useToast();
+    const { alert, confirmHost } = useConfirm();
 
     // Form state, seeded from the current profile
     const [username, setUsername] = useState(profile?.username ?? "");
@@ -37,6 +40,7 @@ export default function EditProfileScreen() {
 
     const { avatarUrl, localUri, pickAvatar } = useAvatarPicker(
         profile?.avatar_url ?? null,
+        (m) => alert("Heads up", m),
     );
 
     const usernameStatus = useUsernameAvailability(
@@ -78,15 +82,14 @@ export default function EditProfileScreen() {
             await updateProfile(userId, fields);
             await refreshProfile();
 
-            Alert.alert("Saved", "Your profile has been updated.", [
-                { text: "OK", onPress: () => router.back() },
-            ]);
+            router.back();
+            showToast("Profile updated", "success");
         } catch (error: any) {
             const msg =
                 error?.code === "23505"
                     ? "That username is already taken."
                     : error?.message || "Could not save your profile.";
-            Alert.alert("Error", msg);
+            alert("Error", msg);
         } finally {
             if (isMounted.current) setSaving(false);
         }
@@ -179,6 +182,8 @@ export default function EditProfileScreen() {
                     <ActivityIndicator size="large" color={COLORS.accent} />
                 </View>
             )}
+
+            {confirmHost}
         </View>
     );
 }

@@ -18,13 +18,13 @@ import { useAuthContext } from "@/hooks/use-auth-context";
 import { useNewPostLocation } from "@/hooks/useNewPostLocation";
 import { countryForCoord } from "@/lib/geocode";
 import { getPostLocations, MapScope, PostLocation } from "@/lib/posts";
+import { useToast } from "@/providers/toast-provider";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Keyboard,
   Linking,
@@ -67,6 +67,7 @@ const MAP_STYLE = [
 
 export default function MapScreen() {
   const { profile } = useAuthContext();
+  const { showToast } = useToast();
 
   const mapRef = useRef<MapView>(null);
   const [scope, setScope] = useState<MapScope>("mine");
@@ -92,7 +93,7 @@ export default function MapScreen() {
     searchLoading,
     onLocationSearchChange,
     searchLocation,
-  } = useNewPostLocation();
+  } = useNewPostLocation(null, (m) => showToast(m, "error"));
   // A searched place that has no post of yours — shown as a plain pin.
   const [searchedPlace, setSearchedPlace] = useState<LocationData | null>(null);
 
@@ -285,9 +286,9 @@ export default function MapScreen() {
         setLocationGranted(granted);
       }
       if (!granted) {
-        return Alert.alert(
-          "Location needed",
+        return showToast(
           "Turn on location access to center the map on you.",
+          "error",
         );
       }
       const { coords } = await Location.getCurrentPositionAsync({
@@ -303,7 +304,7 @@ export default function MapScreen() {
         500,
       );
     } catch {
-      Alert.alert("Location error", "Couldn't get your current location.");
+      showToast("Couldn't get your current location.", "error");
     }
   };
 

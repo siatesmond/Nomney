@@ -1,9 +1,13 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
-import { Alert } from "react-native";
 
-export function useAvatarPicker(initialUrl: string | null) {
+// `onNotify` surfaces the permission message through the app's own UI instead
+// of a system Alert.
+export function useAvatarPicker(
+    initialUrl: string | null,
+    onNotify?: (message: string) => void,
+) {
     const [avatarUrl, setAvatarUrl] = useState<string | null>(initialUrl);
     const [localUri, setLocalUri] = useState<string | null>(null);
 
@@ -11,8 +15,7 @@ export function useAvatarPicker(initialUrl: string | null) {
         const permission =
             await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            return Alert.alert(
-                "Permission denied",
+            return onNotify?.(
                 "We need access to your photos to change your avatar.",
             );
         }

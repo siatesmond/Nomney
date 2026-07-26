@@ -7,6 +7,7 @@ import { PostHeaderOverlay } from "@/components/post/PostHeaderOverlay";
 import { RatingRing } from "@/components/post/RatingRing";
 import { RatingsGrid } from "@/components/post/RatingsGrid";
 import { Tag } from "@/components/ui/Tag";
+import { useConfirm } from "@/components/ui/useConfirm";
 import { COLORS } from "@/constants/theme";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { useOpenLocationOnMap } from "@/hooks/useOpenLocationOnMap";
@@ -21,7 +22,6 @@ import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   Text,
@@ -44,6 +44,7 @@ export function PostDetailModal({ postId, onClose, onDeleted }: PostDetailModalP
   const router = useRouter();
   const { profile: currentUser } = useAuthContext();
   const openLocationOnMap = useOpenLocationOnMap();
+  const { alert, confirm, confirmHost } = useConfirm();
   const commentSheetRef = useRef<BottomSheetModal>(null);
   const [commentText, setCommentText] = useState("");
   const {
@@ -129,27 +130,26 @@ export function PostDetailModal({ postId, onClose, onDeleted }: PostDetailModalP
       handleNewComment(newComment);
       setCommentText("");
     } catch (err: any) {
-      Alert.alert("Comment failed", err.message || "Please try again.");
+      alert("Comment failed", err.message || "Please try again.");
     }
   };
 
   const confirmDelete = () => {
-    Alert.alert("Delete post?", "This can't be undone.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deletePost(postId);
-            onDeleted?.();
-            onClose();
-          } catch (err: any) {
-            Alert.alert("Delete failed", err.message || "Please try again.");
-          }
-        },
+    confirm({
+      title: "Delete post?",
+      message: "This can't be undone.",
+      confirmLabel: "Delete",
+      cancelLabel: "Cancel",
+      onConfirm: async () => {
+        try {
+          await deletePost(postId);
+          onDeleted?.();
+          onClose();
+        } catch (err: any) {
+          alert("Delete failed", err.message || "Please try again.");
+        }
       },
-    ]);
+    });
   };
 
   return (
@@ -415,6 +415,8 @@ export function PostDetailModal({ postId, onClose, onDeleted }: PostDetailModalP
             comments={sheetComments}
             onNewCommentAdded={handleNewComment}
           />
+
+          {confirmHost}
         </View>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

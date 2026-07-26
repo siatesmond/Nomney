@@ -6,7 +6,7 @@ import {
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
 import React, { useCallback, useMemo, useState } from "react";
-import { Alert, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/UserAvatar";
@@ -14,6 +14,7 @@ import { COLORS } from "@/constants/theme";
 import { Comment } from "@/constants/types";
 import { useAuthContext } from "@/hooks/use-auth-context";
 import { addComment } from "@/lib/comments";
+import { useToast } from "@/providers/toast-provider";
 
 type CommentSheetProps = {
   comments: Comment[];
@@ -29,6 +30,7 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
   const [inputValue, setInputValue] = useState("");
 
   const { profile } = useAuthContext();
+  const { showToast } = useToast();
 
   const handleAddComment = async () => {
     if (!inputValue.trim() || !postId || !profile?.id) return;
@@ -38,7 +40,7 @@ export const CommentSheet = React.forwardRef<BottomSheetModal,
       setInputValue(""); // only clear on success, so a failed send keeps the text
     } catch (error) {
       console.log(error);
-      Alert.alert("Couldn't post comment", "Please try again.");
+      showToast("Couldn't post comment. Please try again.", "error");
     }
   };
 

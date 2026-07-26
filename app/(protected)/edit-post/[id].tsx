@@ -3,12 +3,14 @@
 import BottomSheet from "@gorhom/bottom-sheet";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 
 import LocationSheet from "@/components/new-post/LocationSheet";
 import NewPostForm from "@/components/new-post/NewPostForm";
 import RatingsSheet from "@/components/new-post/RatingsSheet";
 import TagsSheet from "@/components/new-post/TagsSheet";
+import { ActionSheet } from "@/components/ui/ActionSheet";
+import { useConfirm } from "@/components/ui/useConfirm";
 
 import { DEFAULT_RATINGS, LocationData, RatingKey } from "@/constants/new-post";
 import { COLORS } from "@/constants/theme";
@@ -18,6 +20,7 @@ import { useNewPostImages } from "@/hooks/useNewPostImages";
 import { useNewPostLocation } from "@/hooks/useNewPostLocation";
 import { resolveTagsToCategoryIds } from "@/lib/categories";
 import { getPostDetail, updatePost } from "@/lib/posts";
+import { useToast } from "@/providers/toast-provider";
 
 type TagType = "food_type" | "meal_type";
 
@@ -81,6 +84,7 @@ export default function EditPostScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { profile } = useAuthContext();
+  const { showToast } = useToast();
 
   const [initial, setInitial] = useState<InitialData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -96,8 +100,8 @@ export default function EditPostScreen() {
         // Only the owner may edit (RLS also enforces this on the server).
         const authorId = one<any>(data?.profiles)?.id;
         if (authorId && profile?.id && authorId !== profile.id) {
-          Alert.alert("Not allowed", "You can only edit your own posts.");
           router.back();
+          showToast("You can only edit your own posts.", "error");
           return;
         }
 
@@ -144,10 +148,13 @@ function EditPostForm({
 }) {
   const router = useRouter();
   const { profile } = useAuthContext();
+  const { showToast } = useToast();
+  const { alert, confirmHost } = useConfirm();
 
   const [title, setTitle] = useState(initial.title);
   const [caption, setCaption] = useState(initial.caption);
   const [loading, setLoading] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>(
     initial.selectedTags,
   );
@@ -159,8 +166,14 @@ function EditPostForm({
   );
 
   const { foodTypes, mealTypes } = useCategories();
-  const { images, showOptions, removeImage } = useNewPostImages(initial.images);
-  const { location, ...locationProps } = useNewPostLocation(initial.location);
+  const { images, pickImages, removeImage } = useNewPostImages(
+    initial.images,
+    (m) => alert("Heads up", m),
+  );
+  const { location, ...locationProps } = useNewPostLocation(
+    initial.location,
+    (m) => alert("Location", m),
+  );
 
   const tagsSheetRef = useRef<BottomSheet>(null!);
   const ratingsSheetRef = useRef<BottomSheet>(null!);
@@ -188,10 +201,10 @@ function EditPostForm({
 
   const saveChanges = async () => {
     if (!profile?.id) {
-      return Alert.alert("Not signed in", "Please sign in again.");
+      return alert("Not signed in", "Please sign in again.");
     }
     if (!images.length) {
-      return Alert.alert("Missing Photos", "A post needs at least one photo.");
+      return alert("Missing photo", "A post needs at least one photo.");
     }
 
     setLoading(true);
@@ -216,11 +229,10 @@ function EditPostForm({
       if (!result.success)
         throw new Error(result.error || "Could not save your changes.");
 
-      Alert.alert("Saved", "Your post has been updated.", [
-        { text: "OK", onPress: () => router.back() },
-      ]);
+      router.back();
+      showToast("Post updated", "success");
     } catch (error: any) {
-      Alert.alert("Save Error", error.message || "Something went wrong.");
+      alert("Save error", error.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -239,7 +251,7 @@ function EditPostForm({
         setCaption={setCaption}
         images={images}
         removeImage={removeImage}
-        showOptions={showOptions}
+        showOptions={() => setPickerOpen(true)}
         selectedTags={selectedTags}
         onTagsPress={() => tagsSheetRef.current?.expand()}
         hasRating={hasRating}
@@ -281,6 +293,26 @@ function EditPostForm({
         location={location}
         {...locationProps}
       />
+
+      <ActionSheet
+        visible={pickerOpen}
+        title="Add photo"
+        onCancel={() => setPickerOpen(false)}
+        options={[
+          {
+            label: "Take a photo",
+            icon: "camera-outline",
+            onPress: () => pickImages("camera"),
+          },
+          {
+            label: "Choose from gallery",
+            icon: "images-outline",
+            onPress: () => pickImages("gallery"),
+          },
+        ]}
+      />
+
+      {confirmHost}
     </View>
   );
 }
