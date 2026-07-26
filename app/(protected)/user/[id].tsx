@@ -85,7 +85,10 @@ export default function UserProfileScreen() {
         {selectedPostId && (
           <PostDetailModal
             postId={selectedPostId}
-            onClose={() => setSelectedPostId(null)}
+            onClose={() => {
+              setSelectedPostId(null);
+              loadContent({ cancelled: false });
+            }}
             onDeleted={() => loadContent({ cancelled: false })}
           />
         )}

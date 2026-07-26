@@ -4,7 +4,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Ionicons } from "@expo/vector-icons";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -90,37 +90,45 @@ export default function HomeScreen() {
     }
   }, [profile?.id]);
 
-  useEffect(() => {
-    if (!profile?.id) return;
-    setLoading(true);
-    loadFeed().finally(() => setLoading(false));
-  }, [profile?.id, loadFeed]);
-
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadFeed();
     setRefreshing(false);
   }, [loadFeed]);
 
-  // Refresh which posts liked/saved every time Home is focused, so the
-  // icons stay in sync with the DB (e.g. after saving/unsaving on another screen).
+  // Reload the feed AND the like/save/follow state every time Home is focused.
+  // Re-fetching the posts (not just the liked/saved id sets) keeps each card's
+  // like/save COUNTS correct after you like or save the same post elsewhere
+  // (e.g. from a post-detail modal) — otherwise the heart turns red but the
+  // count stays at its stale value. Spinner only shows on the very first load.
+  const hasLoaded = useRef(false);
   useFocusEffect(
     useCallback(() => {
       if (!profile?.id) return;
       let cancelled = false;
+      if (!hasLoaded.current) setLoading(true);
+      setError(null);
       (async () => {
         try {
-          const [likedIds, savedIds, followingCount] = await Promise.all([
+          const [feed, likedIds, savedIds, followingCount] = await Promise.all([
+            getFeedPosts(profile.id),
             getUserLikedPostIds(profile.id),
             getUserSavedPostIds(profile.id),
             getFollowingCount(profile.id),
           ]);
           if (cancelled) return;
+          setPosts(feed);
           setLikedPosts(Object.fromEntries(likedIds.map((id) => [id, true])));
           setSavedPosts(Object.fromEntries(savedIds.map((id) => [id, true])));
           setFollowsNoOne(followingCount === 0);
         } catch (err) {
           console.log(err);
+          if (!cancelled) setError("Couldn't load your feed.");
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+            hasLoaded.current = true;
+          }
         }
       })();
       return () => {

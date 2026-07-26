@@ -91,7 +91,13 @@ export default function ProfileScreen() {
         {selectedPostId && (
           <PostDetailModal
             postId={selectedPostId}
-            onClose={() => setSelectedPostId(null)}
+            onClose={() => {
+              setSelectedPostId(null);
+              // Refresh so the Saved tab reflects any save/unsave done inside
+              // the modal (closing it isn't a screen-focus event, so the grid
+              // wouldn't otherwise update).
+              loadContent({ cancelled: false });
+            }}
             onDeleted={() => loadContent({ cancelled: false })}
           />
         )}
