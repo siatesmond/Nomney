@@ -412,7 +412,7 @@ export default function MapScreen() {
         {/* Country picker — tap to zoom to that country's posts. Only shown
             once posts span more than one country. A short list shows as chips;
             a long list collapses into a searchable dropdown. */}
-        {countries.length > 1 &&
+        {countries.length > 0 &&
           (countries.length <= 5 ? (
             <ScrollView
               horizontal
