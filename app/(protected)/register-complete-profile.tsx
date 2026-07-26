@@ -6,8 +6,11 @@ import { Button } from "../../components/ui/BlackButton";
 import { router, useLocalSearchParams, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
+import { useAuthContext } from "../../hooks/use-auth-context";
 
 export default function CompleteProfile() {
+  const { refreshProfile } = useAuthContext();
+
   const params = useLocalSearchParams<{
     firstName?: string;
     lastName?: string;
@@ -74,11 +77,14 @@ export default function CompleteProfile() {
       }
 
       // Update db with profile details
+      const first = capitalize(firstName);
+      const last = capitalize(lastName);
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
-          first_name: capitalize(firstName),
-          last_name: capitalize(lastName),
+          first_name: first,
+          last_name: last,
+          full_name: `${first} ${last}`,
           username,
         })
         .eq("id", userData.user.id);
@@ -90,6 +96,11 @@ export default function CompleteProfile() {
         );
         return;
       }
+
+      // Re-load the profile into auth context so screens seeded from it (e.g.
+      // Edit Profile) show the values just saved instead of the pre-completion
+      // empty row.
+      await refreshProfile();
 
       router.replace("/register-success");
     } catch (err) {
