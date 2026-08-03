@@ -2,9 +2,7 @@ import { supabase } from '@/lib/supabase';
 
 export async function getStreakData(userId: string): Promise<{ current: number; longest: number }> {
     const { data, error } = await supabase
-        .from('profiles')
-        .select('current_streak, longest_streak')
-        .eq('id', userId)
+        .rpc('get_live_streak_data', { target_user_id: userId })
         .single();
 
     if (error) {
@@ -13,4 +11,4 @@ export async function getStreakData(userId: string): Promise<{ current: number; 
     }
 
     return { current: data?.current_streak ?? 0, longest: data?.longest_streak ?? 0 };
-}
+}   
