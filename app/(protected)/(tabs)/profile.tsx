@@ -7,10 +7,6 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Modal } from "react-native";
 
-// import { StreakWidgetSmall } from "@/widget/StreakWidgetSmall";
-// import { StreakWidgetLarge } from "@/widget/StreakWidgetLarge";
-// import { WidgetPreview } from 'react-native-android-widget';
-
 // Your own profile tab. Loads your posts + saved posts and shows them.
 export default function ProfileScreen() {
   const router = useRouter();

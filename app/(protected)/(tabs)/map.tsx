@@ -114,7 +114,7 @@ export default function MapScreen() {
   const [mapReady, setMapReady] = useState(false);
 
   const goToSearchResult = (r: LocationData) => {
-    onLocationSearchChange(""); // clear the box + results
+    onLocationSearchChange("");
     Keyboard.dismiss();
     mapRef.current?.animateToRegion(
       {
@@ -126,10 +126,6 @@ export default function MapScreen() {
       500,
     );
 
-    // Match by place NAME, not coordinates. Shops in the same mall share almost
-    // identical coordinates, so distance can't tell "Ghost Bingsu" from
-    // "Ji De Chi" but a post made from a place stored that place's exact name.
-    // If no post has that name, we just drop a pin.
     const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
     const target = norm(r.name);
     const match = locations.find((l) => norm(l.locationName) === target && target);
@@ -166,7 +162,7 @@ export default function MapScreen() {
   // `locationsLoaded` avoids a false "no post here" on the first open.
   useEffect(() => {
     if (!pendingFocus) return;
-    if (!mapReady) return; // wait until the map can accept animate commands
+    if (!mapReady) return;
 
     // Zoom in to the spot (once).
     if (!focusAnimated.current) {
@@ -227,20 +223,10 @@ export default function MapScreen() {
     }, [profile?.id, scope]),
   );
 
-  // Figure out each post's country (for the country chips) whenever the pins
-  // change. Runs in the background; cached so it's cheap on repeat.
   useEffect(() => {
     let cancelled = false;
-    // Clear the previous scope's countries up front. Without this, switching to
-    // a scope with no posts leaves the old chips on screen — the loop below only
-    // ever *adds* countries, so an empty `locations` would never reset them.
     setPostCountries({});
     (async () => {
-      // Look pins up one at a time. The native Android geocoder is unreliable
-      // under concurrent load (it drops requests / returns "Service not
-      // Available"), so serial is more dependable than Promise.all here — and
-      // the cache keeps repeat loads cheap. We update as each resolves so chips
-      // appear progressively instead of all at the end.
       const found: Record<string, string> = {};
       for (const loc of locations) {
         if (cancelled) return;

@@ -66,9 +66,6 @@ export default function HomeScreen() {
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [savedPosts, setSavedPosts] = useState<Record<string, boolean>>({});
 
-  // When you follow no one, the feed shows popular posts as a fallback. Track
-  // this so we can nudge new users to follow people (the feed isn't empty, so
-  // the empty-state message alone would never appear).
   const [followsNoOne, setFollowsNoOne] = useState(false);
 
   const sheetRef = useRef<BottomSheetModal>(null);
@@ -269,7 +266,7 @@ export default function HomeScreen() {
           }
           renderItem={({ item: post }) => (
             <View className="px-3 pb-4">
-              {/* Shadow lives on this outer view — the PostCard itself uses
+              {/* Shadow lives on this outer view, the PostCard itself uses
                   overflow-hidden to round its corners, which would clip a
                   shadow on iOS if it were on the same view. */}
               <View
